@@ -192,9 +192,8 @@ button:active { transform: translateY(2px) scale(.985); }
   top: calc(80dvh - var(--auth-top));
   left: 0;
   right: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  justify-content: center;
 }
 
 .social-button {
