@@ -3,6 +3,10 @@
     {
       "source": "/",
       "destination": "/Kudo-fixed.html"
+    },
+    {
+      "source": "/auth/google",
+      "destination": "/api/auth/google"
     }
   ]
 }
