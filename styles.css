@@ -33,7 +33,8 @@ button:active { transform: translateY(2px) scale(.985); }
 
 .phone-screen {
   position: relative;
-  width: 100vw;
+  width: min(100vw, 412px);
+  margin-inline: auto;
   height: 100vh;
   height: 100dvh;
   min-height: 100dvh;
