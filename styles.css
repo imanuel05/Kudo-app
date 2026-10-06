@@ -683,10 +683,14 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-stream-page { width: min(100vw, 412px); min-height: 100dvh; margin: 0 auto; padding: 0 20px 28px; overflow-y: auto; background: #fff; }
 .anime-video-shell { position: relative; margin: 0 -20px 18px; background: #10121a; }
 .anime-video-shell video { width: 100%; aspect-ratio: 16 / 9; display: block; background: #10121a; object-fit: contain; }
-.anime-pip { width: min(320px, calc(100vw - 24px)); aspect-ratio: 16 / 9; position: fixed; z-index: 50; right: max(12px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px)); overflow: hidden; border-radius: 12px; background: #10121a; box-shadow: 0 4px 18px #0005; cursor: pointer; }
+.anime-pip { width: min(320px, calc(100vw - 24px)); aspect-ratio: 16 / 9; position: fixed; z-index: 50; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(68px + 14px + env(safe-area-inset-bottom, 0px)); overflow: hidden; border-radius: 12px; background: #10121a; box-shadow: 0 4px 18px #0005; cursor: pointer; }
 .anime-pip video { width: 100%; height: 100%; position: relative; z-index: 0; display: block; background: #10121a; object-fit: contain; pointer-events: none; }
-.anime-pip-close { width: 30px; height: 30px; padding: 0; position: absolute; z-index: 2; top: 7px; right: 7px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #fff; background: #0009; font-size: 22px; line-height: 1; opacity: 1; transition: opacity .2s ease; }
-.anime-pip-controls-hidden .anime-pip-close { opacity: 0; pointer-events: none; }
+.anime-pip-controls { position: absolute; z-index: 2; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; background: #0002; opacity: 1; transition: opacity .2s ease; }
+.anime-pip-controls button { width: 38px; height: 38px; padding: 6px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #fff; background: #0008; filter: drop-shadow(0 1px 3px #0008); }
+.anime-pip-controls button svg { width: 24px; height: 24px; fill: currentColor; }
+.anime-pip-controls button[data-pip-action="toggle-playback"] { width: 44px; height: 44px; }
+.anime-pip-close { width: 30px; height: 30px; padding: 0; position: absolute; z-index: 3; top: 7px; right: 7px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #fff; background: #0009; font-size: 22px; line-height: 1; opacity: 1; transition: opacity .2s ease; }
+.anime-pip-controls-hidden .anime-pip-close, .anime-pip-controls-hidden .anime-pip-controls { opacity: 0; pointer-events: none; }
 .anime-overlay-controls { position: absolute; z-index: 2; inset: 0 0 0; display: flex; align-items: center; justify-content: center; gap: clamp(20px, 8vw, 42px); pointer-events: none; transition: opacity .2s ease; }
 .anime-overlay-controls button { min-width: 42px; min-height: 42px; padding: 2px; display: grid; place-items: center; border: 0; color: #fff; background: transparent; filter: drop-shadow(0 1px 3px #000a); line-height: 1; pointer-events: auto; }
 .anime-overlay-controls button svg { width: 30px; height: 26px; fill: currentColor; }
