@@ -79,13 +79,19 @@ module.exports = async function createDiamondPayment(request, response) {
       body,
     });
     const dokuResult = await dokuResponse.json();
-    const checkoutUrl = dokuResult?.response?.payment?.url;
-    if (!dokuResponse.ok || !checkoutUrl) {
-      console.error(
-        'DOKU checkout creation failed:',
-        dokuResponse.status,
-        dokuResult?.error?.code || dokuResult?.code || 'unknown'
-      );
+const checkoutUrl = dokuResult?.response?.payment?.url;
+
+if (!dokuResponse.ok || !checkoutUrl) {
+  console.error(
+    'DOKU checkout creation failed:',
+    JSON.stringify({
+      status: dokuResponse.status,
+      message: dokuResult?.message,
+      error: dokuResult?.error,
+      code: dokuResult?.code,
+      response: dokuResult?.response,
+    })
+  );
       await supabaseRequest(
         `/rest/v1/payment_orders?invoice_number=eq.${encodeURIComponent(invoiceNumber)}`,
         { method: 'PATCH', body: JSON.stringify({ status: 'failed' }) }
