@@ -186,8 +186,10 @@ button:active { transform: translateY(2px) scale(.985); }
 
 .submit-button { margin-top: 47px; height: 58px; min-height: 58px; border-radius: 7px; color: #fff; font-size: 14px; font-weight: 700; }
 .auth-form[data-form="login"] .login-form-message { min-height: 14px; margin-top: 5px; text-align: center; }
-.auth-form[data-form="login"] .submit-button { margin-top: 10px; }
-.auth-form[data-form="signup"] .submit-button { margin-top: 10px; }
+.auth-form[data-form="login"],
+.auth-form[data-form="signup"] { flex: 1; }
+.auth-form[data-form="login"] .submit-button,
+.auth-form[data-form="signup"] .submit-button { margin-top: auto; }
 
 .social-actions {
   width: 100%;
@@ -232,7 +234,7 @@ button:active { transform: translateY(2px) scale(.985); }
   width: 100%;
   position: relative;
   bottom: auto;
-  margin: 18px 0 96px;
+  margin: 18px 0 60px;
   color: #bfbfbf;
   font-size: 10px;
   text-align: center;
@@ -267,11 +269,12 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
   .auth-form input { height: 42px; }
   .password-toggle { height: 42px; }
   .submit-button { margin-top: 26px; height: 48px; min-height: 48px; }
-  .auth-form[data-form="login"] .submit-button { margin-top: 10px; }
+  .auth-form[data-form="login"],
+  .auth-form[data-form="signup"] { flex: 1; }
   .auth-form[data-form="forgot"] h1 { margin-bottom: 18px; }
   .auth-form[data-form="forgot"] .helper-copy { margin-bottom: 28px; }
   .legal-copy { bottom: 3px; }
-  .switch-copy { bottom: auto; }
+  .switch-copy { bottom: auto; margin-bottom: 40px; }
 }
 
 /* Kudo product pages */
