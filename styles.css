@@ -186,13 +186,12 @@ button:active { transform: translateY(2px) scale(.985); }
 
 .submit-button { margin-top: 47px; height: 58px; min-height: 58px; border-radius: 7px; color: #fff; font-size: 14px; font-weight: 700; }
 .auth-form[data-form="login"] .login-form-message { min-height: 14px; margin-top: 5px; text-align: right; }
-.auth-form[data-form="login"] .submit-button { margin-top: 70px; }
+.auth-form[data-form="login"] .submit-button { margin-top: 10px; }
+.auth-form[data-form="signup"] .submit-button { margin-top: 10px; }
 
 .social-actions {
-  position: absolute;
-  top: calc(80dvh - var(--auth-top));
-  left: 0;
-  right: 0;
+  width: 100%;
+  margin-top: 10px;
   display: flex;
   justify-content: center;
 }
@@ -242,10 +241,13 @@ button:active { transform: translateY(2px) scale(.985); }
 .helper-copy { margin: -15px 0 24px; color: #bfbfbf; font-size: 10px; font-weight: 700; line-height: 1.5; text-align: center; }
 .back-link { width: 100%; min-height: 60px; align-self: stretch; margin: 14px 0 0; border: 1px solid #a8a8a8; border-radius: 8px; color: #797dff; background: #fff; box-shadow: 0 4px 0 #aaa; font-size: 14px; font-weight: 700; }
 .auth-form[data-form="forgot"] h1 { margin-bottom: 18px; }
-.auth-form[data-form="forgot"] .helper-copy { margin: -10px 0 18px; }
+.auth-form[data-form="forgot"] { min-height: calc(100dvh - var(--auth-top) - 12px); }
+.auth-form[data-form="forgot"] .helper-copy { margin: -10px 0 51px; }
 .auth-form[data-form="forgot"] .form-message { min-height: 0; margin-top: 2px; }
-.auth-form[data-form="forgot"] .submit-button { margin-top: 18px; }
-.auth-form[data-form="forgot"] .back-link { height: 58px; min-height: 58px; margin-top: 10px; }
+.forgot-actions { width: 100%; margin-top: auto; display: grid; gap: 10px; }
+.auth-form[data-form="forgot"] .submit-button { margin-top: 0; }
+.auth-form[data-form="forgot"] .back-link { height: 58px; min-height: 58px; margin-top: 0; }
+.shop-insufficient-button { font-size: 14px !important; }
 .delete-account-overlay .dialog h2 { margin-bottom: 8px; font-size: 14px; }
 .delete-account-overlay .dialog p { margin: 0 0 6px; font-size: 10px; }
 .delete-account-overlay .dialog .button { font-size: 14px; }
@@ -263,8 +265,9 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
   .auth-form input { height: 42px; }
   .password-toggle { height: 42px; }
   .submit-button { margin-top: 26px; height: 48px; min-height: 48px; }
-  .auth-form[data-form="login"] .submit-button { margin-top: 16px; }
+  .auth-form[data-form="login"] .submit-button { margin-top: 10px; }
   .auth-form[data-form="forgot"] h1 { margin-bottom: 18px; }
+  .auth-form[data-form="forgot"] .helper-copy { margin-bottom: 28px; }
   .legal-copy { bottom: 3px; }
   .switch-copy { bottom: 54px; }
 }
