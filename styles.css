@@ -701,8 +701,12 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-video-shell { position: relative; margin: 0 -20px 18px; background: #10121a; }
 .anime-video-shell video { width: 100%; aspect-ratio: 16 / 9; display: block; background: #10121a; object-fit: contain; }
 .anime-video-shell iframe { width: 100%; aspect-ratio: 16 / 9; display: block; border: 0; background: #10121a; }
+.anime-video-shell > .anime-back-control { width: 42px; height: 42px; padding: 2px; position: absolute; z-index: 1; top: 8px; left: 8px; display: grid; place-items: center; border: 0; color: #fff; background: transparent; filter: drop-shadow(0 1px 3px #000a); }
+.anime-video-shell > .anime-back-control svg { width: 24px; height: 24px; }
+.anime-video-shell > .anime-back-control svg path { fill: none; stroke: currentColor; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
 .anime-pip { width: min(320px, calc(100vw - 24px)); aspect-ratio: 16 / 9; position: fixed; z-index: 50; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(68px + 14px + env(safe-area-inset-bottom, 0px)); overflow: hidden; border-radius: 12px; background: #10121a; box-shadow: 0 4px 18px #0005; cursor: pointer; }
 .anime-pip video { width: 100%; height: 100%; position: relative; z-index: 0; display: block; background: #10121a; object-fit: contain; pointer-events: none; }
+.anime-pip iframe { width: 100%; height: 100%; position: relative; z-index: 0; display: block; border: 0; }
 .anime-pip-controls { position: absolute; z-index: 2; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; background: #0002; opacity: 1; transition: opacity .2s ease; }
 .anime-pip-controls button { width: 38px; height: 38px; padding: 6px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #fff; background: #0008; filter: drop-shadow(0 1px 3px #0008); }
 .anime-pip-controls button svg { width: 24px; height: 24px; fill: currentColor; }
@@ -732,7 +736,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-stream-tabs button.is-active { border-bottom-color: #9992ff; color: #333652; }
 .anime-stream-tab-content { min-height: 140px; }
 .anime-description { margin: 13px 0; color: #bfbfbf; font-family: inherit; font-size: 10px; font-weight: 400; line-height: 1.55; text-align: justify; }
-.anime-episode-card { width: 100%; min-height: 80px; padding: 8px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 10px; background: #e8e7ff; text-align: left; }
+.anime-episode-card { width: 100%; min-height: 80px; padding: 8px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 10px; background: #e8e7ff; color: inherit; text-align: left; text-decoration: none; }
 .anime-episode-card img { width: 96px; height: 58px; flex: 0 0 auto; border-radius: 6px; object-fit: cover; }
 .anime-episode-card span { display: grid; gap: 10px; }
 .anime-episode-card strong { color: #333652; font-size: 12px; font-weight: 700; }
