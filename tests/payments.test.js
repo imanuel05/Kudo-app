@@ -71,6 +71,9 @@ test('payment creation uses the fixed price and returns LinkAja POST redirect da
       assert.equal(request.order.line_items[0].price, 10000);
       assert.equal(request.customer.email, 'user@example.com');
       const headers = options.headers;
+      assert.equal(headers.Digest, undefined);
+      assert.match(headers['Request-Id'], /^[0-9a-f-]{36}$/i);
+      assert.match(headers['Request-Timestamp'], /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);
       assert.equal(
         headers.Signature,
         createDokuSignatureWithoutDigest(

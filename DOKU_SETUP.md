@@ -31,10 +31,10 @@ key must only be configured as Vercel environment variables; never put them in
 
 The server chooses prices and diamond quantities from the fixed package list
 and creates a LinkAja payment using
-`/linkaja-emoney/v2/ServiceRequestPayment`. The request signature follows the
-LinkAja endpoint's documented Non-SNAP signature format (without a body
-digest). The browser submits DOKU's returned HTTPS redirect URL and POST
-parameters. It does not trust the browser's
+`/linkaja-emoney/v2/ServiceRequestPayment`. Follow the LinkAja-specific
+Non-SNAP signature instructions: sign the Client ID, request ID, UTC timestamp,
+and request target, without a body digest. The browser submits DOKU's returned
+HTTPS redirect URL and POST parameters. It does not trust the browser's
 displayed price. Diamonds are credited only after a DOKU-signed success
 notification passes signature, invoice, and amount checks. A database lock
 makes duplicate notifications idempotent. The transaction page polls the

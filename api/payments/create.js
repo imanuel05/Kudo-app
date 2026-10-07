@@ -1,3 +1,4 @@
+const { randomUUID } = require('node:crypto');
 const {
   DIAMOND_PACKS,
   authenticateRequest,
@@ -60,8 +61,8 @@ module.exports = async function createDiamondPayment(request, response) {
       },
     };
     const body = JSON.stringify(requestBody);
-    const requestId = createInvoiceNumber();
-    const timestamp = new Date().toISOString();
+    const requestId = randomUUID();
+    const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
     const target = '/linkaja-emoney/v2/ServiceRequestPayment';
     const dokuResponse = await fetch(`${doku.apiUrl}${target}`, {
       method: 'POST',
