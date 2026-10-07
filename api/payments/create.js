@@ -1,8 +1,7 @@
-const { randomUUID } = require('node:crypto');
 const {
   DIAMOND_PACKS,
   authenticateRequest,
-  createDokuSignatureWithoutDigest,
+  createDokuSignature,
   createInvoiceNumber,
   getDokuConfig,
   sendJson,
@@ -49,11 +48,19 @@ module.exports = async function createDiamondPayment(request, response) {
         invoice_number: invoiceNumber,
         amount: pack.amountIdr,
         callback_url: `${doku.appUrl}/?payment=return#transaction`,
+        currency: 'IDR',
+        callback_url_result: `${doku.appUrl}/?payment=return#transaction`,
+        auto_redirect: true,
         line_items: [{
+          id: `DIAMOND-${pack.diamonds}`,
           name: `${pack.diamonds.toLocaleString('id-ID')} Berlian Kudo`,
-          price: pack.amountIdr,
           quantity: 1,
+          price: pack.amountIdr,
         }],
+      },
+      payment: {
+        payment_due_date: 60,
+        payment_method_types: ['EMONEY_DOKU'],
       },
       customer: {
         name: customerName,
@@ -61,9 +68,9 @@ module.exports = async function createDiamondPayment(request, response) {
       },
     };
     const body = JSON.stringify(requestBody);
-    const requestId = randomUUID();
-    const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
-    const target = '/linkaja-emoney/v2/ServiceRequestPayment';
+    const requestId = createInvoiceNumber();
+    const timestamp = new Date().toISOString();
+    const target = '/checkout/v1/payment';
     const dokuResponse = await fetch(`${doku.apiUrl}${target}`, {
       method: 'POST',
       headers: {
@@ -71,71 +78,46 @@ module.exports = async function createDiamondPayment(request, response) {
         'Client-Id': doku.clientId,
         'Request-Id': requestId,
         'Request-Timestamp': timestamp,
-        Signature: createDokuSignatureWithoutDigest(
+        Signature: createDokuSignature(
           doku.clientId,
           requestId,
           timestamp,
           target,
+          body,
           doku.secretKey
         ),
       },
       body,
     });
-    const dokuResponseText = await dokuResponse.text();
-    let dokuResult;
-    try {
-      dokuResult = JSON.parse(dokuResponseText);
-    } catch {
-      dokuResult = null;
-    }
-
-    const linkajaPayment = dokuResult?.emoney_payment;
-    const redirectUrl = linkajaPayment?.redirect_url_http;
-    const redirectParameters = linkajaPayment?.redirect_parameter;
-    let paymentUrl;
-    try {
-      paymentUrl = new URL(redirectUrl);
-    } catch {
-      paymentUrl = null;
-    }
-
-    if (
-      !dokuResponse.ok
-      || String(dokuResult?.order?.invoice_number || '') !== invoiceNumber
-      || Number(dokuResult?.order?.amount) !== pack.amountIdr
-      || linkajaPayment?.redirect_method_http !== 'POST'
-      || paymentUrl?.protocol !== 'https:'
-      || !paymentUrl.hostname
-      || !Array.isArray(redirectParameters)
-      || redirectParameters.length === 0
-      || redirectParameters.length > 10
-      || redirectParameters.some((parameter) => (
-        typeof parameter?.name !== 'string'
-        || !parameter.name
-        || parameter.name.length > 100
-        || typeof parameter?.value !== 'string'
-        || parameter.value.length > 10000
-      ))
-    ) {
-      const rawErrorCode = dokuResult?.error?.code
-        || dokuResult?.response?.code
-        || dokuResult?.code;
+    const dokuResult = await dokuResponse.json();
+    const checkoutUrl = dokuResult?.response?.payment?.url;
+    if (!dokuResponse.ok || !checkoutUrl) {
+      const rawErrorCode = dokuResult?.error?.code || dokuResult?.code;
       const errorCode = typeof rawErrorCode === 'string'
         && /^[A-Za-z0-9_.-]{1,64}$/.test(rawErrorCode)
         ? rawErrorCode
         : 'INVALID_RESPONSE';
       console.error(
-        'DOKU LinkAja payment creation failed:',
-        JSON.stringify({ status: dokuResponse.status, code: errorCode })
+        'DOKU Checkout payment creation failed:',
+        dokuResponse.status,
+        errorCode
       );
       await supabaseRequest(
         `/rest/v1/payment_orders?invoice_number=eq.${encodeURIComponent(invoiceNumber)}`,
         { method: 'PATCH', body: JSON.stringify({ status: 'failed' }) }
       );
       return sendJson(response, 502, {
-        error: `DOKU belum dapat membuat pembayaran LinkAja (kode: ${errorCode}).`,
+        error: `DOKU belum dapat membuat pembayaran (kode: ${errorCode}).`,
         errorCode,
       });
+    }
+
+    const paymentUrl = new URL(checkoutUrl);
+    if (
+      paymentUrl.protocol !== 'https:'
+      || (paymentUrl.hostname !== 'doku.com' && !paymentUrl.hostname.endsWith('.doku.com'))
+    ) {
+      throw new Error('DOKU returned an invalid checkout URL.');
     }
 
     await supabaseRequest(
@@ -150,9 +132,7 @@ module.exports = async function createDiamondPayment(request, response) {
       invoiceNumber,
       amount: pack.amountIdr,
       diamonds: pack.diamonds,
-      redirectMethod: linkajaPayment.redirect_method_http,
-      redirectUrl: paymentUrl.toString(),
-      redirectParameters: redirectParameters.map(({ name, value }) => ({ name, value })),
+      checkoutUrl: paymentUrl.toString(),
     });
   } catch (error) {
     console.error('Could not create DOKU payment:', error);

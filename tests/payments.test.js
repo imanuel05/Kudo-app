@@ -12,7 +12,6 @@ process.env.APP_URL = 'https://kudo.example';
 
 const {
   createDokuSignature,
-  createDokuSignatureWithoutDigest,
   verifyDokuNotification,
 } = require('../lib/payments');
 const createPayment = require('../api/payments/create');
@@ -55,7 +54,7 @@ test('DOKU notification signatures reject tampered bodies', () => {
   assert.equal(verifyDokuNotification({ headers }, Buffer.from(`${body} `)), false);
 });
 
-test('payment creation uses the fixed price and returns LinkAja POST redirect data', async () => {
+test('payment creation uses the fixed price and restricts DOKU Checkout to DOKU Wallet', async () => {
   const originalFetch = global.fetch;
   const calls = [];
   global.fetch = async (input, options = {}) => {
@@ -64,39 +63,31 @@ test('payment creation uses the fixed price and returns LinkAja POST redirect da
     if (url.endsWith('/auth/v1/user')) {
       return { ok: true, json: async () => ({ id: 'user-id', email: 'user@example.com' }) };
     }
-    if (url === 'https://api-sandbox.doku.com/linkaja-emoney/v2/ServiceRequestPayment') {
+    if (url === 'https://api-sandbox.doku.com/checkout/v1/payment') {
       const request = JSON.parse(options.body);
       assert.equal(request.order.amount, 10000);
       assert.equal(request.order.invoice_number.startsWith('KUDO-'), true);
       assert.equal(request.order.line_items[0].price, 10000);
       assert.equal(request.customer.email, 'user@example.com');
+      assert.deepEqual(request.payment.payment_method_types, ['EMONEY_DOKU']);
       const headers = options.headers;
-      assert.equal(headers.Digest, undefined);
-      assert.match(headers['Request-Id'], /^[0-9a-f-]{36}$/i);
-      assert.match(headers['Request-Timestamp'], /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/);
+      assert.match(headers['Request-Id'], /^KUDO-[0-9a-f-]{36}$/i);
+      assert.match(headers['Request-Timestamp'], /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
       assert.equal(
         headers.Signature,
-        createDokuSignatureWithoutDigest(
+        createDokuSignature(
           headers['Client-Id'],
           headers['Request-Id'],
           headers['Request-Timestamp'],
-          '/linkaja-emoney/v2/ServiceRequestPayment',
+          '/checkout/v1/payment',
+          options.body,
           process.env.DOKU_SECRET_KEY
         )
       );
       return {
         ok: true,
-        text: async () => JSON.stringify({
-          order: {
-            invoice_number: request.order.invoice_number,
-            amount: '10000.00',
-          },
-          emoney_payment: {
-            redirect_method_http: 'POST',
-            redirect_url_http: 'https://api-uat.doku.com/linkaja/redirect',
-            redirect_parameter: [{ name: 'Message', value: 'encoded-message' }],
-            status: 'PENDING',
-          },
+        json: async () => ({
+          response: { payment: { url: 'https://checkout-sandbox.doku.com/redirect' } },
         }),
       };
     }
@@ -116,12 +107,10 @@ test('payment creation uses the fixed price and returns LinkAja POST redirect da
     assert.equal(response.statusCode, 201);
     const result = JSON.parse(response.body);
     assert.equal(result.diamonds, 1200);
-    assert.equal(result.redirectMethod, 'POST');
-    assert.equal(result.redirectUrl, 'https://api-uat.doku.com/linkaja/redirect');
-    assert.deepEqual(result.redirectParameters, [{ name: 'Message', value: 'encoded-message' }]);
+    assert.equal(result.checkoutUrl, 'https://checkout-sandbox.doku.com/redirect');
     assert.equal(
       calls.some(({ url }) => url.includes('/checkout/v1/payment')),
-      false
+      true
     );
     assert.equal(
       calls.some(({ url, options }) => url.endsWith('/rest/v1/payment_orders')
@@ -133,7 +122,7 @@ test('payment creation uses the fixed price and returns LinkAja POST redirect da
   }
 });
 
-test('DOKU LinkAja errors are surfaced as safe codes and the order is marked failed', async () => {
+test('DOKU Checkout errors are surfaced as safe codes and the order is marked failed', async () => {
   const originalFetch = global.fetch;
   let orderStatusUpdate;
   global.fetch = async (input, options = {}) => {
@@ -141,11 +130,11 @@ test('DOKU LinkAja errors are surfaced as safe codes and the order is marked fai
     if (url.endsWith('/auth/v1/user')) {
       return { ok: true, json: async () => ({ id: 'user-id', email: 'user@example.com' }) };
     }
-    if (url.endsWith('/linkaja-emoney/v2/ServiceRequestPayment')) {
+    if (url.endsWith('/checkout/v1/payment')) {
       return {
         ok: false,
         status: 500,
-        text: async () => JSON.stringify({
+        json: async () => ({
           message: ['Payment channel unavailable'],
           error: { code: 'CHANNEL_NOT_ENABLED' },
           secret: 'must-not-be-logged-or-returned',
@@ -175,7 +164,7 @@ test('DOKU LinkAja errors are surfaced as safe codes and the order is marked fai
 
     assert.equal(response.statusCode, 502);
     assert.deepEqual(JSON.parse(response.body), {
-      error: 'DOKU belum dapat membuat pembayaran LinkAja (kode: CHANNEL_NOT_ENABLED).',
+      error: 'DOKU belum dapat membuat pembayaran (kode: CHANNEL_NOT_ENABLED).',
       errorCode: 'CHANNEL_NOT_ENABLED',
     });
     assert.deepEqual(orderStatusUpdate, { status: 'failed' });
