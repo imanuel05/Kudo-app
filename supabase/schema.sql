@@ -36,12 +36,24 @@ create table if not exists public.payment_orders (
   diamonds integer not null check (diamonds in (1200, 2000)),
   amount_idr integer not null check (amount_idr in (10000, 15000)),
   status text not null default 'pending'
-    check (status in ('pending', 'paid', 'failed', 'expired', 'cancelled')),
+    check (status in ('pending', 'awaiting_verification', 'paid', 'failed', 'expired', 'cancelled')),
   checkout_url text,
+  proof_path text,
+  proof_uploaded_at timestamptz,
   doku_transaction_id text,
   created_at timestamptz not null default now(),
   paid_at timestamptz
 );
+
+alter table public.payment_orders
+  add column if not exists proof_path text,
+  add column if not exists proof_uploaded_at timestamptz;
+
+alter table public.payment_orders
+  drop constraint if exists payment_orders_status_check;
+alter table public.payment_orders
+  add constraint payment_orders_status_check
+  check (status in ('pending', 'awaiting_verification', 'paid', 'failed', 'expired', 'cancelled'));
 
 create index if not exists payment_orders_user_created_idx
   on public.payment_orders (user_id, created_at desc);
@@ -49,6 +61,33 @@ create index if not exists payment_orders_user_created_idx
 alter table public.payment_orders enable row level security;
 revoke all on table public.payment_orders from public, anon, authenticated;
 grant all on table public.payment_orders to service_role;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('payment-proofs', 'payment-proofs', false, 5242880, array['image/png', 'image/jpeg', 'image/webp'])
+on conflict (id) do update
+set public = false,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists payment_proofs_insert_own on storage.objects;
+create policy payment_proofs_insert_own
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'payment-proofs'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+drop policy if exists payment_proofs_select_own on storage.objects;
+create policy payment_proofs_select_own
+  on storage.objects
+  for select
+  to authenticated
+  using (
+    bucket_id = 'payment-proofs'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
 
 create or replace function public.fulfill_diamond_payment(
   p_invoice_number text,
@@ -83,7 +122,7 @@ begin
     return jsonb_build_object('status', 'paid', 'already_fulfilled', true);
   end if;
 
-  if payment_order.status <> 'pending' then
+  if payment_order.status not in ('pending', 'awaiting_verification') then
     raise exception 'Payment order is not pending';
   end if;
 
@@ -134,6 +173,42 @@ $$;
 revoke all on function public.fulfill_diamond_payment(text, integer, text)
   from public, anon, authenticated;
 grant execute on function public.fulfill_diamond_payment(text, integer, text)
+  to service_role;
+
+create or replace function public.verify_qris_payment(p_invoice_number text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  payment_order public.payment_orders%rowtype;
+begin
+  select *
+  into payment_order
+  from public.payment_orders
+  where invoice_number = p_invoice_number
+  for update;
+
+  if not found then
+    raise exception 'Payment order not found';
+  end if;
+
+  if payment_order.status <> 'awaiting_verification' or payment_order.proof_path is null then
+    raise exception 'QRIS payment proof is not awaiting verification';
+  end if;
+
+  return public.fulfill_diamond_payment(
+    payment_order.invoice_number,
+    payment_order.amount_idr,
+    'qris-manual-verification'
+  );
+end;
+$$;
+
+revoke all on function public.verify_qris_payment(text)
+  from public, anon, authenticated;
+grant execute on function public.verify_qris_payment(text)
   to service_role;
 
 create or replace function public.delete_current_user()

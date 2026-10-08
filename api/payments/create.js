@@ -29,7 +29,8 @@ module.exports = async function createDiamondPayment(request, response) {
     const pack = DIAMOND_PACKS[String(parsedBody.packId || '')];
     if (!pack) return sendJson(response, 400, { error: 'Paket berlian tidak valid.' });
 
-    const doku = getDokuConfig();
+    const useQris = parsedBody.paymentMethod === 'qris';
+    const doku = useQris ? null : getDokuConfig();
     const invoiceNumber = createInvoiceNumber();
     const order = {
       user_id: user.id,
@@ -43,6 +44,14 @@ module.exports = async function createDiamondPayment(request, response) {
       headers: { Prefer: 'return=minimal' },
       body: JSON.stringify(order),
     });
+
+    if (useQris) {
+      return sendJson(response, 201, {
+        invoiceNumber,
+        amount: pack.amountIdr,
+        diamonds: pack.diamonds,
+      });
+    }
 
     const customerName = String(
       user.user_metadata?.full_name

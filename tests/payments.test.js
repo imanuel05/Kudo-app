@@ -16,6 +16,7 @@ const {
 } = require('../lib/payments');
 const createPayment = require('../api/payments/create');
 const notifyPayment = require('../api/payments/notification');
+const submitPaymentProof = require('../api/payments/proof');
 
 function createResponse() {
   return {
@@ -141,6 +142,127 @@ test('payment creation uses the fixed price and restricts DOKU Checkout to DOKU 
     );
     assert.equal(responseFromStringBody.statusCode, 201);
     assert.equal(JSON.parse(responseFromStringBody.body).diamonds, 2000);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('QRIS order creation does not call DOKU Checkout', async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (input, options = {}) => {
+    const url = String(input);
+    calls.push({ url, options });
+    if (url.endsWith('/auth/v1/user')) {
+      return { ok: true, json: async () => ({ id: 'user-id', email: 'user@example.com' }) };
+    }
+    return { ok: true, status: 201, text: async () => '' };
+  };
+
+  try {
+    const response = createResponse();
+    await createPayment(
+      {
+        method: 'POST',
+        headers: { authorization: 'Bearer valid-token' },
+        body: { packId: '1200', paymentMethod: 'qris' },
+      },
+      response
+    );
+
+    assert.equal(response.statusCode, 201);
+    assert.deepEqual(Object.keys(JSON.parse(response.body)).sort(), [
+      'amount',
+      'diamonds',
+      'invoiceNumber',
+    ]);
+    assert.equal(calls.some(({ url }) => url.includes('/checkout/v1/payment')), false);
+    const orderRequest = calls.find(({ url }) => url.endsWith('/rest/v1/payment_orders'));
+    assert.equal(JSON.parse(orderRequest.options.body).status, 'pending');
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('QRIS proof registration verifies the uploaded image and leaves diamonds pending verification', async () => {
+  const originalFetch = global.fetch;
+  const userId = '00000000-0000-4000-8000-000000000001';
+  const invoiceNumber = 'KUDO-00000000-0000-4000-8000-000000000000';
+  const proofPath = `${userId}/${invoiceNumber}/proof-00000000-0000-4000-8000-000000000002.png`;
+  let orderUpdate;
+  global.fetch = async (input, options = {}) => {
+    const url = String(input);
+    if (url.endsWith('/auth/v1/user')) {
+      return { ok: true, json: async () => ({ id: userId }) };
+    }
+    if (url.includes('/storage/v1/object/info/payment-proofs/')) {
+      return {
+        ok: true,
+        json: async () => ({ metadata: { mimetype: 'image/png', size: 1024 } }),
+      };
+    }
+    if (url.includes('/rest/v1/payment_orders?')) {
+      orderUpdate = JSON.parse(options.body);
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify([{ status: orderUpdate.status }]),
+      };
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    const response = createResponse();
+    await submitPaymentProof(
+      {
+        method: 'POST',
+        headers: { authorization: 'Bearer valid-token' },
+        body: { invoiceNumber, proofPath },
+      },
+      response
+    );
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(JSON.parse(response.body), { status: 'awaiting_verification' });
+    assert.equal(orderUpdate.status, 'awaiting_verification');
+    assert.equal(orderUpdate.proof_path, proofPath);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('QRIS proof registration rejects an image that is not in private storage', async () => {
+  const originalFetch = global.fetch;
+  const userId = '00000000-0000-4000-8000-000000000001';
+  const invoiceNumber = 'KUDO-00000000-0000-4000-8000-000000000000';
+  const proofPath = `${userId}/${invoiceNumber}/proof-00000000-0000-4000-8000-000000000002.png`;
+  let orderWasUpdated = false;
+  global.fetch = async (input) => {
+    const url = String(input);
+    if (url.endsWith('/auth/v1/user')) {
+      return { ok: true, json: async () => ({ id: userId }) };
+    }
+    if (url.includes('/storage/v1/object/info/payment-proofs/')) {
+      return { ok: false, status: 404 };
+    }
+    if (url.includes('/rest/v1/payment_orders?')) orderWasUpdated = true;
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    const response = createResponse();
+    await submitPaymentProof(
+      {
+        method: 'POST',
+        headers: { authorization: 'Bearer valid-token' },
+        body: { invoiceNumber, proofPath },
+      },
+      response
+    );
+
+    assert.equal(response.statusCode, 400);
+    assert.equal(orderWasUpdated, false);
   } finally {
     global.fetch = originalFetch;
   }

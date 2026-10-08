@@ -754,6 +754,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-ticket-item > img { width: 84px; height: 76px; }
 .transaction-page { display: grid; gap: 12px; padding-bottom: 18px; }
 .transaction-status, .transaction-order, .transaction-payment { padding: 14px; border: 1px solid #e5e4ef; border-radius: 12px; background: #fff; }
+.transaction-order, .transaction-qris-payment { border-width: 2px; }
 .transaction-status { display: flex; align-items: center; gap: 9px; color: #b4771e; background: #fff9ec; }
 .transaction-status.is-paid { color: #24834b; background: #effaf3; }
 .transaction-status > span { font-size: 20px; }
@@ -761,8 +762,19 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .transaction-order h2, .transaction-payment h2 { margin: 0 0 10px; color: #333652; font-size: 13px; font-weight: 700; }
 .transaction-order > div, .transaction-recipient { min-height: 31px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #f0f0f4; color: #888; font-size: 10px; }
 .transaction-order > div strong, .transaction-recipient strong { color: #333652; font-size: 10px; text-align: right; }
-.transaction-qris-placeholder { min-height: 112px; display: grid; place-items: center; border: 1px dashed #c8c8d5; border-radius: 10px; color: #797dff; background: #fafaff; font-size: 18px; font-weight: 700; }
-.transaction-payment > p { margin: 9px 0 0; color: #999; font-size: 10px; line-height: 1.5; }
+.transaction-qris { width: min(100%, 320px); aspect-ratio: 1; margin: 2px auto; display: block; object-fit: contain; image-rendering: pixelated; }
+.transaction-payment > p { margin: 9px 0 0; color: #999; font-size: 10px; line-height: 1.5; text-align: center; }
+.transaction-proof-box { position: relative; }
+.transaction-proof-area { min-height: 78px; margin: 0; padding: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 2px dashed #8984ff; border-radius: 10px; color: #7775ff; background: #fff; font-size: 14px; font-weight: 700; text-align: center; cursor: pointer; }
+.transaction-proof-area.has-photo { min-height: 145px; padding: 12px; pointer-events: none; }
+.transaction-proof-area.has-photo strong { display: none; }
+.transaction-proof-preview { max-width: 100%; max-height: 125px; border-radius: 8px; object-fit: contain; }
+.transaction-proof-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.transaction-proof-box:focus-within .transaction-proof-area { outline: 2px solid #7775ff; outline-offset: 2px; }
+.transaction-proof-status { margin-top: 5px; display: block; color: #aaa; font-size: 9px; text-align: center; }
+.transaction-proof-status.has-error { color: #d92d38; }
+.transaction-proof-remove { position: absolute; top: 8px; right: 8px; z-index: 1; width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #fff; background: #7775ff; font-size: 21px; line-height: 1; box-shadow: 0 2px 5px #0002; }
+.transaction-proof-remove[hidden] { display: none; }
 .transaction-cancel { width: 100%; min-height: 44px; }
 .transaction-pay { width: 100%; min-height: 48px; }
 .account-data-form { display: grid; gap: 7px; }
