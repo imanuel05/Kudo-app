@@ -30,6 +30,58 @@ create policy user_data_update_own
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+create table if not exists public.admin_users (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.admin_users enable row level security;
+revoke all on table public.admin_users from public, anon, authenticated;
+grant all on table public.admin_users to service_role;
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.admin_users
+    where user_id = (select auth.uid())
+  );
+$$;
+
+revoke all on function public.is_admin() from public, anon;
+grant execute on function public.is_admin() to authenticated;
+
+create table if not exists public.catalog_videos (
+  id uuid primary key default gen_random_uuid(),
+  category text not null check (category in ('anime', 'kdrama')),
+  show_title text not null check (char_length(show_title) between 1 and 100),
+  episode_title text not null check (char_length(episode_title) between 1 and 120),
+  episode_number integer not null check (episode_number between 1 and 9999),
+  video_path text not null unique,
+  published boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists catalog_videos_category_created_idx
+  on public.catalog_videos (category, created_at desc);
+
+alter table public.catalog_videos enable row level security;
+grant select on table public.catalog_videos to anon, authenticated;
+revoke insert, update, delete on table public.catalog_videos from public, anon, authenticated;
+grant all on table public.catalog_videos to service_role;
+
+drop policy if exists catalog_videos_public_read on public.catalog_videos;
+create policy catalog_videos_public_read
+  on public.catalog_videos
+  for select
+  to anon, authenticated
+  using (published);
+
 create table if not exists public.payment_orders (
   invoice_number text primary key,
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -210,6 +262,34 @@ revoke all on function public.verify_qris_payment(text)
   from public, anon, authenticated;
 grant execute on function public.verify_qris_payment(text)
   to service_role;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('catalog-videos', 'catalog-videos', true, 104857600, array['video/mp4', 'video/webm'])
+on conflict (id) do update
+set public = true,
+    file_size_limit = excluded.file_size_limit,
+    allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists catalog_videos_admin_upload on storage.objects;
+create policy catalog_videos_admin_upload
+  on storage.objects
+  for insert
+  to authenticated
+  with check (
+    bucket_id = 'catalog-videos'
+    and public.is_admin()
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+drop policy if exists catalog_videos_admin_delete on storage.objects;
+create policy catalog_videos_admin_delete
+  on storage.objects
+  for delete
+  to authenticated
+  using (
+    bucket_id = 'catalog-videos'
+    and public.is_admin()
+  );
 
 create or replace function public.delete_current_user()
 returns void

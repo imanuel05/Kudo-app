@@ -764,17 +764,58 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .transaction-order > div strong, .transaction-recipient strong { color: #333652; font-size: 10px; text-align: right; }
 .transaction-qris { width: min(100%, 320px); aspect-ratio: 1; margin: 2px auto; display: block; object-fit: contain; image-rendering: pixelated; }
 .transaction-payment > p { margin: 9px 0 0; color: #999; font-size: 10px; line-height: 1.5; text-align: center; }
+.transaction-processing { margin: -5px 0 0; color: #7775ff; font-size: 11px; font-weight: 700; text-align: center; }
 .transaction-proof-box { position: relative; }
+.transaction-proof-payment { padding: 0; border: 0; background: transparent; }
 .transaction-proof-area { min-height: 78px; margin: 0; padding: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 2px dashed #8984ff; border-radius: 10px; color: #7775ff; background: #fff; font-size: 14px; font-weight: 700; text-align: center; cursor: pointer; }
 .transaction-proof-area.has-photo { min-height: 145px; padding: 12px; pointer-events: none; }
 .transaction-proof-area.has-photo strong { display: none; }
 .transaction-proof-preview { max-width: 100%; max-height: 125px; border-radius: 8px; object-fit: contain; }
 .transaction-proof-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.transaction-proof-box:focus-within .transaction-proof-area { outline: 2px solid #7775ff; outline-offset: 2px; }
+.transaction-proof-area:focus-visible { outline: none; }
 .transaction-proof-status { margin-top: 5px; display: block; color: #aaa; font-size: 9px; text-align: center; }
 .transaction-proof-status.has-error { color: #d92d38; }
 .transaction-proof-remove { position: absolute; top: 8px; right: 8px; z-index: 1; width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #fff; background: #7775ff; font-size: 21px; line-height: 1; box-shadow: 0 2px 5px #0002; }
 .transaction-proof-remove[hidden] { display: none; }
+.purchase-history-page { display: grid; gap: 10px; padding-bottom: 16px; }
+.purchase-history-list { display: grid; gap: 9px; }
+.purchase-history-item { padding: 13px; display: grid; grid-template-columns: 1fr auto; gap: 7px; border: 1px solid #e5e4ef; border-radius: 11px; background: #fff; }
+.purchase-history-item > div { display: grid; align-content: start; gap: 4px; }
+.purchase-history-item > div:nth-child(2) { justify-items: end; }
+.purchase-history-item strong { color: #333652; font-size: 12px; }
+.purchase-history-item small, .purchase-invoice { color: #999; font-size: 9px; }
+.purchase-status { color: #888; font-size: 10px; }
+.purchase-status-paid { color: #24834b; }
+.purchase-status-awaiting_verification { color: #b4771e; }
+.purchase-history-message, .purchase-history-error { margin: 0; color: #888; font-size: 11px; text-align: center; }
+.purchase-history-error { color: #d92d38; }
+.purchase-history-error button { padding: 0; border: 0; color: #7775ff; background: transparent; font: inherit; font-weight: 700; }
+.admin-panel { display: grid; gap: 14px; padding-bottom: 18px; }
+.admin-panel-section { padding: 14px; display: grid; gap: 10px; border: 1px solid #e5e4ef; border-radius: 12px; background: #fff; }
+.admin-panel-section h2 { margin: 0; color: #333652; font-size: 14px; }
+.admin-panel-section > p { margin: 0; color: #888; font-size: 10px; line-height: 1.5; }
+.admin-video-form { display: grid; gap: 7px; }
+.admin-video-form label { margin-top: 4px; color: #34364e; font-size: 11px; font-weight: 700; }
+.admin-video-form input:not([type=file]), .admin-video-form select { width: 100%; min-height: 39px; padding: 0 10px; border: 1px solid #d9d8e5; border-radius: 8px; color: #45475e; background: #fff; font: inherit; font-size: 11px; }
+.admin-video-form input[type=file] { width: 100%; color: #666; font-size: 10px; }
+.admin-video-form small { color: #888; font-size: 9px; line-height: 1.5; }
+.admin-order-card { display: grid; gap: 9px; padding: 10px; border: 1px solid #eeedf4; border-radius: 9px; }
+.admin-order-summary { display: grid; gap: 4px; }
+.admin-order-summary strong { color: #333652; font-size: 11px; }
+.admin-order-summary small, .admin-video-row span, .admin-video-row small { overflow-wrap: anywhere; color: #888; font-size: 9px; }
+.admin-proof-link { width: 100%; max-height: 260px; display: grid; place-items: center; overflow: hidden; border-radius: 7px; background: #f7f7fa; }
+.admin-proof-link img { max-width: 100%; max-height: 260px; object-fit: contain; }
+.admin-order-card > p, .admin-empty, .admin-panel-message, .admin-panel-error { margin: 0; font-size: 10px; line-height: 1.5; }
+.admin-order-card > .button { min-height: 42px; font-size: 11px; }
+.admin-empty { color: #999; text-align: center; }
+.admin-panel-message { color: #24834b; }
+.admin-panel-error { color: #d92d38; }
+.admin-video-row { display: grid; gap: 4px; padding: 9px 0; border-top: 1px solid #eeedf4; }
+.admin-video-row strong { color: #333652; font-size: 11px; }
+.media-stream-page video { width: 100%; max-height: min(64vh, 520px); display: block; border-radius: 12px; background: #111; }
+.media-stream-page h2 { margin: 14px 0 5px; color: #333652; font-size: 16px; }
+.media-stream-page p { margin: 0; color: #888; font-size: 11px; }
+.catalog-latest-episode { margin-top: 4px; display: block; color: #888; font-size: 9px; }
 .transaction-cancel { width: 100%; min-height: 44px; }
 .transaction-pay { width: 100%; min-height: 48px; }
 .account-data-form { display: grid; gap: 7px; }

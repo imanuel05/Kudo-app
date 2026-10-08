@@ -17,6 +17,7 @@ const {
 const createPayment = require('../api/payments/create');
 const notifyPayment = require('../api/payments/notification');
 const submitPaymentProof = require('../api/payments/proof');
+const paymentHistory = require('../api/payments/history');
 
 function createResponse() {
   return {
@@ -31,6 +32,49 @@ function createResponse() {
     },
   };
 }
+
+test('payment history is authenticated and returns only the current user orders', async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (input, options = {}) => {
+    const url = String(input);
+    calls.push({ url, options });
+    if (url.endsWith('/auth/v1/user')) {
+      return { ok: true, json: async () => ({ id: 'current-user' }) };
+    }
+    return {
+      ok: true,
+      text: async () => JSON.stringify([{
+        invoice_number: 'KUDO-00000000-0000-4000-8000-000000000000',
+        diamonds: 1200,
+        amount_idr: 10000,
+        status: 'awaiting_verification',
+        created_at: '2026-10-08T00:00:00.000Z',
+      }]),
+    };
+  };
+
+  try {
+    const response = createResponse();
+    await paymentHistory(
+      { method: 'GET', headers: { authorization: 'Bearer access-token' } },
+      response
+    );
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(JSON.parse(response.body).orders[0], {
+      invoiceNumber: 'KUDO-00000000-0000-4000-8000-000000000000',
+      diamonds: 1200,
+      amount: 10000,
+      status: 'awaiting_verification',
+      createdAt: '2026-10-08T00:00:00.000Z',
+    });
+    assert.match(calls[1].url, /user_id=eq\.current-user/);
+    assert.match(calls[1].url, /order=created_at\.desc/);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
 
 test('DOKU notification signatures reject tampered bodies', () => {
   const body = Buffer.from(JSON.stringify({
