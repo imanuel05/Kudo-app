@@ -52,6 +52,17 @@ test('DOKU notification signatures reject tampered bodies', () => {
 
   assert.equal(verifyDokuNotification({ headers }, body), true);
   assert.equal(verifyDokuNotification({ headers }, Buffer.from(`${body} `)), false);
+  assert.equal(
+    verifyDokuNotification({
+      headers: {
+        'Client-Id': headers['client-id'],
+        'Request-Id': headers['request-id'],
+        'Request-Timestamp': headers['request-timestamp'],
+        Signature: headers.signature,
+      },
+    }, body),
+    true
+  );
 });
 
 test('payment creation uses the fixed price and restricts DOKU Checkout to DOKU Wallet', async () => {
@@ -65,9 +76,10 @@ test('payment creation uses the fixed price and restricts DOKU Checkout to DOKU 
     }
     if (url === 'https://api-sandbox.doku.com/checkout/v1/payment') {
       const request = JSON.parse(options.body);
-      assert.equal(request.order.amount, 10000);
+      const expectedAmount = request.order.amount === 15000 ? 15000 : 10000;
+      assert.equal(request.order.amount, expectedAmount);
       assert.equal(request.order.invoice_number.startsWith('KUDO-'), true);
-      assert.equal(request.order.line_items[0].price, 10000);
+      assert.equal(request.order.line_items[0].price, expectedAmount);
       assert.equal(request.customer.email, 'user@example.com');
       assert.deepEqual(request.payment.payment_method_types, ['EMONEY_DOKU']);
       const headers = options.headers;
@@ -117,6 +129,18 @@ test('payment creation uses the fixed price and restricts DOKU Checkout to DOKU 
         && options.method === 'POST'),
       true
     );
+
+    const responseFromStringBody = createResponse();
+    await createPayment(
+      {
+        method: 'POST',
+        headers: { Authorization: 'Bearer valid-token' },
+        body: JSON.stringify({ packId: '2000' }),
+      },
+      responseFromStringBody
+    );
+    assert.equal(responseFromStringBody.statusCode, 201);
+    assert.equal(JSON.parse(responseFromStringBody.body).diamonds, 2000);
   } finally {
     global.fetch = originalFetch;
   }

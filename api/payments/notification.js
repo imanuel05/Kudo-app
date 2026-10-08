@@ -1,4 +1,5 @@
 const {
+  getHeaderValue,
   readRawBody,
   sendJson,
   supabaseRequest,
@@ -27,6 +28,7 @@ module.exports = async function dokuPaymentNotification(request, response) {
     const invoiceNumber = notification?.order?.invoice_number;
     const amount = Number(notification?.order?.amount);
     const status = String(notification?.transaction?.status || '').toUpperCase();
+    const transactionIdHeader = getHeaderValue(request.headers, 'request-id');
     if (
       typeof invoiceNumber !== 'string'
       || !/^KUDO-[0-9a-f-]{36}$/i.test(invoiceNumber)
@@ -40,7 +42,7 @@ module.exports = async function dokuPaymentNotification(request, response) {
       const transactionId = String(
         notification?.transaction?.original_request_id
         || notification?.transaction?.request_id
-        || request.headers['request-id']
+        || transactionIdHeader
         || ''
       ).slice(0, 128);
       await supabaseRequest('/rest/v1/rpc/fulfill_diamond_payment', {

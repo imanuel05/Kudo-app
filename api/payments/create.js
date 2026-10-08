@@ -4,6 +4,7 @@ const {
   createDokuSignature,
   createInvoiceNumber,
   getDokuConfig,
+  parseJsonBody,
   sendJson,
   supabaseRequest,
 } = require('../../lib/payments');
@@ -15,12 +16,17 @@ module.exports = async function createDiamondPayment(request, response) {
   }
 
   try {
+    const parsedBody = parseJsonBody(request.body);
+    if (!parsedBody || typeof parsedBody !== 'object' || Array.isArray(parsedBody)) {
+      return sendJson(response, 400, { error: 'Permintaan pembelian tidak valid.' });
+    }
+
     const user = await authenticateRequest(request);
     if (!user?.id || !user.email) {
       return sendJson(response, 401, { error: 'Silakan masuk sebelum membeli berlian.' });
     }
 
-    const pack = DIAMOND_PACKS[String(request.body?.packId || '')];
+    const pack = DIAMOND_PACKS[String(parsedBody.packId || '')];
     if (!pack) return sendJson(response, 400, { error: 'Paket berlian tidak valid.' });
 
     const doku = getDokuConfig();
