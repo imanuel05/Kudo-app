@@ -253,7 +253,7 @@ test('QRIS order creation does not call DOKU Checkout', async () => {
   }
 });
 
-test('QRIS proof registration verifies the uploaded image and leaves diamonds pending verification', async () => {
+test('QRIS proof registration accepts files without a minimum size and leaves diamonds pending verification', async () => {
   const originalFetch = global.fetch;
   const userId = '00000000-0000-4000-8000-000000000001';
   const invoiceNumber = 'KUDO-00000000-0000-4000-8000-000000000000';
@@ -267,7 +267,7 @@ test('QRIS proof registration verifies the uploaded image and leaves diamonds pe
     if (url.includes('/storage/v1/object/info/payment-proofs/')) {
       return {
         ok: true,
-        json: async () => ({ metadata: { mimetype: 'image/png', size: 1024 } }),
+        json: async () => ({ metadata: { mimetype: 'image/png', size: 0 } }),
       };
     }
     if (url.includes('/rest/v1/payment_orders?')) {
