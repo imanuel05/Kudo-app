@@ -944,6 +944,9 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .profile-legal button { padding: 4px 0; border: 0; color: #797dff; background: transparent; font-size: 12px; font-weight: 700; }
 .performance-page { padding: 8px 0 28px; }
 .performance-page > h2 { margin: 0 0 14px; color: #333652; font-size: 14px; font-weight: 700; }
+.performance-empty-state { padding-top: 10px; }
+.performance-empty-illustration { height: 205px; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; }
+.performance-empty-illustration img { width: min(100%, 280px); height: 100%; display: block; object-fit: contain; }
 .performance-chart-card { padding: 12px 10px 13px; border: 2px solid #ddd; border-radius: 13px; background: #fff; }
 .performance-chart { width: 100%; display: block; overflow: visible; }
 .performance-chart text { font-family: inherit; }
