@@ -19,7 +19,7 @@ module.exports = async function adminVideos(request, response) {
 
     if (request.method === 'GET') {
       const query = new URLSearchParams({
-        select: 'id,category,show_title,episode_title,episode_number,video_path,created_at',
+        select: 'id,category,show_title,episode_title,episode_number,video_path,video_url,created_at',
         order: 'created_at.desc',
         limit: '100',
       });
@@ -55,7 +55,7 @@ module.exports = async function adminVideos(request, response) {
       return sendJson(response, 400, { error: 'Lokasi file video tidak valid.' });
     }
     const encodedPath = videoPath.split('/').map(encodeURIComponent).join('/');
-    const objectInfo = await supabaseRequest(`/storage/v1/object/info/catalog-videos/${encodedPath}`);
+    const objectInfo = await supabaseRequest(`/storage/v1/object/info/catalog-video/${encodedPath}`);
     const metadata = objectInfo?.metadata || {};
     if (
       !['video/mp4', 'video/webm'].includes(metadata.mimetype)
@@ -74,6 +74,7 @@ module.exports = async function adminVideos(request, response) {
         episode_title: episodeTitle,
         episode_number: episodeNumber,
         video_path: videoPath,
+        video_url: `${process.env.SUPABASE_URL.replace(/\/+$/, '')}/storage/v1/object/public/catalog-video/${encodedPath}`,
         published: true,
       }),
     });

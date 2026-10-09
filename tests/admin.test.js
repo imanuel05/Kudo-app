@@ -137,7 +137,7 @@ test('admin video insertion validates the uploaded storage object before publish
     if (url.includes('/rest/v1/admin_users')) {
       return jsonResponse([{ user_id: 'admin-user' }]);
     }
-    if (url.includes('/storage/v1/object/info/catalog-videos/')) {
+    if (url.includes('/storage/v1/object/info/catalog-video/')) {
       return jsonResponse({ metadata: { mimetype: 'video/mp4', size: 1024 } });
     }
     if (url.endsWith('/rest/v1/catalog_videos')) {
@@ -163,6 +163,10 @@ test('admin video insertion validates the uploaded storage object before publish
     assert.equal(JSON.parse(response.body).video.published, true);
     const insert = calls.find(({ url }) => url.endsWith('/rest/v1/catalog_videos'));
     assert.equal(JSON.parse(insert.options.body).show_title, 'Licensed Series');
+    assert.equal(
+      JSON.parse(insert.options.body).video_url,
+      'https://supabase.example/storage/v1/object/public/catalog-video/admin-user/00000000-0000-4000-8000-000000000000.mp4',
+    );
   } finally {
     global.fetch = originalFetch;
   }
