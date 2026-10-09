@@ -698,12 +698,10 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .modal-overlay.avatar-options-overlay { position: fixed; inset: 0; padding: 0; display: flex; align-items: flex-end; justify-content: center; background: rgb(0 0 0 / 18%); }
 .modal-overlay.avatar-options-overlay .modal-position { width: min(100%, 412px); max-height: none; overflow: visible; }
 .anime-stream-page { width: min(100vw, 412px); min-height: 100dvh; margin: 0 auto; padding: 0 20px 28px; overflow-y: auto; background: #fff; }
-.anime-video-shell { position: relative; margin: 0 -20px 18px; background: #10121a; }
+.anime-video-shell { position: relative; margin: 0 -20px 25px; background: #10121a; }
+.anime-video-stage { position: relative; }
 .anime-video-shell video { width: 100%; aspect-ratio: 16 / 9; display: block; background: #10121a; object-fit: contain; }
 .anime-video-shell iframe { width: 100%; aspect-ratio: 16 / 9; display: block; border: 0; background: #10121a; }
-.anime-video-shell > .anime-back-control { width: 42px; height: 42px; padding: 2px; position: absolute; z-index: 1; top: 8px; left: 8px; display: grid; place-items: center; border: 0; color: #fff; background: transparent; filter: drop-shadow(0 1px 3px #000a); }
-.anime-video-shell > .anime-back-control svg { width: 24px; height: 24px; }
-.anime-video-shell > .anime-back-control svg path { fill: none; stroke: currentColor; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
 .anime-pip { width: min(320px, calc(100vw - 24px)); aspect-ratio: 16 / 9; position: fixed; z-index: 50; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(68px + 14px + env(safe-area-inset-bottom, 0px)); overflow: hidden; border-radius: 12px; background: #10121a; box-shadow: 0 4px 18px #0005; cursor: pointer; }
 .anime-pip video { width: 100%; height: 100%; position: relative; z-index: 0; display: block; background: #10121a; object-fit: contain; pointer-events: none; }
 .anime-pip iframe { width: 100%; height: 100%; position: relative; z-index: 0; display: block; border: 0; }
@@ -721,8 +719,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-overlay-controls button.anime-back-control svg path { fill: none; stroke: currentColor; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
 .anime-overlay-controls button.anime-play-control { width: 48px; height: 48px; }
 .anime-overlay-controls button.anime-play-control svg { width: 32px; height: 32px; }
-.anime-video-seek { width: 100%; height: 3px; margin: 0; position: absolute; z-index: 3; right: 0; bottom: 0; left: 0; appearance: none; background: transparent; transition: opacity .2s ease; }
-.anime-video-shell.anime-controls-hidden .anime-overlay-controls, .anime-video-shell.anime-controls-hidden .anime-video-seek { opacity: 0; pointer-events: none; }
+.anime-video-seek { width: 100%; height: 16px; margin: 0; padding: 0; position: absolute; z-index: 3; right: 0; bottom: -7px; left: 0; appearance: none; background: transparent; cursor: pointer; }
+.anime-video-shell.anime-controls-hidden .anime-overlay-controls { opacity: 0; pointer-events: none; }
 .anime-video-seek::-webkit-slider-runnable-track { height: 3px; background: linear-gradient(to right, #9a8cff var(--seek-progress, 0%), #fff var(--seek-progress, 0%)); }
 .anime-video-seek::-webkit-slider-thumb { width: 8px; height: 8px; margin-top: -2.5px; appearance: none; border: 0; border-radius: 50%; background: #9a8cff; }
 .anime-video-seek::-moz-range-track { height: 3px; background: #fff; }
@@ -730,7 +728,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-video-seek::-moz-range-thumb { width: 8px; height: 8px; border: 0; border-radius: 50%; background: #9a8cff; }
 .anime-stream-title { margin: 0 0 12px; color: #333652; font-size: 14px; font-weight: 700; }
 .anime-stream-genres { margin-bottom: 18px; display: flex; flex-wrap: wrap; gap: 7px; }
-.anime-stream-genres span { padding: 3px 6px; border: 0; border-radius: 8px; color: #7775c9; background: #f1f0ff; font-family: inherit; font-size: 10px; font-weight: 400; line-height: 1.2; text-align: center; }
+.anime-stream-genres span { min-width: 84px; padding: 3px 8px; border: 1px solid #9992ff; border-radius: 8px; color: #7775c9; background: #fff; font-family: inherit; font-size: 10px; font-weight: 400; line-height: 1.2; text-align: center; }
 .anime-stream-tabs { margin-bottom: 12px; display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid #eee; }
 .anime-stream-tabs button { min-height: 38px; padding: 5px; border: 0; border-bottom: 3px solid transparent; color: #bfbfbf; background: transparent; font-family: inherit; font-size: 12px; font-weight: 700; }
 .anime-stream-tabs button.is-active { border-bottom-color: #9992ff; color: #333652; }
@@ -740,14 +738,15 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-episode-card img { width: 96px; height: 58px; flex: 0 0 auto; border-radius: 6px; object-fit: cover; }
 .anime-episode-card span { display: grid; gap: 10px; }
 .anime-episode-card strong { color: #333652; font-size: 12px; font-weight: 700; }
-.anime-episode-card small { color: #bfbfbf; font-size: 10px; font-weight: 400; }
+.anime-episode-card small { color: #999; font-size: 10px; font-weight: 400; }
 .anime-video-source { margin-top: 10px; display: grid; gap: 6px; color: #333652; font-size: 11px; font-weight: 700; }
 .anime-video-source select { width: 100%; min-height: 38px; padding: 0 10px; border: 1px solid #dedee4; border-radius: 8px; color: #46485a; background: #fff; font: inherit; }
 .anime-video-source small { color: #999; font-size: 10px; font-weight: 400; }
 .anime-similar-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.anime-similar-card { min-width: 0; padding: 0; border: 0; background: transparent; text-align: left; }
+.anime-similar-item { min-width: 0; }
+.anime-similar-card { width: 100%; padding: 0; overflow: hidden; display: block; border: 0; border-radius: 8px; background: transparent; text-align: left; }
 .anime-similar-card img { width: 100%; aspect-ratio: .68; display: block; border-radius: 8px; object-fit: cover; }
-.anime-similar-card strong { margin-top: 7px; display: block; color: #333652; font-size: 12px; font-weight: 700; }
+.anime-similar-item > strong { margin-top: 7px; display: block; color: #333652; font-size: 12px; font-weight: 700; line-height: 1.4; }
 .anime-video-unavailable { min-height: 190px; display: grid; justify-items: center; align-content: center; background: #12141b; }
 .anime-video-unavailable img { width: 90px; height: 110px; object-fit: contain; }
 .anime-video-unavailable p { margin: 8px; color: #fff; font-size: 11px; }
