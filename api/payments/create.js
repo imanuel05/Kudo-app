@@ -15,12 +15,14 @@ module.exports = async function createDiamondPayment(request, response) {
     return sendJson(response, 405, { error: 'Method not allowed.' });
   }
 
+  let stage = 'parse_request';
   try {
     const parsedBody = parseJsonBody(request.body);
     if (!parsedBody || typeof parsedBody !== 'object' || Array.isArray(parsedBody)) {
       return sendJson(response, 400, { error: 'Permintaan pembelian tidak valid.' });
     }
 
+    stage = 'authenticate_user';
     const user = await authenticateRequest(request);
     if (!user?.id || !user.email) {
       return sendJson(response, 401, { error: 'Silakan masuk sebelum membeli berlian.' });
@@ -30,6 +32,7 @@ module.exports = async function createDiamondPayment(request, response) {
     if (!pack) return sendJson(response, 400, { error: 'Paket berlian tidak valid.' });
 
     const useQris = parsedBody.paymentMethod === 'qris';
+    stage = useQris ? 'prepare_qris_order' : 'configure_doku';
     const doku = useQris ? null : getDokuConfig();
     const invoiceNumber = createInvoiceNumber();
     const order = {
@@ -39,6 +42,7 @@ module.exports = async function createDiamondPayment(request, response) {
       amount_idr: pack.amountIdr,
       status: 'pending',
     };
+    stage = 'save_payment_order';
     await supabaseRequest('/rest/v1/payment_orders', {
       method: 'POST',
       headers: { Prefer: 'return=minimal' },
@@ -53,6 +57,7 @@ module.exports = async function createDiamondPayment(request, response) {
       });
     }
 
+    stage = 'create_doku_checkout';
     const customerName = String(
       user.user_metadata?.full_name
       || user.user_metadata?.name
@@ -117,6 +122,7 @@ module.exports = async function createDiamondPayment(request, response) {
         dokuResponse.status,
         errorCode
       );
+      stage = 'mark_failed_doku_order';
       await supabaseRequest(
         `/rest/v1/payment_orders?invoice_number=eq.${encodeURIComponent(invoiceNumber)}`,
         { method: 'PATCH', body: JSON.stringify({ status: 'failed' }) }
@@ -135,6 +141,7 @@ module.exports = async function createDiamondPayment(request, response) {
       throw new Error('DOKU returned an invalid checkout URL.');
     }
 
+    stage = 'save_doku_checkout_url';
     await supabaseRequest(
       `/rest/v1/payment_orders?invoice_number=eq.${encodeURIComponent(invoiceNumber)}`,
       {
@@ -150,7 +157,29 @@ module.exports = async function createDiamondPayment(request, response) {
       checkoutUrl: paymentUrl.toString(),
     });
   } catch (error) {
-    console.error('Could not create DOKU payment:', error);
+    const safeCode = (value) => (
+      typeof value === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(value)
+        ? value
+        : undefined
+    );
+    const safeErrorNames = new Set([
+      'AggregateError',
+      'Error',
+      'RangeError',
+      'ReferenceError',
+      'SyntaxError',
+      'TypeError',
+      'URIError',
+    ]);
+    const diagnostic = {
+      stage,
+      errorName: safeErrorNames.has(error?.name) ? error.name : 'Error',
+      errorCode: safeCode(error?.code) || 'UNEXPECTED_ERROR',
+      ...(Number.isInteger(error?.status) ? { httpStatus: error.status } : {}),
+      ...(safeCode(error?.databaseCode) ? { databaseCode: error.databaseCode } : {}),
+      ...(safeCode(error?.cause?.code) ? { networkCode: error.cause.code } : {}),
+    };
+    console.error('Could not create diamond payment:', diagnostic);
     return sendJson(response, 500, { error: 'Pembayaran belum dapat dibuat. Silakan coba lagi.' });
   }
 };

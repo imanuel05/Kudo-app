@@ -15,8 +15,18 @@ send them in chat.
    Supabase SQL editor. It creates the private `payment_orders` table, the
    private `payment-proofs` Storage bucket with per-user upload policies, and
    the service-role-only payment verification and fulfillment functions. It
-   also creates the admin allowlist, public video catalog, and video Storage
-   bucket.
+   also creates the admin allowlist and public video catalog, and configures
+   the existing `catalog-video` Storage bucket (it does not create a bucket).
+   The schema adds `catalog_videos.video_url`, migrates existing
+   catalog paths to public URLs in the existing `catalog-video` bucket, and
+   registers Frieren Episode 1 at `catalog-video/frieren/frieren-episode-1.mp4`.
+   Re-run this updated SQL
+   before deploying the matching app code. Upload the licensed MP4 manually to
+   that exact object path in the existing `catalog-video` bucket; files in
+   another bucket are not moved by this SQL or by the application.
+   For an existing database, run
+   [`supabase/migrations/20261010010000_allow_10_idr_diamond_pack.sql`](./supabase/migrations/20261010010000_allow_10_idr_diamond_pack.sql)
+   in the SQL editor to allow the Rp 10 diamond pack before creating a new order.
 2. In Vercel project settings, configure these environment variables for QRIS:
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`

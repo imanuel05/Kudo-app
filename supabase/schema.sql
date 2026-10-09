@@ -67,6 +67,93 @@ create table if not exists public.catalog_videos (
   created_at timestamptz not null default now()
 );
 
+alter table public.catalog_videos
+  add column if not exists video_url text;
+alter table public.catalog_videos
+  alter column video_path drop not null;
+
+create unique index if not exists catalog_videos_video_url_unique
+  on public.catalog_videos (video_url)
+  where video_url is not null;
+
+update public.catalog_videos
+set video_url = 'https://uipmsrfepoghoshqlfzy.supabase.co/storage/v1/object/public/catalog-video/'
+  || replace(
+    coalesce(
+      video_path,
+      substring(video_url from '/storage/v1/object/public/[^/]+/(.*)$')
+    ),
+    ' ',
+    '%20'
+  )
+where video_path is not null
+  or video_url is null
+  or video_url not like
+    'https://uipmsrfepoghoshqlfzy.supabase.co/storage/v1/object/public/catalog-video/%';
+
+do $$
+declare
+  frieren_video_id uuid;
+  frieren_video_path constant text := 'frieren/frieren-episode-1.mp4';
+  frieren_video_url constant text :=
+    'https://uipmsrfepoghoshqlfzy.supabase.co/storage/v1/object/public/catalog-video/frieren/frieren-episode-1.mp4';
+begin
+  select id
+  into frieren_video_id
+  from public.catalog_videos
+  where video_url = frieren_video_url
+  limit 1;
+
+  if frieren_video_id is null then
+    select id
+    into frieren_video_id
+    from public.catalog_videos
+    where category = 'anime'
+      and lower(show_title) = lower('Frieren: Beyond Journey''s End')
+      and episode_number = 1
+    order by created_at desc
+    limit 1;
+  end if;
+
+  if frieren_video_id is null then
+    insert into public.catalog_videos (
+      category,
+      show_title,
+      episode_title,
+      episode_number,
+      video_path,
+      video_url,
+      published
+    )
+    values (
+      'anime',
+      'Frieren: Beyond Journey''s End',
+      'Episode 1',
+      1,
+      frieren_video_path,
+      frieren_video_url,
+      true
+    );
+  else
+    update public.catalog_videos
+    set published = false
+    where category = 'anime'
+      and lower(show_title) = lower('Frieren: Beyond Journey''s End')
+      and episode_number = 1
+      and id <> frieren_video_id;
+
+    update public.catalog_videos
+    set category = 'anime',
+        show_title = 'Frieren: Beyond Journey''s End',
+        episode_title = 'Episode 1',
+        episode_number = 1,
+        video_path = frieren_video_path,
+        video_url = frieren_video_url,
+        published = true
+    where id = frieren_video_id;
+  end if;
+end $$;
+
 create index if not exists catalog_videos_category_created_idx
   on public.catalog_videos (category, created_at desc);
 
@@ -86,7 +173,7 @@ create table if not exists public.payment_orders (
   invoice_number text primary key,
   user_id uuid not null references auth.users (id) on delete cascade,
   diamonds integer not null check (diamonds in (1200, 2000)),
-  amount_idr integer not null check (amount_idr in (10000, 15000)),
+  amount_idr integer not null check (amount_idr in (10, 500, 10000, 15000)),
   status text not null default 'pending'
     check (status in ('pending', 'awaiting_verification', 'paid', 'failed', 'expired', 'cancelled')),
   checkout_url text,
@@ -269,12 +356,18 @@ revoke all on function public.verify_qris_payment(text)
 grant execute on function public.verify_qris_payment(text)
   to service_role;
 
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('catalog-videos', 'catalog-videos', true, 104857600, array['video/mp4', 'video/webm'])
-on conflict (id) do update
-set public = true,
-    file_size_limit = excluded.file_size_limit,
-    allowed_mime_types = excluded.allowed_mime_types;
+do $$
+begin
+  update storage.buckets
+  set public = true,
+      file_size_limit = 104857600,
+      allowed_mime_types = array['video/mp4', 'video/webm']
+  where id = 'catalog-video';
+
+  if not found then
+    raise exception 'Expected existing Storage bucket catalog-video was not found';
+  end if;
+end $$;
 
 drop policy if exists catalog_videos_admin_upload on storage.objects;
 create policy catalog_videos_admin_upload
@@ -282,9 +375,8 @@ create policy catalog_videos_admin_upload
   for insert
   to authenticated
   with check (
-    bucket_id = 'catalog-videos'
+    bucket_id = 'catalog-video'
     and public.is_admin()
-    and (storage.foldername(name))[1] = (select auth.uid())::text
   );
 
 drop policy if exists catalog_videos_admin_delete on storage.objects;
@@ -293,7 +385,7 @@ create policy catalog_videos_admin_delete
   for delete
   to authenticated
   using (
-    bucket_id = 'catalog-videos'
+    bucket_id = 'catalog-video'
     and public.is_admin()
   );
 

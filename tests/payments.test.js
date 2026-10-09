@@ -12,6 +12,7 @@ process.env.APP_URL = 'https://kudo.example';
 
 const {
   createDokuSignature,
+  isValidPaymentProofObject,
   verifyDokuNotification,
 } = require('../lib/payments');
 const createPayment = require('../api/payments/create');
@@ -253,6 +254,96 @@ test('QRIS order creation does not call DOKU Checkout', async () => {
   }
 });
 
+test('QRIS order creation logs safe diagnostics when Supabase rejects the order insert', async () => {
+  const originalFetch = global.fetch;
+  const originalConsoleError = console.error;
+  const logs = [];
+  global.fetch = async (input, options = {}) => {
+    const url = String(input);
+    if (url.endsWith('/auth/v1/user')) {
+      return { ok: true, json: async () => ({ id: 'user-id', email: 'user@example.com' }) };
+    }
+    if (url.endsWith('/rest/v1/payment_orders')) {
+      const order = JSON.parse(options.body);
+      assert.equal(order.diamonds, 1200);
+      assert.equal(order.amount_idr, 10);
+      assert.equal(order.status, 'pending');
+      return {
+        ok: false,
+        status: 400,
+        text: async () => JSON.stringify({
+          code: '23514',
+          message: 'new row violates check constraint',
+          details: 'Sensitive row detail must not be logged or returned.',
+        }),
+      };
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  console.error = (...args) => logs.push(args);
+
+  try {
+    const response = createResponse();
+    await createPayment(
+      {
+        method: 'POST',
+        headers: { authorization: 'Bearer sensitive-user-token' },
+        body: { packId: '1200', paymentMethod: 'qris' },
+      },
+      response
+    );
+
+    assert.equal(response.statusCode, 500);
+    assert.deepEqual(JSON.parse(response.body), {
+      error: 'Pembayaran belum dapat dibuat. Silakan coba lagi.',
+    });
+    const diagnosticLog = JSON.stringify(logs);
+    assert.match(diagnosticLog, /"stage":"save_payment_order"/);
+    assert.match(diagnosticLog, /"httpStatus":400/);
+    assert.match(diagnosticLog, /"databaseCode":"23514"/);
+    assert.doesNotMatch(diagnosticLog, /Sensitive row detail|sensitive-user-token|test-service-role-key/);
+    assert.doesNotMatch(response.body, /23514|Sensitive row detail|sensitive-user-token/);
+  } finally {
+    global.fetch = originalFetch;
+    console.error = originalConsoleError;
+  }
+});
+
+test('QRIS order creation identifies missing Supabase configuration without exposing it', async () => {
+  const originalFetch = global.fetch;
+  const originalConsoleError = console.error;
+  const originalServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const logs = [];
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  global.fetch = async () => {
+    throw new Error('Authentication fetch must not run with incomplete configuration.');
+  };
+  console.error = (...args) => logs.push(args);
+
+  try {
+    const response = createResponse();
+    await createPayment(
+      {
+        method: 'POST',
+        headers: { authorization: 'Bearer sensitive-user-token' },
+        body: { packId: '1200', paymentMethod: 'qris' },
+      },
+      response
+    );
+
+    assert.equal(response.statusCode, 500);
+    const diagnosticLog = JSON.stringify(logs);
+    assert.match(diagnosticLog, /"stage":"authenticate_user"/);
+    assert.match(diagnosticLog, /"errorCode":"SUPABASE_CONFIG_INCOMPLETE"/);
+    assert.doesNotMatch(diagnosticLog, /sensitive-user-token|test-service-role-key/);
+    assert.doesNotMatch(response.body, /SUPABASE|sensitive-user-token/);
+  } finally {
+    process.env.SUPABASE_SERVICE_ROLE_KEY = originalServiceRoleKey;
+    global.fetch = originalFetch;
+    console.error = originalConsoleError;
+  }
+});
+
 test('QRIS proof registration accepts files without a minimum size and leaves diamonds pending verification', async () => {
   const originalFetch = global.fetch;
   const userId = '00000000-0000-4000-8000-000000000001';
@@ -340,6 +431,63 @@ test('QRIS proof registration accepts storage metadata with contentLength and co
 
     assert.equal(response.statusCode, 200);
     assert.deepEqual(JSON.parse(response.body), { status: 'awaiting_verification' });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('QRIS proof validation uses storage headers when object metadata is incomplete', async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (input, options = {}) => {
+    const url = String(input);
+    calls.push({ url, method: options.method || 'GET' });
+    if (url.includes('/storage/v1/object/info/payment-proofs/')) {
+      return { ok: true, json: async () => ({ metadata: { eTag: 'proof-etag' } }) };
+    }
+    if (url.includes('/storage/v1/object/payment-proofs/')) {
+      return {
+        ok: true,
+        headers: new Headers({
+          'content-length': '1024',
+          'content-type': 'image/jpeg',
+        }),
+        text: async () => '',
+      };
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    assert.equal(await isValidPaymentProofObject('user/invoice/proof.jpg'), true);
+    assert.deepEqual(calls.map(({ method }) => method), ['GET', 'HEAD']);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test('QRIS proof validation still rejects storage objects larger than 5 MB', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes('/storage/v1/object/info/payment-proofs/')) {
+      return { ok: true, json: async () => ({ metadata: {} }) };
+    }
+    if (url.includes('/storage/v1/object/payment-proofs/')) {
+      return {
+        ok: true,
+        headers: new Headers({
+          'content-length': String(5 * 1024 * 1024 + 1),
+          'content-type': 'image/jpeg',
+        }),
+        text: async () => '',
+      };
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    assert.equal(await isValidPaymentProofObject('user/invoice/proof.jpg'), false);
   } finally {
     global.fetch = originalFetch;
   }

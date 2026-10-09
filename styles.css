@@ -734,6 +734,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-episode-card { width: 100%; min-height: 64px; padding: 12px; display: flex; align-items: center; border: 0; border-radius: 10px; background: #e8e7ff; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
 .anime-episode-list { display: grid; gap: 8px; }
 .anime-episode-card.is-active { background: #dedcff; }
+.anime-episode-unavailable { background: #f1f0f7; }
+.anime-episode-unavailable strong { color: #77788a; }
 .anime-episode-thumbnail { width: 88px; height: 50px; margin-right: 12px; flex: 0 0 auto; border-radius: 6px; object-fit: cover; }
 .anime-episode-card span { min-width: 0; display: grid; gap: 8px; }
 .anime-episode-card strong { color: #333652; font-size: 12px; font-weight: 700; }
