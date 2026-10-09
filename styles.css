@@ -727,8 +727,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-video-seek::-moz-range-progress { height: 3px; background: #9a8cff; }
 .anime-video-seek::-moz-range-thumb { width: 8px; height: 8px; border: 0; border-radius: 50%; background: #9a8cff; }
 .anime-stream-title { margin: 0 0 12px; color: #333652; font-size: 14px; font-weight: 700; }
-.anime-stream-genres { margin-bottom: 18px; display: flex; flex-wrap: wrap; gap: 7px; }
-.anime-stream-genres span { min-width: 84px; padding: 3px 8px; border: 1px solid #9992ff; border-radius: 8px; color: #7775c9; background: #fff; font-family: inherit; font-size: 10px; font-weight: 400; line-height: 1.2; text-align: center; }
+.anime-stream-genres { margin-bottom: 18px; display: flex; flex-wrap: wrap; gap: 4px; }
+.catalog-genres span, .anime-stream-genres span { padding: 3px 6px; border: 0; border-radius: 8px; color: #7775c9; background: #f1f0ff; font-family: inherit; font-size: 10px; font-weight: 400; line-height: 1.2; }
 .anime-stream-tabs { margin-bottom: 12px; display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid #eee; }
 .anime-stream-tabs button { min-height: 38px; padding: 5px; border: 0; border-bottom: 3px solid transparent; color: #bfbfbf; background: transparent; font-family: inherit; font-size: 12px; font-weight: 700; }
 .anime-stream-tabs button.is-active { border-bottom-color: #9992ff; color: #333652; }
