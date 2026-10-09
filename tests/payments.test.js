@@ -301,6 +301,50 @@ test('QRIS proof registration accepts files without a minimum size and leaves di
   }
 });
 
+test('QRIS proof registration accepts storage metadata with contentLength and contentType', async () => {
+  const originalFetch = global.fetch;
+  const userId = '00000000-0000-4000-8000-000000000001';
+  const invoiceNumber = 'KUDO-00000000-0000-4000-8000-000000000000';
+  const proofPath = `${userId}/${invoiceNumber}/proof-00000000-0000-4000-8000-000000000002.jpg`;
+  global.fetch = async (input, options = {}) => {
+    const url = String(input);
+    if (url.endsWith('/auth/v1/user')) {
+      return { ok: true, json: async () => ({ id: userId }) };
+    }
+    if (url.includes('/storage/v1/object/info/payment-proofs/')) {
+      return {
+        ok: true,
+        json: async () => ({ metadata: { contentType: 'image/jpeg', contentLength: 1024 } }),
+      };
+    }
+    if (url.includes('/rest/v1/payment_orders?')) {
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify([{ status: 'awaiting_verification' }]),
+      };
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    const response = createResponse();
+    await submitPaymentProof(
+      {
+        method: 'POST',
+        headers: { authorization: 'Bearer test-user-token' },
+        body: { invoiceNumber, proofPath },
+      },
+      response
+    );
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(JSON.parse(response.body), { status: 'awaiting_verification' });
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('QRIS proof registration rejects an image that is not in private storage', async () => {
   const originalFetch = global.fetch;
   const userId = '00000000-0000-4000-8000-000000000001';
