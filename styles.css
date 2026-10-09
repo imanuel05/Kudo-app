@@ -947,7 +947,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .performance-page { padding: 8px 0 28px; }
 .performance-page > h2 { margin: 0 0 14px; color: #333652; font-size: 14px; font-weight: 700; }
 .performance-empty-state { padding-top: 10px; }
-.performance-empty-illustration { height: 125px; margin: 55px 0 45px; position: relative; border-radius: 16px; background: #f1f0ff; }
+.performance-empty-illustration { height: 125px; margin: 55px 0 15px; position: relative; border-radius: 16px; background: #f1f0ff; }
 .performance-empty-illustration img { width: 62%; height: 150px; position: absolute; top: -75px; left: 50%; transform: translateX(-50%); object-fit: contain; }
 .performance-empty-state .empty-state { min-height: 194px; box-sizing: border-box; align-content: center; padding: 24px 20px; gap: 12px; border-width: 2px; border-radius: 16px; }
 .performance-empty-state .empty-state strong { margin: 0; color: #333652; font-size: 14px; font-weight: 700; }
