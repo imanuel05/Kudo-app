@@ -36,6 +36,8 @@ function createResponse() {
 test('payment history is authenticated and returns only the current user orders', async () => {
   const originalFetch = global.fetch;
   const calls = [];
+  const recentOrderDate = new Date().toISOString();
+  const expiredOrderDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString();
   global.fetch = async (input, options = {}) => {
     const url = String(input);
     calls.push({ url, options });
@@ -44,13 +46,22 @@ test('payment history is authenticated and returns only the current user orders'
     }
     return {
       ok: true,
-      text: async () => JSON.stringify([{
-        invoice_number: 'KUDO-00000000-0000-4000-8000-000000000000',
-        diamonds: 1200,
-        amount_idr: 10000,
-        status: 'awaiting_verification',
-        created_at: '2026-10-08T00:00:00.000Z',
-      }]),
+      text: async () => JSON.stringify([
+        {
+          invoice_number: 'KUDO-00000000-0000-4000-8000-000000000000',
+          diamonds: 1200,
+          amount_idr: 10000,
+          status: 'awaiting_verification',
+          created_at: recentOrderDate,
+        },
+        {
+          invoice_number: 'KUDO-00000000-0000-4000-8000-000000000001',
+          diamonds: 2000,
+          amount_idr: 15000,
+          status: 'paid',
+          created_at: expiredOrderDate,
+        },
+      ]),
     };
   };
 
@@ -62,15 +73,22 @@ test('payment history is authenticated and returns only the current user orders'
     );
 
     assert.equal(response.statusCode, 200);
-    assert.deepEqual(JSON.parse(response.body).orders[0], {
+    const history = JSON.parse(response.body).orders;
+    assert.equal(history.length, 1);
+    assert.deepEqual(history[0], {
       invoiceNumber: 'KUDO-00000000-0000-4000-8000-000000000000',
       diamonds: 1200,
       amount: 10000,
       status: 'awaiting_verification',
-      createdAt: '2026-10-08T00:00:00.000Z',
+      createdAt: recentOrderDate,
     });
     assert.match(calls[1].url, /user_id=eq\.current-user/);
     assert.match(calls[1].url, /order=created_at\.desc/);
+    const historyQuery = new URL(calls[1].url).searchParams;
+    const requestedCutoff = Date.parse(historyQuery.get('created_at').slice(4));
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    assert.ok(requestedCutoff <= thirtyDaysAgo);
+    assert.ok(requestedCutoff >= thirtyDaysAgo - 1000);
   } finally {
     global.fetch = originalFetch;
   }
@@ -121,7 +139,9 @@ test('payment creation uses the fixed price and restricts DOKU Checkout to DOKU 
     }
     if (url === 'https://api-sandbox.doku.com/checkout/v1/payment') {
       const request = JSON.parse(options.body);
-      const expectedAmount = request.order.amount === 15000 ? 15000 : 10000;
+      const expectedAmount = request.order.line_items[0].id === 'DIAMOND-1200'
+        ? 500
+        : 15000;
       assert.equal(request.order.amount, expectedAmount);
       assert.equal(request.order.invoice_number.startsWith('KUDO-'), true);
       assert.equal(request.order.line_items[0].price, expectedAmount);
@@ -162,6 +182,9 @@ test('payment creation uses the fixed price and restricts DOKU Checkout to DOKU 
       response
     );
     assert.equal(response.statusCode, 201);
+    const storedOrder = calls.find(({ url, options }) => url.endsWith('/rest/v1/payment_orders')
+      && options.method === 'POST');
+    assert.equal(JSON.parse(storedOrder.options.body).amount_idr, 500);
     const result = JSON.parse(response.body);
     assert.equal(result.diamonds, 1200);
     assert.equal(result.checkoutUrl, 'https://checkout-sandbox.doku.com/redirect');
@@ -220,8 +243,10 @@ test('QRIS order creation does not call DOKU Checkout', async () => {
       'diamonds',
       'invoiceNumber',
     ]);
+    assert.equal(JSON.parse(response.body).amount, 500);
     assert.equal(calls.some(({ url }) => url.includes('/checkout/v1/payment')), false);
     const orderRequest = calls.find(({ url }) => url.endsWith('/rest/v1/payment_orders'));
+    assert.equal(JSON.parse(orderRequest.options.body).amount_idr, 500);
     assert.equal(JSON.parse(orderRequest.options.body).status, 'pending');
   } finally {
     global.fetch = originalFetch;
