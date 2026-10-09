@@ -734,9 +734,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-stream-tabs button.is-active { border-bottom-color: #9992ff; color: #333652; }
 .anime-stream-tab-content { min-height: 140px; }
 .anime-description { margin: 13px 0; color: #bfbfbf; font-family: inherit; font-size: 10px; font-weight: 400; line-height: 1.55; text-align: justify; }
-.anime-episode-card { width: 100%; min-height: 80px; padding: 8px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 10px; background: #e8e7ff; color: inherit; text-align: left; text-decoration: none; }
-.anime-episode-card img { width: 96px; height: 58px; flex: 0 0 auto; border-radius: 6px; object-fit: cover; }
-.anime-episode-card span { display: grid; gap: 10px; }
+.anime-episode-card { width: 100%; min-height: 64px; padding: 12px; display: flex; align-items: center; border: 0; border-radius: 10px; background: #e8e7ff; color: inherit; text-align: left; text-decoration: none; }
+.anime-episode-card span { display: grid; gap: 8px; }
 .anime-episode-card strong { color: #333652; font-size: 12px; font-weight: 700; }
 .anime-episode-card small { color: #999; font-size: 10px; font-weight: 400; }
 .anime-video-source { margin-top: 10px; display: grid; gap: 6px; color: #333652; font-size: 11px; font-weight: 700; }
