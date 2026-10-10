@@ -377,14 +377,19 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .task-create-hero img { width: 62%; height: 150px; position: absolute; top: -75px; left: 50%; transform: translateX(-50%); object-fit: contain; }
 .task-create-form { flex: 1; display: flex; flex-direction: column; }
 .task-create-form > label:not(.upload-area) { margin: 0 0 8px; color: #000; font-size: 14px; font-weight: 700; }
-.task-create-form input:not([type=file]) { width: 100%; height: 43px; margin: 0 0 13px; padding: 0 12px; border: 2px solid #8984ff; border-radius: 10px; color: #45475e; background: #fff; font-size: 12px; }
+.task-create-form input:not([type=file]) { width: 100%; height: 43px; margin: 0 0 13px; padding: 0 12px; border: 2px solid #e4e4e4; border-radius: 10px; color: #45475e; background: #fff; font-size: 12px; }
 .task-create-form input:not([type=file]):hover,
 .task-create-form input:not([type=file]):focus,
-.task-create-form input:not([type=file]):focus-visible { border-color: #8984ff; outline: none; box-shadow: none; }
+.task-create-form input:not([type=file]):focus-visible { border-color: #e4e4e4; outline: none; box-shadow: none; }
+.task-create-screen .task-create-form input:not([type=file]),
+.task-create-screen .task-create-form input:not([type=file]):hover,
+.task-create-screen .task-create-form input:not([type=file]):focus,
+.task-create-screen .task-create-form input:not([type=file]):focus-visible { border-color: #e4e4e4; }
 .task-create-form .upload-title { margin-top: 0; }
 .task-create-form .upload-box { position: relative; margin-bottom: 20px; }
-.task-create-form .upload-area { min-height: 78px; margin: 0; border: 2px dashed #8984ff; border-radius: 10px; color: var(--lavender); font-size: 14px; font-weight: 700; }
-.task-create-form .upload-area strong { color: var(--lavender); font-size: 14px; font-weight: 700; }
+.task-create-form .upload-area { min-height: 78px; margin: 0; border: 2px dashed #e4e4e4; border-radius: 10px; color: #333652; background: #fff; font-size: 14px; font-weight: 700; }
+.task-create-screen .task-create-form .upload-area { border-color: #e4e4e4; }
+.task-create-form .upload-area strong { color: #333652; font-size: 14px; font-weight: 700; }
 .task-create-form .upload-icon { color: #fff; background: #8984ff; }
 .task-create-form .upload-area small { display: block; }
 .task-create-form .upload-area.has-photo { min-height: 145px; padding: 12px; border-style: dashed; pointer-events: none; }
@@ -396,7 +401,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .task-create-form .upload-remove[hidden] { display: none; }
 .task-create-form .upload-status { margin-top: 5px; color: #d92d38; font-size: 10px; text-align: center; }
 .task-create-form.has-attachment .task-create-submit { margin-top: 2px; }
-.task-create-submit { min-height: 45px; margin-top: auto; font-size: 13px; font-weight: 700; }
+.task-create-submit { min-height: 45px; margin-top: auto; font-size: 14px; font-weight: 700; }
 .quest-stats, .profile-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .quest-stats { gap: 12px; margin-bottom: 8px; }
 .quest-stats div { min-height: 78px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border: 4px solid #d8f2dc; border-radius: 10px; }
@@ -709,7 +714,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-video-shell iframe { width: 100%; aspect-ratio: 16 / 9; display: block; border: 0; background: #10121a; }
 .anime-pip { width: min(320px, calc(100vw - 24px)); aspect-ratio: 16 / 9; position: fixed; z-index: 50; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(68px + 14px + env(safe-area-inset-bottom, 0px)); overflow: hidden; border-radius: 12px; background: #10121a; box-shadow: 0 4px 18px #0005; cursor: pointer; }
 .anime-pip-drag-handle { height: 24px; position: absolute; z-index: 4; inset: 0 42px auto 0; display: grid; place-items: center; cursor: grab; touch-action: none; }
-.anime-pip-drag-handle::after { width: 34px; height: 4px; border-radius: 4px; background: #fff9; content: ""; }
+.anime-pip-drag-handle::after { width: 34px; height: 4px; position: relative; left: 21px; border-radius: 4px; background: #fff9; content: ""; }
 .anime-pip.is-dragging, .anime-pip.is-dragging .anime-pip-drag-handle { cursor: grabbing; }
 .anime-pip video { width: 100%; height: 100%; position: relative; z-index: 0; display: block; background: #10121a; object-fit: contain; pointer-events: none; }
 .anime-pip iframe { width: 100%; height: 100%; position: relative; z-index: 0; display: block; border: 0; }
@@ -1138,6 +1143,22 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .focus-gate-sheet .shop-decline-button { color: #797dff; }
 .focus-gate-sheet .shop-decline-button { margin-top: 8px; }
 .item-purchase-decline { margin-top: 8px; }
+
+/* Keep primary and secondary action buttons consistent with the task form. */
+#app button.button,
+#app button.submit-button,
+#app button.back-link,
+#app button.shop-decline-button,
+#app button.focus-gate-confirm,
+#app button.item-purchase-confirm,
+#app button.item-purchase-decline,
+#app button.text-button,
+#app button.account-delete-button,
+#app button.profile-logout {
+  height: 45px;
+  min-height: 45px;
+  font-size: 14px;
+}
 
 @keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
