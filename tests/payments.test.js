@@ -151,7 +151,7 @@ test('payment creation uses the fixed price and restricts DOKU Checkout to DOKU 
     if (url === 'https://api-sandbox.doku.com/checkout/v1/payment') {
       const request = JSON.parse(options.body);
       const expectedAmount = request.order.line_items[0].id === 'DIAMOND-1200'
-        ? 10
+        ? 10000
         : 15000;
       assert.equal(request.order.amount, expectedAmount);
       assert.equal(request.order.invoice_number.startsWith('KUDO-'), true);
@@ -195,7 +195,7 @@ test('payment creation uses the fixed price and restricts DOKU Checkout to DOKU 
     assert.equal(response.statusCode, 201);
     const storedOrder = calls.find(({ url, options }) => url.endsWith('/rest/v1/payment_orders')
       && options.method === 'POST');
-    assert.equal(JSON.parse(storedOrder.options.body).amount_idr, 10);
+    assert.equal(JSON.parse(storedOrder.options.body).amount_idr, 10000);
     const result = JSON.parse(response.body);
     assert.equal(result.diamonds, 1200);
     assert.equal(result.checkoutUrl, 'https://checkout-sandbox.doku.com/redirect');
@@ -254,10 +254,10 @@ test('QRIS order creation does not call DOKU Checkout', async () => {
       'diamonds',
       'invoiceNumber',
     ]);
-    assert.equal(JSON.parse(response.body).amount, 10);
+    assert.equal(JSON.parse(response.body).amount, 10000);
     assert.equal(calls.some(({ url }) => url.includes('/checkout/v1/payment')), false);
     const orderRequest = calls.find(({ url }) => url.endsWith('/rest/v1/payment_orders'));
-    assert.equal(JSON.parse(orderRequest.options.body).amount_idr, 10);
+    assert.equal(JSON.parse(orderRequest.options.body).amount_idr, 10000);
     assert.equal(JSON.parse(orderRequest.options.body).status, 'pending');
   } finally {
     global.fetch = originalFetch;
@@ -276,7 +276,7 @@ test('QRIS order creation logs safe diagnostics when Supabase rejects the order 
     if (url.endsWith('/rest/v1/payment_orders')) {
       const order = JSON.parse(options.body);
       assert.equal(order.diamonds, 1200);
-      assert.equal(order.amount_idr, 10);
+      assert.equal(order.amount_idr, 10000);
       assert.equal(order.status, 'pending');
       return {
         ok: false,

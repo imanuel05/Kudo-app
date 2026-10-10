@@ -698,6 +698,11 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .modal-overlay.avatar-options-overlay { position: fixed; inset: 0; padding: 0; display: flex; align-items: flex-end; justify-content: center; background: rgb(0 0 0 / 18%); }
 .modal-overlay.avatar-options-overlay .modal-position { width: min(100%, 412px); max-height: none; overflow: visible; }
 .anime-stream-page { width: min(100vw, 412px); height: 100dvh; min-height: 100dvh; margin: 0 auto; padding: 0 20px 28px; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; background: #fff; }
+.anime-episodes-page { position: relative; }
+.product-screen:has(.anime-episodes-page) .page-content { padding-top: 0; }
+.anime-episodes-poster { width: calc(100% + 44px); aspect-ratio: 16 / 9; margin: 0 -22px 20px; display: block; object-fit: cover; }
+.anime-episodes-page .anime-stream-title { font-size: 16px; }
+.anime-episodes-heading { margin: 20px 0 12px; color: #333652; font-size: 14px; font-weight: 700; }
 .anime-video-shell { position: relative; margin: 0 -20px 25px; background: #10121a; }
 .anime-video-stage { position: relative; }
 .anime-video-shell video { width: 100%; aspect-ratio: 16 / 9; display: block; background: #10121a; object-fit: contain; }
@@ -731,10 +736,9 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-stream-tabs button.is-active { border-bottom-color: #9992ff; color: #333652; }
 .anime-stream-tab-content { min-height: 140px; }
 .anime-description { margin: 13px 0; color: #bfbfbf; font-family: inherit; font-size: 10px; font-weight: 400; line-height: 1.55; text-align: justify; }
-.anime-episode-card { width: 100%; min-height: 64px; padding: 12px; display: flex; align-items: center; border: 0; border-radius: 10px; background: #e8e7ff; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.anime-episode-card { width: 100%; min-height: 64px; padding: 12px; display: flex; align-items: center; border: 0; border-radius: 10px; background: #f1f0ff; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
 .anime-episode-list { display: grid; gap: 8px; }
-.anime-episode-card.is-active { background: #dedcff; }
-.anime-episode-unavailable { background: #f1f0f7; }
+.anime-episode-card.is-active, .anime-episode-unavailable { background: #f1f0ff; }
 .anime-episode-unavailable strong { color: #77788a; }
 .anime-episode-thumbnail { width: 88px; height: 50px; margin-right: 12px; flex: 0 0 auto; border-radius: 6px; object-fit: cover; }
 .anime-episode-card span { min-width: 0; display: grid; gap: 8px; }
