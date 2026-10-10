@@ -277,6 +277,52 @@ test('admin video insertion validates the uploaded storage object before publish
   }
 });
 
+test('admin video listing returns saved folder metadata and storage paths', async () => {
+  const originalFetch = global.fetch;
+  const savedFolder = {
+    category: 'anime',
+    show_title: "Frieren: Beyond Journey's End",
+    folder_name: 'frieren-beyond-journeys-end-1234abcd',
+    show_description: 'Saved folder description',
+    poster_path: 'admin-user/frieren-beyond-journeys-end-1234abcd/poster.webp',
+    poster_url: 'https://supabase.example/storage/v1/object/public/catalog-video/admin-user/frieren/poster.webp',
+    genres: ['Fantasy', 'Adventure'],
+    show_type: 'Series',
+    episode_title: 'Episode 1',
+    episode_number: 1,
+    thumbnail_path: 'admin-user/frieren/thumbnails/episode-1.webp',
+    thumbnail_url: 'https://supabase.example/storage/v1/object/public/catalog-video/admin-user/frieren/thumbnail.webp',
+  };
+  const calls = [];
+  global.fetch = async (input) => {
+    const url = String(input);
+    calls.push(url);
+    if (url.endsWith('/auth/v1/user')) return jsonResponse({ id: 'admin-user' });
+    if (url.includes('/rest/v1/admin_users')) return jsonResponse([{ user_id: 'admin-user' }]);
+    if (url.includes('/rest/v1/catalog_videos?')) return jsonResponse([savedFolder]);
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    const response = createResponse();
+    await adminVideos({
+      method: 'GET',
+      headers: { authorization: 'Bearer test-token' },
+    }, response);
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(JSON.parse(response.body).videos, [savedFolder]);
+    const catalogRequest = calls.find((url) => url.includes('/rest/v1/catalog_videos?'));
+    const selectedFields = new URL(catalogRequest).searchParams.get('select');
+    assert.match(selectedFields, /folder_name/);
+    assert.match(selectedFields, /poster_path,poster_url/);
+    assert.match(selectedFields, /show_description/);
+    assert.match(selectedFields, /genres/);
+    assert.match(selectedFields, /show_type/);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('admin video insertion validates poster and thumbnail metadata for a new series folder', async () => {
   const originalFetch = global.fetch;
   const calls = [];
