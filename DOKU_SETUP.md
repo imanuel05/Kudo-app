@@ -14,7 +14,7 @@ send them in chat.
 1. Run the current [`supabase/schema.sql`](./supabase/schema.sql) in the
    Supabase SQL editor. It creates the private `payment_orders` table, the
    private `payment-proofs` Storage bucket with per-user upload policies, and
-   the service-role-only payment verification and fulfillment functions. It
+   the    service-role-only payment verification, rejection, and fulfillment functions. It
    also creates the admin allowlist and public video catalog, and configures
    the existing `catalog-video` Storage bucket (it does not create a bucket).
    The schema adds `catalog_videos.video_url`, migrates existing
@@ -27,6 +27,9 @@ send them in chat.
    For an existing database, run
    [`supabase/migrations/20261010010000_allow_10_idr_diamond_pack.sql`](./supabase/migrations/20261010010000_allow_10_idr_diamond_pack.sql)
    in the SQL editor to allow the Rp 10 diamond pack before creating a new order.
+   For an existing database, also run
+   [`supabase/migrations/20261010020000_reject_qris_orders.sql`](./supabase/migrations/20261010020000_reject_qris_orders.sql)
+   before deploying admin transaction rejection.
 2. In Vercel project settings, configure these environment variables for QRIS:
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
@@ -80,6 +83,7 @@ endpoint and reloads account state after payment.
 - `POST /api/payments/notification` — DOKU notification endpoint.
 - `GET /api/admin/access` — checks admin allowlist membership.
 - `GET /api/admin/orders` and `POST /api/admin/orders` — lists proofs awaiting
-  verification and approves a confirmed QRIS payment.
+  verification and approves or rejects a QRIS payment. Rejected orders do not
+  receive diamonds.
 - `GET /api/admin/videos` and `POST /api/admin/videos` — lists and publishes
   admin-uploaded video catalog entries.

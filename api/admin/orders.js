@@ -27,6 +27,7 @@ module.exports = async function adminOrders(request, response) {
     return sendJson(response, 405, { error: 'Method not allowed.' });
   }
 
+  let action = 'verify';
   try {
     const access = await authorizeAdmin(request);
     if (!access.user) return respondUnauthorized(response, access.status);
@@ -40,9 +41,9 @@ module.exports = async function adminOrders(request, response) {
           limit: '100',
         })}`),
         supabaseRequest(`/rest/v1/payment_orders?${new URLSearchParams({
-          select: 'invoice_number,user_id,diamonds,amount_idr,status,created_at,paid_at',
-          status: 'eq.paid',
-          order: 'paid_at.desc.nullslast',
+          select: 'invoice_number,user_id,diamonds,amount_idr,status,created_at,paid_at,rejected_at',
+          status: 'in.(paid,rejected)',
+          order: 'created_at.desc',
           limit: '100',
         })}`),
       ]);
@@ -66,23 +67,30 @@ module.exports = async function adminOrders(request, response) {
           amount: order.amount_idr,
           status: order.status,
           createdAt: order.created_at,
-          verifiedAt: order.paid_at,
+          verifiedAt: order.paid_at || order.rejected_at,
         })),
       });
     }
 
     const body = parseJsonBody(request.body);
     const invoiceNumber = String(body?.invoiceNumber || '');
+    action = body?.action || 'verify';
     if (!/^KUDO-[0-9a-f-]{36}$/i.test(invoiceNumber)) {
       return sendJson(response, 400, { error: 'Nomor transaksi tidak valid.' });
     }
-    const result = await supabaseRequest('/rest/v1/rpc/verify_qris_payment', {
+    if (!['verify', 'reject'].includes(action)) {
+      return sendJson(response, 400, { error: 'Tindakan transaksi tidak valid.' });
+    }
+    const rpcName = action === 'reject' ? 'reject_qris_payment' : 'verify_qris_payment';
+    const result = await supabaseRequest(`/rest/v1/rpc/${rpcName}`, {
       method: 'POST',
       body: JSON.stringify({ p_invoice_number: invoiceNumber }),
     });
-    return sendJson(response, 200, { status: result?.status || 'paid' });
+    return sendJson(response, 200, { status: result?.status || (action === 'reject' ? 'rejected' : 'paid') });
   } catch (error) {
-    console.error('Admin payment verification failed:', error);
-    return sendJson(response, 500, { error: 'Pembayaran tidak dapat diverifikasi.' });
+    console.error('Admin payment action failed:', error);
+    return sendJson(response, 500, {
+      error: action === 'reject' ? 'Pembelian tidak dapat ditolak.' : 'Pembayaran tidak dapat diverifikasi.',
+    });
   }
 };
