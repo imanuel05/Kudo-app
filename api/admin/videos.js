@@ -5,7 +5,7 @@ const {
   supabaseRequest,
 } = require('../../lib/payments');
 
-const VIDEO_LIMIT_BYTES = 100 * 1024 * 1024;
+const VIDEO_LIMIT_BYTES = 50 * 1024 * 1024;
 const IMAGE_LIMIT_BYTES = 5 * 1024 * 1024;
 
 function publicStorageUrl(path) {
@@ -94,7 +94,7 @@ module.exports = async function adminVideos(request, response) {
       return sendJson(response, 400, { error: 'Lokasi file video tidak valid.' });
     }
     const encodedPath = videoPath.split('/').map(encodeURIComponent).join('/');
-    await validateStorageObject(videoPath, ['video/mp4', 'video/webm'], VIDEO_LIMIT_BYTES, 'Video harus berupa MP4/WebM maksimal 100 MB');
+    await validateStorageObject(videoPath, ['video/mp4', 'video/webm'], VIDEO_LIMIT_BYTES, 'Video harus berupa MP4/WebM maksimal 50 MB');
     if (posterPath) {
       const posterPattern = folderName
         ? new RegExp(`^[0-9a-f-]{36}/${folderName}/poster\\.(png|jpe?g|webp)$`, 'i')

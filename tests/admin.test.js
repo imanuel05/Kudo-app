@@ -277,6 +277,43 @@ test('admin video insertion validates the uploaded storage object before publish
   }
 });
 
+test('admin video insertion rejects storage objects larger than 50 MB', async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (input) => {
+    const url = String(input);
+    calls.push(url);
+    if (url.endsWith('/auth/v1/user')) return jsonResponse({ id: 'admin-user' });
+    if (url.includes('/rest/v1/admin_users')) {
+      return jsonResponse([{ user_id: 'admin-user' }]);
+    }
+    if (url.includes('/storage/v1/object/info/catalog-video/')) {
+      return jsonResponse({ metadata: { mimetype: 'video/mp4', size: 50 * 1024 * 1024 + 1 } });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    const response = createResponse();
+    await adminVideos({
+      method: 'POST',
+      headers: { authorization: 'Bearer test-token' },
+      body: {
+        category: 'anime',
+        showTitle: 'Licensed Series',
+        episodeTitle: 'Episode 1',
+        episodeNumber: 1,
+        videoPath: 'admin-user/00000000-0000-4000-8000-000000000000.mp4',
+      },
+    }, response);
+    assert.equal(response.statusCode, 400);
+    assert.match(JSON.parse(response.body).error, /maksimal 50 MB/);
+    assert.equal(calls.some((url) => url.endsWith('/rest/v1/catalog_videos')), false);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('admin video listing returns saved folder metadata and storage paths', async () => {
   const originalFetch = global.fetch;
   const savedFolder = {

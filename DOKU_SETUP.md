@@ -53,7 +53,7 @@ send them in chat.
    ```
    Only add trusted administrators. The admin panel is available from Profile
    after the allowlist entry is created. It can review pending QRIS proofs,
-   approve verified payments, and upload MP4/WebM videos up to 100 MB. Upload
+   approve verified payments, and upload MP4/WebM videos up to 50 MB. Upload
    only video content you own or are licensed to distribute.
 5. For DOKU Checkout, also configure:
    - `DOKU_CLIENT_ID` and `DOKU_SECRET_KEY` for the same environment, with
