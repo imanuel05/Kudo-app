@@ -277,6 +277,62 @@ test('admin video insertion validates the uploaded storage object before publish
   }
 });
 
+test('admin video insertion validates poster and thumbnail metadata for a new series folder', async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (input, options = {}) => {
+    const url = String(input);
+    calls.push({ url, options });
+    if (url.endsWith('/auth/v1/user')) return jsonResponse({ id: '00000000-0000-4000-8000-000000000000' });
+    if (url.includes('/rest/v1/admin_users')) {
+      return jsonResponse([{ user_id: '00000000-0000-4000-8000-000000000000' }]);
+    }
+    if (url.includes('/storage/v1/object/info/catalog-video/')) {
+      const objectPath = decodeURIComponent(url.split('/storage/v1/object/info/catalog-video/')[1]);
+      const mimetype = objectPath.endsWith('.mp4')
+        ? 'video/mp4'
+        : objectPath.endsWith('.png') ? 'image/png' : 'image/webp';
+      return jsonResponse({ metadata: { mimetype, size: 1024 } });
+    }
+    if (url.endsWith('/rest/v1/catalog_videos')) {
+      return jsonResponse([JSON.parse(options.body)]);
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    const response = createResponse();
+    await adminVideos({
+      method: 'POST',
+      headers: { authorization: 'Bearer test-token' },
+      body: {
+        category: 'anime',
+        showTitle: 'Licensed Series',
+        episodeTitle: 'Episode 1',
+        episodeNumber: 1,
+        folderName: 'licensed-series-1234abcd',
+        showDescription: 'A licensed series description.',
+        genres: ['Fantasy', 'Adventure'],
+        showType: 'Series',
+        posterPath: '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/poster.png',
+        thumbnailPath: '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/thumbnails/episode-1-00000000-0000-4000-8000-000000000001.webp',
+        videoPath: '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/episodes/00000000-0000-4000-8000-000000000002.mp4',
+      },
+    }, response);
+    assert.equal(response.statusCode, 201, response.body);
+    const insertion = calls.find(({ url }) => url.endsWith('/rest/v1/catalog_videos'));
+    const insertedVideo = JSON.parse(insertion.options.body);
+    assert.equal(insertedVideo.folder_name, 'licensed-series-1234abcd');
+    assert.equal(insertedVideo.show_description, 'A licensed series description.');
+    assert.deepEqual(insertedVideo.genres, ['Fantasy', 'Adventure']);
+    assert.equal(insertedVideo.poster_path, '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/poster.png');
+    assert.equal(insertedVideo.thumbnail_path, '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/thumbnails/episode-1-00000000-0000-4000-8000-000000000001.webp');
+    assert.equal(calls.filter(({ url }) => url.includes('/storage/v1/object/info/catalog-video/')).length, 3);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('admin video insertion rejects a storage path outside the signed-in administrator folder', async () => {
   const originalFetch = global.fetch;
   global.fetch = async (input) => {

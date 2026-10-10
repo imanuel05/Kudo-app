@@ -6,6 +6,27 @@ const {
 } = require('../../lib/payments');
 
 const VIDEO_LIMIT_BYTES = 100 * 1024 * 1024;
+const IMAGE_LIMIT_BYTES = 5 * 1024 * 1024;
+
+function publicStorageUrl(path) {
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+  return `${process.env.SUPABASE_URL.replace(/\/+$/, '')}/storage/v1/object/public/catalog-video/${encodedPath}`;
+}
+
+async function validateStorageObject(path, allowedTypes, maxSize, label) {
+  const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+  const objectInfo = await supabaseRequest(`/storage/v1/object/info/catalog-video/${encodedPath}`);
+  const metadata = objectInfo?.metadata || {};
+  if (
+    !allowedTypes.includes(metadata.mimetype)
+    || Number(metadata.size) <= 0
+    || Number(metadata.size) > maxSize
+  ) {
+    const error = new Error(`${label} tidak valid.`);
+    error.statusCode = 400;
+    throw error;
+  }
+}
 
 module.exports = async function adminVideos(request, response) {
   if (!['GET', 'POST'].includes(request.method)) {
@@ -19,7 +40,7 @@ module.exports = async function adminVideos(request, response) {
 
     if (request.method === 'GET') {
       const query = new URLSearchParams({
-        select: 'id,category,show_title,episode_title,episode_number,video_path,video_url,created_at',
+        select: 'id,category,show_title,episode_title,episode_number,video_path,video_url,created_at,folder_name,show_description,poster_path,poster_url,genres,show_type,episode_description,thumbnail_path,thumbnail_url',
         order: 'created_at.desc',
         limit: '100',
       });
@@ -37,6 +58,15 @@ module.exports = async function adminVideos(request, response) {
     const episodeTitle = String(body.episodeTitle || '').trim();
     const episodeNumber = Number(body.episodeNumber);
     const videoPath = String(body.videoPath || '');
+    const folderName = String(body.folderName || '');
+    const showDescription = String(body.showDescription || '').trim();
+    const genres = Array.isArray(body.genres)
+      ? body.genres.map((genre) => String(genre).trim()).filter(Boolean)
+      : [];
+    const showType = String(body.showType || 'Series');
+    const episodeDescription = String(body.episodeDescription || '').trim();
+    const posterPath = String(body.posterPath || '');
+    const thumbnailPath = String(body.thumbnailPath || '');
     if (
       !['anime', 'kdrama'].includes(category)
       || showTitle.length < 1
@@ -46,23 +76,42 @@ module.exports = async function adminVideos(request, response) {
       || !Number.isInteger(episodeNumber)
       || episodeNumber < 1
       || episodeNumber > 9999
+      || (folderName && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(folderName))
+      || showDescription.length > 5000
+      || (folderName && (!showDescription || !genres.length || !posterPath || !thumbnailPath))
+      || genres.length > 20
+      || genres.some((genre) => genre.length > 40)
+      || !['Series', 'Movie'].includes(showType)
+      || episodeDescription.length > 5000
     ) {
-      return sendJson(response, 400, { error: 'Judul, kategori, atau episode tidak valid.' });
+      return sendJson(response, 400, { error: 'Metadata judul, kategori, atau episode tidak valid.' });
     }
 
-    const pathPattern = new RegExp(`^${access.user.id}/[0-9a-f-]{36}\\.(mp4|webm)$`, 'i');
+    const pathPattern = folderName
+      ? new RegExp(`^${access.user.id}/${folderName}/episodes/[0-9a-f-]{36}\\.(mp4|webm)$`, 'i')
+      : new RegExp(`^${access.user.id}/[0-9a-f-]{36}\\.(mp4|webm)$`, 'i');
     if (!pathPattern.test(videoPath)) {
       return sendJson(response, 400, { error: 'Lokasi file video tidak valid.' });
     }
     const encodedPath = videoPath.split('/').map(encodeURIComponent).join('/');
-    const objectInfo = await supabaseRequest(`/storage/v1/object/info/catalog-video/${encodedPath}`);
-    const metadata = objectInfo?.metadata || {};
-    if (
-      !['video/mp4', 'video/webm'].includes(metadata.mimetype)
-      || Number(metadata.size) <= 0
-      || Number(metadata.size) > VIDEO_LIMIT_BYTES
-    ) {
-      return sendJson(response, 400, { error: 'Video harus berupa MP4/WebM maksimal 100 MB.' });
+    await validateStorageObject(videoPath, ['video/mp4', 'video/webm'], VIDEO_LIMIT_BYTES, 'Video harus berupa MP4/WebM maksimal 100 MB');
+    if (posterPath) {
+      const posterPattern = folderName
+        ? new RegExp(`^[0-9a-f-]{36}/${folderName}/poster\\.(png|jpe?g|webp)$`, 'i')
+        : null;
+      if (!posterPattern?.test(posterPath)) {
+        return sendJson(response, 400, { error: 'Lokasi poster tidak valid.' });
+      }
+      await validateStorageObject(posterPath, ['image/png', 'image/jpeg', 'image/webp'], IMAGE_LIMIT_BYTES, 'Poster harus PNG/JPG/WebP maksimal 5 MB');
+    }
+    if (thumbnailPath) {
+      const thumbnailPattern = folderName
+        ? new RegExp(`^${access.user.id}/${folderName}/thumbnails/episode-${episodeNumber}-[0-9a-f-]{36}\\.(png|jpe?g|webp)$`, 'i')
+        : null;
+      if (!thumbnailPattern?.test(thumbnailPath)) {
+        return sendJson(response, 400, { error: 'Lokasi thumbnail tidak valid.' });
+      }
+      await validateStorageObject(thumbnailPath, ['image/png', 'image/jpeg', 'image/webp'], IMAGE_LIMIT_BYTES, 'Thumbnail harus PNG/JPG/WebP maksimal 5 MB');
     }
 
     const videos = await supabaseRequest('/rest/v1/catalog_videos', {
@@ -74,7 +123,14 @@ module.exports = async function adminVideos(request, response) {
         episode_title: episodeTitle,
         episode_number: episodeNumber,
         video_path: videoPath,
-        video_url: `${process.env.SUPABASE_URL.replace(/\/+$/, '')}/storage/v1/object/public/catalog-video/${encodedPath}`,
+        video_url: publicStorageUrl(videoPath),
+        ...(folderName ? { folder_name: folderName } : {}),
+        ...(showDescription ? { show_description: showDescription } : {}),
+        ...(posterPath ? { poster_path: posterPath, poster_url: publicStorageUrl(posterPath) } : {}),
+        ...(genres.length ? { genres } : {}),
+        ...(showType ? { show_type: showType } : {}),
+        ...(episodeDescription ? { episode_description: episodeDescription } : {}),
+        ...(thumbnailPath ? { thumbnail_path: thumbnailPath, thumbnail_url: publicStorageUrl(thumbnailPath) } : {}),
         published: true,
       }),
     });
@@ -84,6 +140,6 @@ module.exports = async function adminVideos(request, response) {
     return sendJson(response, 201, { video: videos[0] });
   } catch (error) {
     console.error('Admin video catalog request failed:', error);
-    return sendJson(response, 500, { error: 'Data video tidak dapat diproses.' });
+    return sendJson(response, error.statusCode || 500, { error: error.statusCode ? error.message : 'Data video tidak dapat diproses.' });
   }
 };

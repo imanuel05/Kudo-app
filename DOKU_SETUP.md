@@ -30,6 +30,9 @@ send them in chat.
    For an existing database, also run
    [`supabase/migrations/20261010020000_reject_qris_orders.sql`](./supabase/migrations/20261010020000_reject_qris_orders.sql)
    before deploying admin transaction rejection.
+   Run [`supabase/migrations/20261010030000_catalog_video_metadata.sql`](./supabase/migrations/20261010030000_catalog_video_metadata.sql)
+   before deploying the expanded video catalog form; it adds series/episode
+   metadata and enables image uploads to the existing `catalog-video` bucket.
 2. In Vercel project settings, configure these environment variables for QRIS:
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`

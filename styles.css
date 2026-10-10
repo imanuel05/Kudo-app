@@ -817,8 +817,17 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .admin-pending-count { flex: 0 0 auto; padding: 5px 8px; border-radius: 8px; color: #7775c9; background: #f1f0ff; font-size: 10px; font-weight: 400; line-height: 1.2; }
 .admin-video-form { display: grid; gap: 7px; }
 .admin-video-form label { margin-top: 4px; color: #34364e; font-size: 11px; font-weight: 700; }
-.admin-video-form input:not([type=file]), .admin-video-form select { width: 100%; min-height: 39px; padding: 0 10px; border: 1px solid #d9d8e5; border-radius: 8px; color: #45475e; background: #fff; font: inherit; font-size: 11px; }
-.admin-video-form input[type=file] { width: 100%; color: #666; font-size: 10px; }
+.admin-video-form input:not([type=file]), .admin-video-form select, .admin-video-form textarea { width: 100%; min-height: 39px; padding: 9px 11px; border: 2px solid #d9d8e5; border-radius: 8px; color: #45475e; background: #fff; font: inherit; font-size: 11px; }
+.admin-video-form select { padding-right: 36px; appearance: none; background-image: linear-gradient(45deg, transparent 50%, #999 50%), linear-gradient(135deg, #999 50%, transparent 50%); background-position: calc(100% - 17px) 17px, calc(100% - 12px) 17px; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; }
+.admin-video-form textarea { min-height: 76px; resize: vertical; }
+.admin-video-form select:focus, .admin-video-form input:focus, .admin-video-form textarea:focus { outline: none; border-color: #797dff; }
+.admin-video-form [data-admin-new-show-fields] { display: grid; gap: 7px; }
+.admin-video-form [data-admin-new-show-fields][hidden] { display: none; }
+.admin-file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.admin-upload-area { width: 100%; min-height: 88px; padding: 10px; display: grid; place-items: center; overflow: hidden; border: 2px dashed #8984ff; border-radius: 10px; color: #7775ff; background: #fff; font-size: 11px; text-align: center; cursor: pointer; }
+.admin-upload-area strong, .admin-upload-area span { overflow-wrap: anywhere; }
+.admin-upload-area img { max-width: 100%; max-height: 130px; border-radius: 7px; object-fit: contain; }
+.admin-upload-area.admin-video-file-area { min-height: 58px; }
 .admin-video-form small { color: #888; font-size: 9px; line-height: 1.5; }
 .admin-order-card { display: grid; gap: 9px; padding: 12px; border: 1px solid #eeedf4; border-radius: 10px; background: #fff; }
 .admin-order-actions { display: grid; gap: 9px; }
@@ -857,6 +866,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .media-stream-page video { width: 100%; max-height: min(64vh, 520px); display: block; border-radius: 12px; background: #111; }
 .media-stream-page h2 { margin: 14px 0 5px; color: #333652; font-size: 16px; }
 .media-stream-page p { margin: 0; color: #888; font-size: 11px; }
+.media-stream-description { margin-top: 10px !important; line-height: 1.5; white-space: pre-wrap; }
 .catalog-latest-episode { margin-top: 4px; display: block; color: #888; font-size: 9px; }
 .transaction-cancel { width: 100%; min-height: 44px; }
 .transaction-pay { width: 100%; min-height: 48px; }
