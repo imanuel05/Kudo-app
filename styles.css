@@ -385,7 +385,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .task-create-form #task-deadline { color-scheme: light; }
 .task-create-form #task-deadline:invalid { color: #bfbfbf; }
 .task-create-form #task-deadline:invalid::-webkit-datetime-edit { color: #bfbfbf; }
-.task-create-form #task-deadline::-webkit-calendar-picker-indicator { width: 18px; height: 18px; margin-right: -12px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237975ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M7 3v4M17 3v4M3 10h18'/%3E%3C/svg%3E") center / contain no-repeat; cursor: pointer; }
+.task-create-form #task-deadline::-webkit-calendar-picker-indicator { width: 18px; height: 18px; margin-right: -4px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237975ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M7 3v4M17 3v4M3 10h18'/%3E%3C/svg%3E") center / contain no-repeat; cursor: pointer; }
 .task-create-screen .task-create-form input:not([type=file]),
 .task-create-screen .task-create-form input:not([type=file]):hover,
 .task-create-screen .task-create-form input:not([type=file]):focus,
@@ -739,7 +739,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-video-seek::-moz-range-track { height: 3px; background: #fff; }
 .anime-video-seek::-moz-range-progress { height: 3px; background: #9992ff; }
 .anime-video-seek::-moz-range-thumb { width: 8px; height: 8px; border: 0; border-radius: 50%; background: #fff; }
-.anime-video-shell.anime-controls-hidden .anime-video-controls, .anime-video-shell.anime-controls-hidden .anime-back-control { opacity: 0; pointer-events: none; }
+.anime-video-shell.anime-controls-hidden .anime-video-controls { opacity: 0; pointer-events: none; }
 .anime-stream-title { margin: 0 0 12px; color: #333652; font-size: 14px; font-weight: 700; }
 .anime-stream-genres { margin-bottom: 18px; display: flex; flex-wrap: wrap; gap: 4px; }
 .catalog-genres span, .anime-stream-genres span { padding: 3px 6px; border: 0; border-radius: 8px; color: #7775c9; background: #f1f0ff; font-family: inherit; font-size: 10px; font-weight: 400; line-height: 1.2; }
