@@ -974,7 +974,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .profile-banner h1 { margin: 0; padding: 17px 12px; color: #333652; font-size: 16px; font-weight: 700; }
 .profile-avatar-window { width: 138px; height: 112px; position: absolute; bottom: 0; left: 50%; overflow: hidden; transform: translateX(-50%); }
 .profile-avatar-window img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: contain; }
-.profile-settings { padding: 8px 22px 84px; }
+.profile-settings { padding: 8px 22px 0; }
 .profile-settings-section { margin-bottom: 9px; }
 .profile-settings-section > h2 { margin: 0 0 6px; color: #333652; font-size: 14px; font-weight: 700; }
 .profile-settings-card { overflow: hidden; border: 2px solid #d8d8d8; border-radius: 9px; background: #fff; }
