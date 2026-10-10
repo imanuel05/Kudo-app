@@ -45,6 +45,12 @@ test('payment history is authenticated and returns only the current user orders'
     if (url.endsWith('/auth/v1/user')) {
       return { ok: true, json: async () => ({ id: 'current-user' }) };
     }
+    if (url.includes('/storage/v1/object/sign/payment-proofs/')) {
+      return {
+        ok: true,
+        text: async () => JSON.stringify({ signedURL: '/object/sign/payment-proofs/proof.png?token=temporary' }),
+      };
+    }
     return {
       ok: true,
       text: async () => JSON.stringify([
@@ -53,6 +59,7 @@ test('payment history is authenticated and returns only the current user orders'
           diamonds: 1200,
           amount_idr: 10000,
           status: 'awaiting_verification',
+          proof_path: 'current-user/order/proof.png',
           created_at: recentOrderDate,
         },
         {
@@ -82,10 +89,13 @@ test('payment history is authenticated and returns only the current user orders'
       amount: 10000,
       status: 'awaiting_verification',
       createdAt: recentOrderDate,
+      proofUrl: 'https://supabase.example/storage/v1/object/sign/payment-proofs/proof.png?token=temporary',
     });
     assert.match(calls[1].url, /user_id=eq\.current-user/);
     assert.match(calls[1].url, /order=created_at\.desc/);
     const historyQuery = new URL(calls[1].url).searchParams;
+    assert.match(historyQuery.get('select'), /proof_path/);
+    assert.ok(calls.some(({ url }) => url.includes('/storage/v1/object/sign/payment-proofs/current-user/order/proof.png')));
     const requestedCutoff = Date.parse(historyQuery.get('created_at').slice(4));
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
     assert.ok(requestedCutoff <= thirtyDaysAgo);
