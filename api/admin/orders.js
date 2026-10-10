@@ -41,7 +41,7 @@ module.exports = async function adminOrders(request, response) {
           limit: '100',
         })}`),
         supabaseRequest(`/rest/v1/payment_orders?${new URLSearchParams({
-          select: 'invoice_number,user_id,diamonds,amount_idr,status,created_at,paid_at,rejected_at',
+          select: 'invoice_number,user_id,diamonds,amount_idr,status,proof_path,created_at,paid_at,rejected_at',
           status: 'in.(paid,rejected)',
           order: 'created_at.desc',
           limit: '100',
@@ -60,7 +60,7 @@ module.exports = async function adminOrders(request, response) {
           createdAt: order.created_at,
           proofUrl: order.proof_path ? await signedProofUrl(order.proof_path) : '',
         }))),
-        verifiedOrders: verifiedOrders.map((order) => ({
+        verifiedOrders: await Promise.all(verifiedOrders.map(async (order) => ({
           invoiceNumber: order.invoice_number,
           userId: order.user_id,
           diamonds: order.diamonds,
@@ -68,7 +68,8 @@ module.exports = async function adminOrders(request, response) {
           status: order.status,
           createdAt: order.created_at,
           verifiedAt: order.paid_at || order.rejected_at,
-        })),
+          proofUrl: order.proof_path ? await signedProofUrl(order.proof_path) : '',
+        }))),
       });
     }
 

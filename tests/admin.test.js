@@ -167,6 +167,7 @@ test('admin order listing signs private payment proofs for review', async () => 
           diamonds: 2000,
           amount_idr: 15000,
           status: 'paid',
+          proof_path: 'verified-customer/paid-proof.png',
           created_at: '2026-10-07T00:00:00.000Z',
           paid_at: '2026-10-08T00:00:00.000Z',
           rejected_at: null,
@@ -176,6 +177,7 @@ test('admin order listing signs private payment proofs for review', async () => 
           diamonds: 1200,
           amount_idr: 10,
           status: 'rejected',
+          proof_path: 'rejected-customer/rejected-proof.png',
           created_at: '2026-10-06T00:00:00.000Z',
           paid_at: null,
           rejected_at: '2026-10-08T01:00:00.000Z',
@@ -213,6 +215,7 @@ test('admin order listing signs private payment proofs for review', async () => 
       status: 'paid',
       createdAt: '2026-10-07T00:00:00.000Z',
       verifiedAt: '2026-10-08T00:00:00.000Z',
+      proofUrl: 'https://supabase.example/storage/v1/object/sign/payment-proofs/proof.png?token=temporary',
     });
     assert.deepEqual(result.verifiedOrders[1], {
       invoiceNumber: 'KUDO-00000000-0000-4000-8000-000000000002',
@@ -222,6 +225,7 @@ test('admin order listing signs private payment proofs for review', async () => 
       status: 'rejected',
       createdAt: '2026-10-06T00:00:00.000Z',
       verifiedAt: '2026-10-08T01:00:00.000Z',
+      proofUrl: 'https://supabase.example/storage/v1/object/sign/payment-proofs/proof.png?token=temporary',
     });
   } finally {
     global.fetch = originalFetch;
