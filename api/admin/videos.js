@@ -40,7 +40,7 @@ module.exports = async function adminVideos(request, response) {
 
     if (request.method === 'GET') {
       const query = new URLSearchParams({
-        select: 'id,category,show_title,episode_title,episode_number,video_path,video_url,created_at,folder_name,show_description,poster_path,poster_url,genres,show_type,episode_description,thumbnail_path,thumbnail_url',
+        select: 'id,category,show_title,episode_title,episode_number,video_path,video_url,created_at,folder_name,show_description,poster_path,poster_url,episode_poster_path,episode_poster_url,genres,show_type,episode_description,thumbnail_path,thumbnail_url',
         order: 'created_at.desc',
         limit: '100',
       });
@@ -66,6 +66,7 @@ module.exports = async function adminVideos(request, response) {
     const showType = String(body.showType || 'Series');
     const episodeDescription = String(body.episodeDescription || '').trim();
     const posterPath = String(body.posterPath || '');
+    const episodePosterPath = String(body.episodePosterPath || '');
     const thumbnailPath = String(body.thumbnailPath || '');
     if (
       !['anime', 'kdrama'].includes(category)
@@ -78,7 +79,7 @@ module.exports = async function adminVideos(request, response) {
       || episodeNumber > 9999
       || (folderName && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(folderName))
       || showDescription.length > 5000
-      || (folderName && (!showDescription || !genres.length || !posterPath || !thumbnailPath))
+      || (folderName && (!showDescription || !genres.length || !posterPath || !episodePosterPath || !thumbnailPath))
       || genres.length > 20
       || genres.some((genre) => genre.length > 40)
       || !['Series', 'Movie'].includes(showType)
@@ -104,6 +105,15 @@ module.exports = async function adminVideos(request, response) {
       }
       await validateStorageObject(posterPath, ['image/png', 'image/jpeg', 'image/webp'], IMAGE_LIMIT_BYTES, 'Poster harus PNG/JPG/WebP maksimal 5 MB');
     }
+    if (episodePosterPath) {
+      const episodePosterPattern = folderName
+        ? new RegExp(`^${access.user.id}/${folderName}/episode-posters/[0-9a-f-]{36}\\.(png|jpe?g|webp)$`, 'i')
+        : null;
+      if (!episodePosterPattern?.test(episodePosterPath)) {
+        return sendJson(response, 400, { error: 'Lokasi poster episode tidak valid.' });
+      }
+      await validateStorageObject(episodePosterPath, ['image/png', 'image/jpeg', 'image/webp'], IMAGE_LIMIT_BYTES, 'Poster episode harus PNG/JPG/WebP maksimal 5 MB');
+    }
     if (thumbnailPath) {
       const thumbnailPattern = folderName
         ? new RegExp(`^${access.user.id}/${folderName}/thumbnails/episode-${episodeNumber}-[0-9a-f-]{36}\\.(png|jpe?g|webp)$`, 'i')
@@ -127,6 +137,10 @@ module.exports = async function adminVideos(request, response) {
         ...(folderName ? { folder_name: folderName } : {}),
         ...(showDescription ? { show_description: showDescription } : {}),
         ...(posterPath ? { poster_path: posterPath, poster_url: publicStorageUrl(posterPath) } : {}),
+        ...(episodePosterPath ? {
+          episode_poster_path: episodePosterPath,
+          episode_poster_url: publicStorageUrl(episodePosterPath),
+        } : {}),
         ...(genres.length ? { genres } : {}),
         ...(showType ? { show_type: showType } : {}),
         ...(episodeDescription ? { episode_description: episodeDescription } : {}),

@@ -74,6 +74,8 @@ alter table public.catalog_videos
   add column if not exists show_description text not null default '',
   add column if not exists poster_path text,
   add column if not exists poster_url text,
+  add column if not exists episode_poster_path text,
+  add column if not exists episode_poster_url text,
   add column if not exists genres text[] not null default '{}',
   add column if not exists show_type text not null default 'Series',
   add column if not exists episode_description text not null default '',

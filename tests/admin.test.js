@@ -323,6 +323,8 @@ test('admin video listing returns saved folder metadata and storage paths', asyn
     show_description: 'Saved folder description',
     poster_path: 'admin-user/frieren-beyond-journeys-end-1234abcd/poster.webp',
     poster_url: 'https://supabase.example/storage/v1/object/public/catalog-video/admin-user/frieren/poster.webp',
+    episode_poster_path: 'admin-user/frieren-beyond-journeys-end-1234abcd/episode-posters/episode.webp',
+    episode_poster_url: 'https://supabase.example/storage/v1/object/public/catalog-video/admin-user/frieren/episode-posters/episode.webp',
     genres: ['Fantasy', 'Adventure'],
     show_type: 'Series',
     episode_title: 'Episode 1',
@@ -352,6 +354,7 @@ test('admin video listing returns saved folder metadata and storage paths', asyn
     const selectedFields = new URL(catalogRequest).searchParams.get('select');
     assert.match(selectedFields, /folder_name/);
     assert.match(selectedFields, /poster_path,poster_url/);
+    assert.match(selectedFields, /episode_poster_path,episode_poster_url/);
     assert.match(selectedFields, /show_description/);
     assert.match(selectedFields, /genres/);
     assert.match(selectedFields, /show_type/);
@@ -398,6 +401,7 @@ test('admin video insertion validates poster and thumbnail metadata for a new se
         genres: ['Fantasy', 'Adventure'],
         showType: 'Series',
         posterPath: '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/poster.png',
+        episodePosterPath: '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/episode-posters/00000000-0000-4000-8000-000000000003.png',
         thumbnailPath: '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/thumbnails/episode-1-00000000-0000-4000-8000-000000000001.webp',
         videoPath: '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/episodes/00000000-0000-4000-8000-000000000002.mp4',
       },
@@ -409,8 +413,9 @@ test('admin video insertion validates poster and thumbnail metadata for a new se
     assert.equal(insertedVideo.show_description, 'A licensed series description.');
     assert.deepEqual(insertedVideo.genres, ['Fantasy', 'Adventure']);
     assert.equal(insertedVideo.poster_path, '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/poster.png');
+    assert.equal(insertedVideo.episode_poster_path, '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/episode-posters/00000000-0000-4000-8000-000000000003.png');
     assert.equal(insertedVideo.thumbnail_path, '00000000-0000-4000-8000-000000000000/licensed-series-1234abcd/thumbnails/episode-1-00000000-0000-4000-8000-000000000001.webp');
-    assert.equal(calls.filter(({ url }) => url.includes('/storage/v1/object/info/catalog-video/')).length, 3);
+    assert.equal(calls.filter(({ url }) => url.includes('/storage/v1/object/info/catalog-video/')).length, 4);
   } finally {
     global.fetch = originalFetch;
   }

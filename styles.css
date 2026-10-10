@@ -832,6 +832,14 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .admin-section-heading p { margin: 0; color: #888; font-size: 10px; line-height: 1.5; }
 .admin-pending-count { flex: 0 0 auto; padding: 5px 8px; border-radius: 8px; color: #7775c9; background: #f1f0ff; font-size: 10px; font-weight: 400; line-height: 1.2; }
 .admin-video-form { display: grid; gap: 7px; }
+.admin-video-step { display: grid; gap: 7px; }
+.admin-video-step[hidden] { display: none; }
+.admin-video-step-actions { display: flex; align-items: center; gap: 8px; }
+.admin-video-step-actions [data-admin-step-indicator] { flex: 1; color: #888; font-size: 11px; text-align: center; }
+.admin-video-step-actions .button { min-height: 42px; padding: 0 14px; font-size: 14px; }
+.catalog-pagination { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 4px; color: #888; font-size: 11px; }
+.catalog-pagination button { min-height: 34px; padding: 0 10px; border: 1px solid #dedee5; border-radius: 7px; color: #555; background: #fff; font: inherit; }
+.catalog-pagination button:disabled { opacity: .45; }
 .admin-video-form label { margin-top: 4px; color: #34364e; font-size: 11px; font-weight: 700; }
 .admin-video-form input:not([type=file]), .admin-video-form select, .admin-video-form textarea { width: 100%; min-height: 39px; padding: 9px 11px; border: 2px solid #d9d8e5; border-radius: 8px; color: #45475e; background: #fff; font: inherit; font-size: 11px; }
 .admin-select-wrap { position: relative; display: block; }
