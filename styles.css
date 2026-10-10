@@ -837,6 +837,9 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .admin-panel-error { color: #d92d38; }
 .admin-video-row { display: grid; gap: 4px; padding: 9px 0; border-top: 1px solid #eeedf4; }
 .admin-video-row strong { color: #333652; font-size: 11px; }
+.admin-verified-order { display: grid; gap: 4px; padding: 9px 0; border-top: 1px solid #eeedf4; }
+.admin-verified-order strong { color: #333652; font-size: 11px; }
+.admin-verified-order small { overflow-wrap: anywhere; color: #888; font-size: 9px; }
 .media-stream-page video { width: 100%; max-height: min(64vh, 520px); display: block; border-radius: 12px; background: #111; }
 .media-stream-page h2 { margin: 14px 0 5px; color: #333652; font-size: 16px; }
 .media-stream-page p { margin: 0; color: #888; font-size: 11px; }

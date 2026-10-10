@@ -32,14 +32,23 @@ module.exports = async function adminOrders(request, response) {
     if (!access.user) return respondUnauthorized(response, access.status);
 
     if (request.method === 'GET') {
-      const query = new URLSearchParams({
-        select: 'invoice_number,user_id,diamonds,amount_idr,status,proof_path,created_at',
-        status: 'eq.awaiting_verification',
-        order: 'created_at.asc',
-        limit: '100',
-      });
-      const orders = await supabaseRequest(`/rest/v1/payment_orders?${query}`);
-      if (!Array.isArray(orders)) throw new Error('Admin payment order response was invalid.');
+      const [orders, verifiedOrders] = await Promise.all([
+        supabaseRequest(`/rest/v1/payment_orders?${new URLSearchParams({
+          select: 'invoice_number,user_id,diamonds,amount_idr,status,proof_path,created_at',
+          status: 'eq.awaiting_verification',
+          order: 'created_at.asc',
+          limit: '100',
+        })}`),
+        supabaseRequest(`/rest/v1/payment_orders?${new URLSearchParams({
+          select: 'invoice_number,user_id,diamonds,amount_idr,status,created_at,paid_at',
+          status: 'eq.paid',
+          order: 'paid_at.desc.nullslast',
+          limit: '100',
+        })}`),
+      ]);
+      if (!Array.isArray(orders) || !Array.isArray(verifiedOrders)) {
+        throw new Error('Admin payment order response was invalid.');
+      }
       return sendJson(response, 200, {
         orders: await Promise.all(orders.map(async (order) => ({
           invoiceNumber: order.invoice_number,
@@ -50,6 +59,15 @@ module.exports = async function adminOrders(request, response) {
           createdAt: order.created_at,
           proofUrl: order.proof_path ? await signedProofUrl(order.proof_path) : '',
         }))),
+        verifiedOrders: verifiedOrders.map((order) => ({
+          invoiceNumber: order.invoice_number,
+          userId: order.user_id,
+          diamonds: order.diamonds,
+          amount: order.amount_idr,
+          status: order.status,
+          createdAt: order.created_at,
+          verifiedAt: order.paid_at,
+        })),
       });
     }
 

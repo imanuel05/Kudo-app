@@ -95,9 +95,18 @@ test('admin order listing signs private payment proofs for review', async () => 
       };
     }
     if (url.includes('/rest/v1/payment_orders')) {
+      const status = new URL(url).searchParams.get('status');
       return {
         ok: true,
-        text: async () => JSON.stringify([{
+        text: async () => JSON.stringify(status === 'eq.paid' ? [{
+          invoice_number: 'KUDO-00000000-0000-4000-8000-000000000001',
+          user_id: 'verified-customer',
+          diamonds: 2000,
+          amount_idr: 15000,
+          status: 'paid',
+          created_at: '2026-10-07T00:00:00.000Z',
+          paid_at: '2026-10-08T00:00:00.000Z',
+        }] : [{
           invoice_number: 'KUDO-00000000-0000-4000-8000-000000000000',
           user_id: 'customer-user',
           diamonds: 1200,
@@ -121,7 +130,17 @@ test('admin order listing signs private payment proofs for review', async () => 
     const response = createResponse();
     await adminOrders({ method: 'GET', headers: { authorization: 'Bearer token' } }, response);
     assert.equal(response.statusCode, 200);
-    assert.match(JSON.parse(response.body).orders[0].proofUrl, /^https:\/\/supabase\.example\/storage\/v1\/object\/sign\//);
+    const result = JSON.parse(response.body);
+    assert.match(result.orders[0].proofUrl, /^https:\/\/supabase\.example\/storage\/v1\/object\/sign\//);
+    assert.deepEqual(result.verifiedOrders[0], {
+      invoiceNumber: 'KUDO-00000000-0000-4000-8000-000000000001',
+      userId: 'verified-customer',
+      diamonds: 2000,
+      amount: 15000,
+      status: 'paid',
+      createdAt: '2026-10-07T00:00:00.000Z',
+      verifiedAt: '2026-10-08T00:00:00.000Z',
+    });
   } finally {
     global.fetch = originalFetch;
   }
