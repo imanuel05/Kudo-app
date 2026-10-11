@@ -281,10 +281,13 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .product-screen {
   position: relative;
   width: min(100vw, 412px);
+  height: 100dvh;
   min-height: 100dvh;
   margin-inline: auto;
   padding-bottom: 76px;
   overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
   background: #fff;
 }
 
@@ -323,6 +326,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .token-crystal { color: #0bb8ec; background: transparent; }
 
 .page-content { padding: 19px 22px 26px; }
+.product-screen:has(.add-task-card) .page-content { padding-bottom: 19px; }
 .add-task-card { min-height: 100px; padding: 17px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: 15px; background: #f0efff; }
 .add-task-card h1 { margin: 0 0 5px; color: #333652; font-size: 14px; font-weight: 700; }
 .add-task-card p { max-width: 240px; margin: 0; color: #bfbfbf; font-size: 10px; font-weight: 400; line-height: 1.45; }
@@ -370,7 +374,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .quest-boss { position: relative; margin-top: 82px; overflow: visible; isolation: isolate; background: #ffeded; }
 .boss-screen .quest-boss { margin-top: 72px; }
 .quest-boss img { width: 90%; height: 188px; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); object-fit: contain; mix-blend-mode: multiply; }
-.task-create-screen { width: min(100%, 412px); min-height: 100dvh; margin: 0 auto; position: relative; overflow-y: auto; background: #fff; }
+.task-create-screen { width: min(100%, 412px); height: 100dvh; min-height: 100dvh; margin: 0 auto; position: relative; overflow-y: auto; overscroll-behavior-y: contain; background: #fff; }
 .task-create-inventory { width: 100%; }
 .task-create-content { min-height: calc(100dvh - 62px); padding: 88px 21px 20px; display: flex; flex-direction: column; }
 .task-create-hero { height: 100px; margin: 0 0 25px; position: relative; flex: 0 0 auto; border-radius: 15px; background: #f1f0ff; }
@@ -378,6 +382,10 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .task-create-form { flex: 1; display: flex; flex-direction: column; }
 .task-create-form > label:not(.upload-area) { margin: 0 0 8px; color: #000; font-size: 14px; font-weight: 700; }
 .task-create-form input:not([type=file]) { width: 100%; height: 43px; margin: 0 0 13px; padding: 0 12px; border: 2px solid #e4e4e4; border-radius: 10px; color: #45475e; background: #fff; font-size: 12px; }
+.task-create-form textarea { width: 100%; min-height: 82px; margin: 0 0 13px; padding: 10px 12px; resize: vertical; border: 2px solid #e4e4e4; border-radius: 10px; color: #45475e; background: #fff; font: inherit; font-size: 12px; }
+.task-create-form textarea::placeholder { color: #bfbfbf; opacity: 1; }
+.task-create-form textarea:focus,
+.task-create-form textarea:focus-visible { border-color: #e4e4e4; outline: none; box-shadow: none; }
 .task-create-form input:not([type=file]):hover,
 .task-create-form input:not([type=file]):focus,
 .task-create-form input:not([type=file]):focus-visible { border-color: #e4e4e4; outline: none; box-shadow: none; }
@@ -434,6 +442,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .task-list { display: grid; gap: 9px; }
 .task-row { min-height: 57px; padding: 8px 9px; display: grid; gap: 8px; border: 2px solid #e2e2e2; border-radius: 12px; background: #fff; }
 .task-row-main { min-width: 0; display: flex; align-items: center; gap: 9px; }
+.task-description { margin: 0; color: #656677; font-size: 11px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 .task-row.is-done { opacity: .7; }
 .task-check { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border: 2px solid #e2e2e2; border-radius: 7px; color: #fff; background: #fff; font-size: 20px; font-weight: 700; line-height: 1; }
 .task-check.checked { border-color: #e2e2e2; background: #19bd4b; }
@@ -525,7 +534,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .focus-session-time { margin: 5px 0 10px; color: #999; font-size: 10px; text-align: right; font-variant-numeric: tabular-nums; }
 .session-skip { width: 34px; height: 40px; border: 0; color: #9690ff; background: transparent; font-size: 20px; }
 .session-play { width: 48px; height: 48px; background: #aaa5ff; font-size: 20px; }
-.focus-recommendations { margin-top: 18px; padding: 18px 16px; border: 2px solid #ddd; border-radius: 13px; }
+.focus-recommendations { margin-top: 18px; padding: 18px 16px; border: 0; border-radius: 13px; }
 .focus-recommendations h3 { margin: 0 0 14px; color: #111; font-size: 15px; font-weight: 700; }
 .focus-recommendations > div { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .focus-recommendations button { padding: 0; overflow: hidden; display: grid; gap: 7px; border: 0; color: #111; background: transparent; text-align: left; }
@@ -534,11 +543,14 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .focus-recommendation-copy strong { color: #111; font-size: 15px; font-weight: 700; }
 .focus-recommendation-copy small { color: #999; font-size: 11px; }
 .focus-mini-player { width: min(100vw, 412px); min-height: 56px; padding: 7px 10px 9px; position: fixed; z-index: 30; left: 50%; bottom: max(68px, calc(59px + env(safe-area-inset-bottom, 0px))); display: flex; align-items: center; gap: 9px; box-sizing: border-box; background: #fff; box-shadow: 0 -3px 12px #2222; transform: translateX(-50%); }
-.focus-mini-player > img { width: 38px; height: 38px; flex: 0 0 38px; border-radius: 6px; object-fit: cover; }
+.focus-mini-open { position: absolute; z-index: 0; inset: 0; width: 100% !important; height: 100% !important; border-radius: 0; }
+.focus-mini-player > img { position: relative; z-index: 1; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 6px; object-fit: cover; pointer-events: none; }
 .focus-mini-copy { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.focus-mini-copy { position: relative; z-index: 1; pointer-events: none; }
 .focus-mini-copy strong { overflow: hidden; color: #111; font-size: 12px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .focus-mini-copy small { color: #aaa; font-size: 10px; }
-.focus-mini-player button { width: 28px; height: 34px; padding: 0; display: grid; place-items: center; border: 0; color: #9992ff; background: transparent; font-size: 21px; line-height: 1; }
+.focus-mini-player button { position: relative; z-index: 2; width: 28px; height: 34px; padding: 0; display: grid; place-items: center; border: 0; color: #9992ff; background: transparent; font-size: 21px; line-height: 1; }
+.focus-mini-player .focus-mini-open { position: absolute; }
 .focus-mini-player button[data-action="dismiss-focus-player"] { color: #999; font-size: 22px; }
 .focus-mini-player .focus-mini-toggle svg { width: 22px; height: 22px; fill: currentColor; }
 .focus-mini-progress { height: 3px; position: absolute; right: 0; bottom: 0; left: 0; background: #efeff2; }
@@ -688,8 +700,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .profile-info-dialog h2 { margin-bottom: 8px; }
 .profile-info-dialog > img { width: 100%; height: 150px; display: block; object-fit: contain; }
 .profile-info-dialog > p { margin: 8px 0 12px; }
-.account-page { width: min(100vw, 412px); min-height: 100dvh; margin: 0 auto; padding: 0 24px 28px; display: flex; flex-direction: column; align-items: stretch; background: #fff; }
-.account-page-header { min-height: 62px; margin: 0 -24px 20px; padding: 0 18px; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #eee; }
+.account-page { width: min(100vw, 412px); height: 100dvh; min-height: 100dvh; margin: 0 auto; padding: 0 24px 28px; overflow-y: auto; overscroll-behavior-y: contain; display: flex; flex-direction: column; align-items: stretch; background: #fff; }
+.account-page-header { min-height: 62px; margin: 0 -24px 20px; padding: 0 18px; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 13px; border-bottom: 1px solid #eee; background: #fff; }
 .account-page-header button { width: 26px; height: 32px; padding: 0; display: grid; place-items: center; border: 0; color: #999; background: transparent; font-size: 0; }
 .account-page-header button::before { width: 10px; height: 10px; content: ''; border-left: 4px solid currentColor; border-bottom: 4px solid currentColor; border-radius: 2px; transform: rotate(45deg); }
 .account-page-header h1 { margin: 0; color: #bfbfbf; font-size: 16px; font-weight: 700; }
@@ -716,8 +728,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-video-stage { position: relative; }
 .anime-video-shell video { width: 100%; aspect-ratio: 16 / 9; display: block; background: #10121a; object-fit: contain; }
 .anime-video-shell iframe { width: 100%; aspect-ratio: 16 / 9; display: block; border: 0; background: #10121a; }
-.anime-video-stage:fullscreen, .anime-video-stage:-webkit-full-screen { width: 100%; height: 100%; display: grid; place-items: center; background: #10121a; }
-.anime-video-stage:fullscreen video, .anime-video-stage:-webkit-full-screen video { width: 100%; height: 100%; aspect-ratio: auto; object-fit: contain; }
+.anime-video-stage:fullscreen, .anime-video-stage:-webkit-full-screen { position: fixed; inset: 0; width: 100vw; height: 100dvh; max-width: none; max-height: none; display: grid; place-items: center; background: #10121a; }
+.anime-video-stage:fullscreen video, .anime-video-stage:-webkit-full-screen video { width: 100%; height: 100%; max-width: 100%; max-height: 100%; aspect-ratio: auto; object-fit: contain; }
 .anime-pip { width: min(320px, calc(100vw - 24px)); aspect-ratio: 16 / 9; position: fixed; z-index: 50; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(68px + 14px + env(safe-area-inset-bottom, 0px)); overflow: hidden; border-radius: 12px; background: #10121a; box-shadow: 0 4px 18px #0005; cursor: pointer; }
 .anime-pip-drag-handle { height: 24px; position: absolute; z-index: 4; inset: 0 42px auto 0; display: grid; place-items: center; cursor: grab; touch-action: none; }
 .anime-pip-drag-handle::after { width: 34px; height: 4px; position: relative; left: 21px; border-radius: 4px; background: #fff9; content: ""; }
@@ -1020,9 +1032,9 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .profile-settings { padding: 8px 22px 0; }
 .profile-settings-section { margin-bottom: 9px; }
 .profile-settings-section > h2 { margin: 0 0 6px; color: #333652; font-size: 14px; font-weight: 700; }
-.profile-settings-card { overflow: hidden; border: 2px solid #d8d8d8; border-radius: 9px; background: #fff; }
-.profile-settings-card > button:not(.strict-toggle) { width: 100%; min-height: 43px; padding: 7px 12px; display: flex; align-items: center; justify-content: space-between; border: 0; color: #333652; background: #fff; font-size: 12px; font-weight: 700; text-align: left; }
-.profile-settings-card > button + button { border-top: 2px solid #e4e4e4 !important; }
+.profile-settings-card { overflow: hidden; border: 2px solid #e3e1ff; border-radius: 9px; background: #f1f0ff; }
+.profile-settings-card > button:not(.strict-toggle) { width: 100%; min-height: 43px; padding: 7px 12px; display: flex; align-items: center; justify-content: space-between; border: 0; color: #333652; background: #f1f0ff; font-size: 12px; font-weight: 700; text-align: left; }
+.profile-settings-card > button + button { border-top: 2px solid #e3e1ff !important; }
 .profile-settings-card > button b { width: 10px; height: 10px; display: block; border-top: 3px solid #999; border-right: 3px solid #999; color: transparent; font-size: 0; line-height: 0; transform: rotate(45deg); }
 .profile-settings-card.preference-row { min-height: 44px; padding: 5px 12px; display: flex; align-items: center; justify-content: space-between; color: #333652; font-size: 12px; font-weight: 700; }
 .strict-toggle { width: 42px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: flex-start; border: 0; border-radius: 13px; background: #aaa; }
@@ -1140,7 +1152,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .product-screen .noise-option strong { color: #333652; font-size: 12px; font-weight: 700; }
 .product-screen .noise-option small { font-size: 10px; font-weight: 400; }
 .noise-list > .noise-option { box-sizing: border-box; border: 2px solid #e4e4e4; }
-.focus-session-page .focus-recommendations { box-sizing: border-box; border: 2px solid #ddd; }
+.focus-session-page .focus-recommendations { box-sizing: border-box; border: 0; }
 .focus-session-art { width: min(100%, 343px); height: min(343px, calc(100vw - 30px)); margin: 0 auto; aspect-ratio: 1; object-fit: cover; }
 .focus-session-page > h2,
 .focus-recommendations h3 { color: #333652; font-size: 14px; font-weight: 700; }

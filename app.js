@@ -1393,6 +1393,7 @@ function taskCard(task) {
       <button class="task-check ${task.done ? 'checked' : ''}" type="button" data-complete="${task.id}" aria-label="${task.done ? 'Selesai' : 'Selesaikan'}: ${escapeHtml(task.title)}">${task.done ? '✓' : ''}</button>
       <button class="task-delete" type="button" data-delete="${task.id}" aria-label="Hapus ${escapeHtml(task.title)}"><img src="assets/trash-icon.png" alt="" /></button>
     </div>
+    ${task.description ? `<p class="task-description">${escapeHtml(task.description)}</p>` : ''}
     ${task.photo ? `<button class="task-photo-preview" type="button" data-action="view-task-photo" data-photo="${task.photo}" aria-label="Perbesar lampiran ${escapeHtml(task.title)}"><img src="${task.photo}" alt="Lampiran tugas: ${escapeHtml(task.title)}" /></button>` : ''}
   </article>`;
 }
@@ -1582,6 +1583,18 @@ function renderTaskCreate() {
             accept="image/*"
             hidden
           />
+
+          <label for="task-description">
+            Deskripsi (opsional)
+          </label>
+
+          <textarea
+            id="task-description"
+            name="description"
+            maxlength="500"
+            rows="3"
+            placeholder="Tambahkan detail tugas"
+          ></textarea>
 
           <button
             class="button button-primary task-create-submit"
@@ -3083,7 +3096,7 @@ function renderProfile() {
   ];
   app.innerHTML = `<section class="product-screen profile-screen"><header class="profile-banner"><h1>${username}</h1><div class="profile-avatar-window"><img src="${getAccountAvatarSource()}" alt="Foto profil ${username}" /></div></header><main class="profile-settings">
     <section class="profile-settings-section"><h2>Akun</h2><div class="profile-settings-card"><button type="button" data-nav="account"><span>Profil</span><b>›</b></button><button type="button" data-action="profile-performance"><span>Performa</span><b>›</b></button></div></section>
-    <section class="profile-settings-section"><h2>Histori pembelian</h2><div class="profile-settings-card"><button type="button" data-nav="purchase-history"><span>Histori pembelian</span><b>›</b></button></div></section>
+    <section class="profile-settings-section"><h2>Notifikasi</h2><div class="profile-settings-card"><button type="button" data-nav="purchase-history"><span>Histori pembelian</span><b>›</b></button></div></section>
     <section class="profile-settings-section"><h2>Dukungan</h2><div class="profile-settings-card"><button type="button" data-action="profile-info" data-title="Pusat bantuan" data-message="Butuh bantuan menggunakan Kudo? Di sini kamu bisa mengatur tugas, memakai mode fokus, dan membuka hadiah. Untuk bantuan lebih lanjut, hubungi bantuan@kudo_task_management_app"><span>Pusat bantuan</span><b>›</b></button><button type="button" data-action="open-suggestions"><span>Saran</span><b>›</b></button></div></section>
     ${isAdminUser ? `<section class="profile-settings-section"><h2>Panel admin</h2><div class="profile-settings-card">${adminProfileLinks.map(([page, label]) => `<button type="button" data-nav="${page}"><span>${label}</span><b>›</b></button>`).join('')}</div></section>` : ''}
     <button class="profile-logout" type="button" data-action="logout">Keluar</button><div class="profile-legal"><button type="button" data-action="profile-info" data-title="Ketentuan" data-message="Dengan menggunakan Kudo, kamu setuju memakai fitur aplikasi secara wajar, menjaga keamanan akun, dan bertanggung jawab atas tugas serta konten yang kamu tambahkan. Fitur pada aplikasi ini disediakan untuk membantu mengatur kebiasaan belajar.">Ketentuan</button><button type="button" data-action="profile-info" data-title="Kebijakan Privasi" data-message="Aplikasi Kudo menyimpan nama pengguna, tugas, dan preferensi secara aman untuk kenyamanan pengguna.">Kebijakan Privasi</button><button type="button" data-action="profile-info" data-title="Ucapan terima kasih" data-message="Terima kasih telah menggunakan Kudo dan meluangkan waktu untuk menyelesaikan setiap tugas. Semoga Kudo membuat proses belajar dan beristirahat terasa lebih menyenangkan.">Ucapan terima kasih</button></div>
@@ -4166,7 +4179,7 @@ function render() {
     const playerIcon = session.paused
       ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z" /></svg>'
       : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h4v16H7zm7 0h4v16h-4z" /></svg>';
-    app.querySelector('.product-screen')?.insertAdjacentHTML('beforeend', `<aside class="focus-mini-player" aria-label="White noise sedang diputar"><img src="${sounds[session.noise] || ASSETS.noiseRain}" alt="" /><span class="focus-mini-copy"><strong>${escapeHtml(session.noise || 'White noise')}</strong><small>White noise</small></span><button class="focus-mini-toggle" type="button" data-action="toggle-focus-player" aria-label="${session.paused ? 'Putar' : 'Jeda'}">${playerIcon}</button><button type="button" data-action="dismiss-focus-player" aria-label="Hentikan white noise">×</button><span class="focus-mini-progress" aria-hidden="true"><span id="focus-mini-progress" style="width:${progress}%"></span></span></aside>`);
+    app.querySelector('.product-screen')?.insertAdjacentHTML('beforeend', `<aside class="focus-mini-player" aria-label="White noise sedang diputar"><button class="focus-mini-open" type="button" data-action="open-focus-session" aria-label="Kembali ke white noise yang sedang diputar"></button><img src="${sounds[session.noise] || ASSETS.noiseRain}" alt="" /><span class="focus-mini-copy"><strong>${escapeHtml(session.noise || 'White noise')}</strong><small>White noise</small></span><button class="focus-mini-toggle" type="button" data-action="toggle-focus-player" aria-label="${session.paused ? 'Putar' : 'Jeda'}">${playerIcon}</button><button type="button" data-action="dismiss-focus-player" aria-label="Hentikan white noise">×</button><span class="focus-mini-progress" aria-hidden="true"><span id="focus-mini-progress" style="width:${progress}%"></span></span></aside>`);
   }
   if (modal) app.insertAdjacentHTML('beforeend', modalView());
   if (state.activeFocus && !state.activeFocus.paused) startFocusTicker();
@@ -4944,6 +4957,9 @@ app.addEventListener('click', async (event) => {
       persist();
       break;
     }
+    case 'open-focus-session':
+      if (state.activeFocus) navigate('focus-session');
+      return;
     case 'switch-focus-sound': {
       const sounds = ['Rain', 'Ocean Waves', 'Forest'];
       const nextName = button.dataset.noise;
@@ -5534,6 +5550,10 @@ app.addEventListener('submit', async (event) => {
       formData.get('title') || ''
     ).trim();
 
+    const description = String(
+      formData.get('description') || ''
+    ).trim();
+
     const deadline = String(
       formData.get('deadline') || ''
     );
@@ -5561,6 +5581,7 @@ app.addEventListener('submit', async (event) => {
     const task = {
       id: crypto.randomUUID(),
       title,
+      description,
       deadline,
       photo,
       createdAt: new Date().toISOString(),
