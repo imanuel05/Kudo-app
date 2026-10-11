@@ -1907,7 +1907,7 @@ function renderTaskPage(kind) {
 
     ${
       hard
-        ? `<div class="quest-illustration quest-boss"><div class="quest-boss-panel"></div><button class="quest-boss-avatar" type="button" data-nav="boss" aria-label="Boss ${escapeHtml(activeBoss.name)}"><img src="${activeBoss.image}" alt="${escapeHtml(activeBoss.alt)}" /></button></div>`
+        ? `<div class="quest-illustration quest-boss"><div class="quest-boss-panel"></div><button class="quest-boss-avatar" type="button" data-nav="boss-select" aria-label="Pilih boss: ${escapeHtml(activeBoss.name)}"><img src="${activeBoss.image}" alt="${escapeHtml(activeBoss.alt)}" /></button></div>`
         : `<div class="quest-illustration quest-daily"><img src="${ASSETS.artDaily}" alt="Dua anak belajar bersama kucing" /></div>`
     }
 
