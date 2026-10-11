@@ -39,6 +39,7 @@ test('payment history is authenticated and returns only the current user orders'
   const originalFetch = global.fetch;
   const calls = [];
   const recentOrderDate = new Date().toISOString();
+  const verifiedOrderDate = new Date(Date.now() - 5 * 60 * 1000).toISOString();
   const expiredOrderDate = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString();
   global.fetch = async (input, options = {}) => {
     const url = String(input);
@@ -62,13 +63,25 @@ test('payment history is authenticated and returns only the current user orders'
           status: 'awaiting_verification',
           proof_path: 'current-user/order/proof.png',
           created_at: recentOrderDate,
+          paid_at: null,
+          rejected_at: null,
         },
         {
           invoice_number: 'KUDO-00000000-0000-4000-8000-000000000001',
           diamonds: 2000,
           amount_idr: 15000,
           status: 'paid',
+          created_at: recentOrderDate,
+          paid_at: verifiedOrderDate,
+          rejected_at: null,
+        },
+        {
+          invoice_number: 'KUDO-00000000-0000-4000-8000-000000000002',
+          diamonds: 500,
+          amount_idr: 5000,
+          status: 'paid',
           created_at: expiredOrderDate,
+          paid_at: expiredOrderDate,
         },
       ]),
     };
@@ -83,15 +96,18 @@ test('payment history is authenticated and returns only the current user orders'
 
     assert.equal(response.statusCode, 200);
     const history = JSON.parse(response.body).orders;
-    assert.equal(history.length, 1);
+    assert.equal(history.length, 2);
     assert.deepEqual(history[0], {
       invoiceNumber: 'KUDO-00000000-0000-4000-8000-000000000000',
       diamonds: 1200,
       amount: 10000,
       status: 'awaiting_verification',
       createdAt: recentOrderDate,
+      verifiedAt: '',
       proofUrl: 'https://supabase.example/storage/v1/object/sign/payment-proofs/proof.png?token=temporary',
     });
+    assert.equal(history[1].invoiceNumber, 'KUDO-00000000-0000-4000-8000-000000000001');
+    assert.equal(history[1].verifiedAt, verifiedOrderDate);
     assert.match(calls[1].url, /user_id=eq\.current-user/);
     assert.match(calls[1].url, /order=created_at\.desc/);
     const historyQuery = new URL(calls[1].url).searchParams;

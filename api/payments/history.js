@@ -34,7 +34,7 @@ module.exports = async function paymentHistory(request, response) {
 
     const cutoff = new Date(Date.now() - PAYMENT_HISTORY_RETENTION_MS).toISOString();
     const query = new URLSearchParams({
-      select: 'invoice_number,diamonds,amount_idr,status,proof_path,created_at',
+      select: 'invoice_number,diamonds,amount_idr,status,proof_path,created_at,paid_at,rejected_at',
       user_id: `eq.${user.id}`,
       created_at: `gte.${cutoff}`,
       order: 'created_at.desc',
@@ -53,6 +53,7 @@ module.exports = async function paymentHistory(request, response) {
         amount: order.amount_idr,
         status: order.status,
         createdAt: order.created_at,
+        verifiedAt: order.paid_at || order.rejected_at || '',
         proofUrl: order.proof_path ? await signedProofUrl(order.proof_path) : '',
       }))),
     });

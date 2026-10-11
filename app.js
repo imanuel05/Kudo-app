@@ -99,7 +99,7 @@ const SHOP_INVENTORY_BALANCE_KEY = 'kudo-shop-inventory-balance-v3';
 const BOSS_AVATARS = {
   'paper-task': {
     name: 'Paper Task',
-    image: ASSETS.bossPaper,
+    image: 'assets/paper-task-boss.png',
     alt: 'Tumpukan tugas yang menjadi boss',
   },
   'error-code': {
@@ -351,6 +351,7 @@ let purchaseHistoryExpiryTimer = null;
 let purchaseHistoryLoading = false;
 let purchaseHistoryError = '';
 let purchaseHistoryLoaded = false;
+let lastRenderedPage = '';
 const messageEmailAttempts = new Set();
 const messageEmailRetryTimers = new Map();
 let catalogVideos = [];
@@ -1111,6 +1112,10 @@ function navigate(page) {
   }
   modal = null;
   toast = '';
+  if (page === 'profile' && currentPage() !== 'profile') {
+    purchaseHistoryLoaded = false;
+    purchaseHistoryError = '';
+  }
   if (currentPage() === 'purchase-history' && page !== 'purchase-history') {
     window.clearTimeout(purchaseHistoryExpiryTimer);
     purchaseHistoryExpiryTimer = null;
@@ -1173,7 +1178,7 @@ function inventoryBar() {
 }
 
 function bottomNav(page) {
-  const unreadCount = unreadMessagesCount();
+  const unreadCount = unreadMessagesCount() + unreadVerifiedPurchaseCount();
   const unreadBadge = unreadCount > 99 ? '99+' : String(unreadCount);
   const links = [
     ['home', ASSETS.navHome, 'Beranda'],
@@ -1189,7 +1194,7 @@ function bottomNav(page) {
         page === key
           ? 'is-current'
           : ''
-      }${key === 'profile' && unreadCount ? ' has-unread-messages' : ''}" type="button" data-nav="${key}" aria-label="${label}${key === 'profile' && unreadCount ? `, ${unreadCount} pesan belum dibaca` : ''}" aria-current="${
+      }${key === 'profile' && unreadCount ? ' has-unread-messages' : ''}" type="button" data-nav="${key      }" aria-label="${label}${key === 'profile' && unreadCount ? `, ${unreadCount} notifikasi belum dibaca` : ''}" aria-current="${
         page === key
           ? 'page'
           : 'false'
@@ -1206,6 +1211,27 @@ function unreadMessagesCount() {
 
 function messageCountBadge(count) {
   return count > 99 ? '99+' : String(count);
+}
+
+function purchaseHistoryReadAt() {
+  if (!currentAccount?.id) return 0;
+  const value = Number(localStorage.getItem(`kudo-purchase-history-read-${currentAccount.id}`));
+  return Number.isFinite(value) ? value : 0;
+}
+
+function unreadVerifiedPurchaseCount() {
+  if (!purchaseHistoryLoaded) return 0;
+  const readAt = purchaseHistoryReadAt();
+  return purchaseHistory.filter((order) => {
+    if (!['paid', 'rejected'].includes(order.status)) return false;
+    const verifiedAt = Date.parse(order.verifiedAt);
+    return Number.isFinite(verifiedAt) && verifiedAt > readAt;
+  }).length;
+}
+
+function markPurchaseHistoryRead() {
+  if (!currentAccount?.id) return;
+  localStorage.setItem(`kudo-purchase-history-read-${currentAccount.id}`, String(Date.now()));
 }
 
 function appFrame(
@@ -1275,7 +1301,7 @@ function appFrame(
           : page === 'boss'
             ? 'Boss Fight'
           : page === 'boss-select'
-            ? 'Pilih Boss'
+            ? 'Boss'
             : page === 'focus'
               ? 'Nonton'
               : page === 'focus-mode'
@@ -1310,7 +1336,7 @@ function appFrame(
         page === 'focus-session'
           ? 'focus-mode'
           : bossAvatarPageHeader
-            ? 'home'
+            ? 'boss'
           : watchCatalogHeader
             ? 'focus'
             : showEpisodesPageHeader
@@ -1568,20 +1594,6 @@ function renderForgot() {
   </section>`;
 }
 
-function renderPasswordReset() {
-  app.innerHTML = `<section class="phone-screen auth-screen" aria-label="Buat kata sandi baru">
-    <div class="screen-content auth-content">
-      <form class="auth-form" data-form="password-reset">
-        <h1>Buat kata sandi baru</h1>
-        <label class="field-label" for="reset-new-password">Password baru</label>
-        <input id="reset-new-password" name="password" type="password" autocomplete="new-password" minlength="6" required />
-        <p class="form-message" role="status"></p>
-        <button class="button button-primary submit-button" type="submit">Simpan password</button>
-      </form>
-    </div>
-  </section>`;
-}
-
 function taskCard(task) {
   const date = task.deadline
     ? new Date(task.deadline).toLocaleDateString(
@@ -1603,6 +1615,20 @@ function taskCard(task) {
     ${task.description ? `<p class="task-description">${escapeHtml(task.description)}</p>` : ''}
     ${task.photo ? `<button class="task-photo-preview" type="button" data-action="view-task-photo" data-photo="${task.photo}" aria-label="Perbesar lampiran ${escapeHtml(task.title)}"><img src="${task.photo}" alt="Lampiran tugas: ${escapeHtml(task.title)}" /></button>` : ''}
   </article>`;
+}
+
+function renderPasswordReset() {
+  app.innerHTML = `<section class="phone-screen auth-screen" aria-label="Buat kata sandi baru">
+    <div class="screen-content auth-content">
+      <form class="auth-form" data-form="password-reset">
+        <h1>Buat kata sandi baru</h1>
+        <label class="field-label" for="reset-new-password">Password baru</label>
+        <input id="reset-new-password" name="password" type="password" autocomplete="new-password" minlength="6" required />
+        <p class="form-message" role="status"></p>
+        <button class="button button-primary submit-button" type="submit">Simpan password</button>
+      </form>
+    </div>
+  </section>`;
 }
 
 function renderHome() {
@@ -1646,7 +1672,7 @@ function renderHome() {
     <button
       class="feature-card feature-hard"
       type="button"
-      data-nav="boss-select">
+      data-nav="boss">
 
       <div class="feature-art">
         <img
@@ -1854,10 +1880,6 @@ function renderTaskPage(kind) {
     ${
       hard
         ? `
-          <h2 class="boss-subtitle">
-            ${escapeHtml(activeBoss.name)}
-          </h2>
-
           <div class="boss-health">
             <div class="boss-health-track">
               <span style="width:${hp}%"></span>
@@ -1873,7 +1895,7 @@ function renderTaskPage(kind) {
 
     ${
       hard
-        ? `<div class="quest-illustration quest-boss"><div class="quest-boss-panel"></div><img src="${activeBoss.image}" alt="${escapeHtml(activeBoss.alt)}" /></div>`
+        ? `<div class="quest-illustration quest-boss"><div class="quest-boss-panel"></div><button class="quest-boss-avatar" type="button" data-nav="boss-select" aria-label="Pilih boss: ${escapeHtml(activeBoss.name)}"><img src="${activeBoss.image}" alt="${escapeHtml(activeBoss.alt)}" /></button></div>`
         : `<div class="quest-illustration quest-daily"><img src="${ASSETS.artDaily}" alt="Dua anak belajar bersama kucing" /></div>`
     }
 
@@ -1952,7 +1974,7 @@ function renderBossAvatarSelection() {
     selectedBossAvatar = Object.hasOwn(BOSS_AVATARS, state.bossAvatar) ? state.bossAvatar : 'paper-task';
   }
   const choices = Object.entries(BOSS_AVATARS).map(([id, boss]) => (
-    `<button class="boss-avatar-choice ${selectedBossAvatar === id ? 'is-selected' : ''}" type="button" data-action="select-boss-avatar" data-boss-avatar="${id}" aria-pressed="${selectedBossAvatar === id}"><img src="${boss.image}" alt="" /><strong>${boss.name}</strong></button>`
+    `<button class="boss-avatar-choice ${selectedBossAvatar === id ? 'is-selected' : ''}" type="button" data-action="select-boss-avatar" data-boss-avatar="${id}" aria-label="${escapeHtml(boss.name)}" aria-pressed="${selectedBossAvatar === id}"><img src="${boss.image}" alt="" /></button>`
   )).join('');
   const content = `<section class="boss-avatar-page"><h2>Pilih boss yang ingin kamu lawan</h2><p>Avatar boss bisa diganti kapan saja.</p><div class="boss-avatar-grid">${choices}</div><button class="button button-primary boss-avatar-confirm" type="button" data-action="confirm-boss-avatar">Konfirmasi</button></section>`;
   app.innerHTML = appFrame('boss-select', content);
@@ -3303,6 +3325,7 @@ function renderChestReward() {
 function renderProfile() {
   const done = state.tasks.filter((task) => task.done).length;
   const unreadCount = unreadMessagesCount();
+  const unreadPurchaseCount = unreadVerifiedPurchaseCount();
   const username = escapeHtml(currentAccount?.name || state.username || 'Tayaki');
   const adminProfileLinks = [
     ['admin-verification', 'Verifikasi pembelian'],
@@ -3312,7 +3335,7 @@ function renderProfile() {
   ];
   app.innerHTML = `<section class="product-screen profile-screen"><header class="profile-banner"><h1>${username}</h1><div class="profile-avatar-window"><img src="${getAccountAvatarSource()}" alt="Foto profil ${username}" /></div></header><main class="profile-settings">
     <section class="profile-settings-section"><h2>Akun</h2><div class="profile-settings-card"><button type="button" data-nav="account"><span>Profil</span><b>›</b></button><button type="button" data-action="profile-performance"><span>Performa</span><b>›</b></button></div></section>
-    <section class="profile-settings-section"><h2>Notifikasi</h2><div class="profile-settings-card"><button class="message-entry ${unreadCount ? 'has-unread-messages' : ''}" type="button" data-nav="messages"><span>Pesan</span>${unreadCount ? `<span class="message-count-badge" aria-label="${unreadCount} pesan belum dibaca">${messageCountBadge(unreadCount)}</span>` : ''}<b>›</b></button><button type="button" data-nav="purchase-history"><span>Histori pembelian</span><b>›</b></button></div></section>
+    <section class="profile-settings-section"><h2>Notifikasi</h2><div class="profile-settings-card"><button class="message-entry ${unreadCount ? 'has-unread-messages' : ''}" type="button" data-nav="messages"><span>Pesan</span>${unreadCount ? `<span class="message-count-badge" aria-label="${unreadCount} pesan belum dibaca">${messageCountBadge(unreadCount)}</span>` : ''}<b>›</b></button><button class="message-entry ${unreadPurchaseCount ? 'has-unread-messages' : ''}" type="button" data-nav="purchase-history"><span>Histori pembelian</span>${unreadPurchaseCount ? `<span class="message-count-badge" aria-label="${unreadPurchaseCount} transaksi belum dibaca">${messageCountBadge(unreadPurchaseCount)}</span>` : ''}<b>›</b></button></div>${purchaseHistoryError ? `<p class="purchase-history-error" role="alert">${escapeHtml(purchaseHistoryError)} <button type="button" data-action="retry-profile-purchase-history">Coba lagi</button></p>` : ''}</section>
     <section class="profile-settings-section"><h2>Dukungan</h2><div class="profile-settings-card"><button type="button" data-action="profile-info" data-title="Pusat bantuan" data-message="Butuh bantuan menggunakan Kudo? Di sini kamu bisa mengatur tugas, memakai mode fokus, dan membuka hadiah. Untuk bantuan lebih lanjut, hubungi bantuan@kudo_task_management_app"><span>Pusat bantuan</span><b>›</b></button><button type="button" data-action="open-suggestions"><span>Saran</span><b>›</b></button></div></section>
     ${isAdminUser ? `<section class="profile-settings-section"><h2>Panel admin</h2><div class="profile-settings-card">${adminProfileLinks.map(([page, label]) => `<button type="button" data-nav="${page}"><span>${label}</span><b>›</b></button>`).join('')}</div></section>` : ''}
     <button class="profile-logout" type="button" data-action="logout">Keluar</button><div class="profile-legal"><button type="button" data-action="profile-info" data-title="Ketentuan" data-message="Dengan menggunakan Kudo, kamu setuju memakai fitur aplikasi secara wajar, menjaga keamanan akun, dan bertanggung jawab atas tugas serta konten yang kamu tambahkan. Fitur pada aplikasi ini disediakan untuk membantu mengatur kebiasaan belajar.">Ketentuan</button><button type="button" data-action="profile-info" data-title="Kebijakan Privasi" data-message="Aplikasi Kudo menyimpan nama pengguna, tugas, dan preferensi secara aman untuk kenyamanan pengguna.">Kebijakan Privasi</button><button type="button" data-action="profile-info" data-title="Ucapan terima kasih" data-message="Terima kasih telah menggunakan Kudo dan meluangkan waktu untuk menyelesaikan setiap tugas. Semoga Kudo membuat proses belajar dan beristirahat terasa lebih menyenangkan.">Ucapan terima kasih</button></div>
@@ -3320,6 +3343,9 @@ function renderProfile() {
     ${bottomNav('profile')}</section>`;
   if (currentAccount?.id && adminCheckedForUserId !== currentAccount.id && !adminAccessLoading) {
     void checkAdminAccess();
+  }
+  if (currentAccount?.id && !purchaseHistoryLoaded && !purchaseHistoryLoading && !purchaseHistoryError) {
+    void loadPurchaseHistory();
   }
 }
 
@@ -3426,6 +3452,7 @@ async function loadPurchaseHistory() {
   } finally {
     purchaseHistoryLoading = false;
     if (currentAccount?.id === requestedUserId && currentPage() === 'purchase-history') renderPurchaseHistory();
+    else if (currentAccount?.id === requestedUserId && currentPage() === 'profile') renderProfile();
   }
 }
 
@@ -4355,6 +4382,10 @@ function render() {
   processTaskDeadlineMessages();
   scheduleTaskDeadlineRefresh();
   const page = currentPage();
+  if (page === 'purchase-history' && lastRenderedPage !== 'purchase-history') {
+    markPurchaseHistoryRead();
+  }
+  lastRenderedPage = page;
   if (page !== 'boss-select') selectedBossAvatar = null;
   const isStreamingPage = page === 'anime-stream' || page === 'media-stream';
   if (page === 'focus-session') {
@@ -4927,6 +4958,11 @@ app.addEventListener('click', async (event) => {
       purchaseHistoryLoaded = false;
       purchaseHistoryError = '';
       renderPurchaseHistory();
+      return;
+    case 'retry-profile-purchase-history':
+      purchaseHistoryLoaded = false;
+      purchaseHistoryError = '';
+      renderProfile();
       return;
     case 'admin-add-video':
       await uploadAdminVideo(button);
