@@ -2489,6 +2489,16 @@ function renderAnimeEpisodeList() {
   )).join('')}</div>`;
 }
 
+function requestStreamTicket(category, videoId, showTitle) {
+  modal = {
+    type: 'anime-ticket-gate',
+    category,
+    videoId,
+    showTitle,
+  };
+  render();
+}
+
 function renderAnimeEpisodes() {
   const showTitle = normalizeShowTitle(selectedAnime) === normalizeShowTitle("Frieren: Beyond Journey's End")
     ? "Frieren: Beyond Journey's End"
@@ -3235,7 +3245,7 @@ function renderMessages() {
   messagePage = Math.min(messagePage, pageCount - 1);
   const pageMessages = state.messages.slice(messagePage * pageSize, (messagePage + 1) * pageSize);
   const list = pageMessages.length
-    ? `<div class="message-list">${pageMessages.map((message) => `<article class="message-card"><span class="message-card-icon" aria-hidden="true">${message.type === 'task-moved' ? '↗' : '!'}</span><div><h2>${escapeHtml(message.title)}</h2><p>${escapeHtml(message.body)}</p><time datetime="${escapeHtml(message.createdAt)}">${new Date(message.createdAt).toLocaleString('id-ID')}</time></div></article>`).join('')}</div>${pageCount > 1 ? `<nav class="message-pagination" aria-label="Navigasi pesan"><button type="button" data-action="message-page" data-page="${messagePage - 1}" aria-label="Pesan sebelumnya" ${messagePage === 0 ? 'disabled' : ''}></button><span>Halaman ${messagePage + 1} dari ${pageCount}</span><button type="button" data-action="message-page" data-page="${messagePage + 1}" aria-label="Pesan berikutnya" ${messagePage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
+    ? `<div class="message-list">${pageMessages.map((message) => `<article class="message-card"><img class="message-card-icon" src="assets/message-icon.png" alt="" /><div><h2>${escapeHtml(message.title)}</h2><p>${escapeHtml(message.body)}</p><time datetime="${escapeHtml(message.createdAt)}">${new Date(message.createdAt).toLocaleString('id-ID')}</time></div></article>`).join('')}</div>${pageCount > 1 ? `<nav class="message-pagination" aria-label="Navigasi pesan"><button type="button" data-action="message-page" data-page="${messagePage - 1}" aria-label="Pesan sebelumnya" ${messagePage === 0 ? 'disabled' : ''}></button><span>Halaman ${messagePage + 1} dari ${pageCount}</span><button type="button" data-action="message-page" data-page="${messagePage + 1}" aria-label="Pesan berikutnya" ${messagePage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
     : `<div class="messages-empty-state"><img src="${ASSETS.focusShortage}" alt="" /><p>Belum ada pesan masuk</p></div>`;
 
   let markedRead = false;
@@ -3655,7 +3665,7 @@ function renderAdminPanel() {
   );
   const orderMarkup = adminOrders.length
     ? `${pageOrders.map((order) => `<article class="admin-order-card"><div class="admin-order-summary"><strong>${Number(order.diamonds).toLocaleString('id-ID')} berlian · Rp ${Number(order.amount).toLocaleString('id-ID')}</strong><small>${escapeHtml(order.invoiceNumber)} · ${new Date(order.createdAt).toLocaleString('id-ID')}</small><small>User: ${escapeHtml(order.userId)}</small></div>${order.proofUrl ? `<a class="admin-proof-link" href="${escapeHtml(order.proofUrl)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(order.proofUrl)}" alt="Bukti pembayaran ${escapeHtml(order.invoiceNumber)}" /><span>Lihat bukti pembayaran</span></a>` : '<p class="admin-proof-missing">Bukti pembayaran belum diunggah.</p>'}<div class="admin-order-actions"><button class="button button-primary" type="button" data-action="admin-verify-order" data-invoice="${escapeHtml(order.invoiceNumber)}" ${adminActionInProgress || !order.proofUrl ? 'disabled' : ''}>${order.proofUrl ? 'Dana diterima' : 'Menunggu bukti pembayaran'}</button><button class="admin-reject-order" type="button" data-action="admin-reject-order" data-invoice="${escapeHtml(order.invoiceNumber)}" ${adminActionInProgress ? 'disabled' : ''}>Tolak pembelian</button></div></article>`).join('')}${orderPageCount > 1 ? `<nav class="admin-orders-pagination" aria-label="Navigasi transaksi menunggu verifikasi"><button type="button" data-action="admin-orders-page" data-page="${adminOrdersPage - 1}" aria-label="Halaman sebelumnya" ${adminOrdersPage === 0 ? 'disabled' : ''}></button><span>Halaman ${adminOrdersPage + 1} dari ${orderPageCount}</span><button type="button" data-action="admin-orders-page" data-page="${adminOrdersPage + 1}" aria-label="Halaman berikutnya" ${adminOrdersPage >= orderPageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
-    : '<p class="admin-empty">Tidak ada transaksi yang menunggu verifikasi.</p>';
+    : `<div class="admin-empty-state"><img src="${ASSETS.focusShortage}" alt="" /><p class="admin-empty">Tidak ada transaksi yang menunggu verifikasi.</p></div>`;
   const videoMarkup = adminVideos.length
     ? (() => {
       const pageSize = 6;
@@ -4184,7 +4194,7 @@ function modalView() {
     const title = modal.filterKey === 'genre' ? 'Pilih genre' : 'Pilih jenis';
     body = `<div class="filter-sheet"><h2>${title}</h2><div class="filter-sheet-options">${modal.options.map((option) => `<button class="filter-chip ${modal.selection === option ? 'is-selected' : ''}" type="button" data-filter-option="${escapeHtml(option)}" aria-pressed="${modal.selection === option}">${escapeHtml(option)}</button>`).join('')}</div><button class="button button-primary filter-confirm" type="button" data-action="confirm-watch-filter">Terapkan</button></div>`;
   } else if (modal.type === 'anime-ticket-gate') {
-    body = `<div class="focus-gate-sheet"><h2>Ingin menggunakan tiket untuk menonton?</h2><div class="focus-gate-item anime-ticket-item"><img src="${ASSETS.ticket}" alt="Tiket nonton" /><strong>1X</strong></div><button class="button button-primary focus-gate-confirm" type="button" data-action="use-anime-ticket">Gunakan tiket</button><button class="shop-decline-button" type="button" data-action="close-modal">Tidak, terima kasih</button></div>`;
+    body = `<div class="focus-gate-sheet"><h2>Ingin menggunakan tiket untuk menonton?</h2><div class="focus-gate-item anime-ticket-item"><img src="${ASSETS.ticket}" alt="Tiket nonton" /><strong>1X</strong></div><button class="button button-primary focus-gate-confirm" type="button" data-action="use-anime-ticket">Gunakan</button><button class="shop-decline-button" type="button" data-action="close-modal">Tidak, terima kasih</button></div>`;
   } else if (modal.type === 'avatar-options') {
     body = `<div class="avatar-options-sheet"><h2>Pilih avatar</h2><div class="avatar-options-grid"><button class="avatar-choice ${modal.selection === 'female' ? 'is-selected' : ''}" type="button" data-avatar-choice="female" aria-label="Avatar perempuan" aria-pressed="${modal.selection === 'female'}"><img src="assets/avatar-female.png" alt="Avatar perempuan" /></button><button class="avatar-choice ${modal.selection === 'male' ? 'is-selected' : ''}" type="button" data-avatar-choice="male" aria-label="Avatar laki-laki" aria-pressed="${modal.selection === 'male'}"><img src="assets/avatar-male.png" alt="Avatar laki-laki" /></button></div><button class="button button-primary" type="button" data-action="confirm-avatar">Konfirmasi</button></div>`;
   } else if (modal.type === 'profile-info') {
@@ -4610,11 +4620,7 @@ app.addEventListener('click', async (event) => {
         && normalizeShowTitle(video.show_title) === normalizeShowTitle(currentMediaVideo?.show_title)
       ));
       if (!episode) return;
-      currentMediaVideo = episode;
-      mediaStreamTab = 'episode';
-      renderMediaStream();
-      const video = app.querySelector('.anime-video-shell video');
-      if (video) video.play().catch((error) => console.error('Video gagal diputar:', error));
+      requestStreamTicket(episode.category, episode.id, episode.show_title);
       return;
     }
     case 'open-kdrama-episode': {
@@ -4628,10 +4634,7 @@ app.addEventListener('click', async (event) => {
         render();
         return;
       }
-      currentMediaVideo = episode;
-      mediaStreamTab = 'episode';
-      mediaAutoplayRequested = true;
-      navigate('media-stream');
+      requestStreamTicket(episode.category, episode.id, episode.show_title);
       return;
     }
     case 'watch-show':
@@ -4735,26 +4738,7 @@ app.addEventListener('click', async (event) => {
         render();
         return;
       }
-      if (currentPage() === 'anime-episodes') {
-        selectedAnimeCatalogVideoId = episode.id;
-        animeAutoplayRequested = true;
-        navigate('anime-stream');
-        return;
-      }
-      const video = app.querySelector('#anime-video');
-      if (!video) return;
-
-      selectedAnimeCatalogVideoId = episode.id;
-      video.pause();
-      video.src = episode.src;
-      video.setAttribute('aria-label', animeEpisodeTitle(episode));
-      video.load();
-      const title = app.querySelector('.anime-stream-title');
-      if (title) title.textContent = animeEpisodeTitle(episode);
-      const tabContent = app.querySelector('.anime-stream-tab-content');
-      if (tabContent) tabContent.innerHTML = renderAnimeTabContent();
-      updateAnimeVideoUi(video);
-      video.play().catch((error) => console.error('Video gagal diputar:', error));
+      requestStreamTicket('anime', episode.id, episode.showTitle || selectedAnime);
       return;
     }
     case 'toggle-anime-playback': {
@@ -4780,18 +4764,49 @@ app.addEventListener('click', async (event) => {
       if (video && Number.isFinite(video.duration)) video.currentTime = Math.min(video.duration, Math.max(0, video.currentTime + Number(button.dataset.seconds)));
       return;
     }
-    case 'use-anime-ticket':
+    case 'use-anime-ticket': {
       if (state.chests < 1) { modal = null; navigate('shop'); return; }
+      const ticketRequest = modal;
+      if (ticketRequest?.category === 'anime') {
+        const episode = getAnimeCatalogEpisodes(ticketRequest.showTitle || selectedAnime)
+          .find((video) => video.id === ticketRequest.videoId);
+        if (!episode) {
+          console.error('Episode anime tidak ditemukan saat menggunakan tiket:', ticketRequest.videoId);
+          toast = 'Episode tidak tersedia. Muat ulang katalog dan coba lagi.';
+          render();
+          return;
+        }
+        state.chests -= 1;
+        persist();
+        modal = null;
+        if (animePiPWindow) closeAnimePiP();
+        selectedAnime = ticketRequest.showTitle || episode.showTitle || selectedAnime;
+        selectedAnimeCatalogVideoId = episode.id;
+        animeStreamTab = 'episode';
+        animeAutoplayRequested = true;
+        navigate('anime-stream');
+        return;
+      }
+      const episode = catalogVideos.find((video) => (
+        video.category === 'kdrama'
+        && video.id === ticketRequest?.videoId
+        && normalizeShowTitle(video.show_title) === normalizeShowTitle(ticketRequest?.showTitle)
+      ));
+      if (!episode) {
+        console.error('Episode K-drama tidak ditemukan saat menggunakan tiket:', ticketRequest?.videoId);
+        toast = 'Episode tidak tersedia. Muat ulang katalog dan coba lagi.';
+        render();
+        return;
+      }
       state.chests -= 1;
       persist();
-      if (animePiPWindow) closeAnimePiP();
-      selectedAnime = modal?.targetAnime || selectedAnime;
-      selectedAnimeCatalogVideoId = '';
-      animeStreamTab = 'episode';
-      animeAutoplayRequested = true;
       modal = null;
-      navigate('anime-stream');
+      currentMediaVideo = episode;
+      mediaStreamTab = 'episode';
+      mediaAutoplayRequested = true;
+      navigate('media-stream');
       return;
+    }
     case 'profile-info': modal = { type: 'profile-info', title: button.dataset.title, message: button.dataset.message }; break;
     case 'open-avatar-options': modal = { type: 'avatar-options', selection: currentAccount?.avatarChoice || 'male' }; break;
     case 'confirm-avatar':
@@ -5056,7 +5071,7 @@ app.addEventListener('click', async (event) => {
       task.mood = modal.mood;
       task.completedAt = new Date().toISOString();
       state.moodLog.push({ mood: modal.mood, taskId: task.id, at: task.completedAt });
-      state.crystals += 10;
+      state.crystals += Math.floor(Math.random() * 10) + 1;
       const defeatedBoss = task.difficulty === 'hard';
       if (defeatedBoss) state.bossHealth = Math.max(0, Number(state.bossHealth ?? 100) - 25);
       persist();

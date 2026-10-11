@@ -376,9 +376,10 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .quest-daily img { width: 76%; height: 170px; position: absolute; top: -78px; left: 50%; transform: translateX(-50%); }
 .daily-screen .quest-daily img { width: 62%; height: 150px; top: -70px; }
 .quest-daily:has(img) { background: #ddffe3; }
-.quest-boss { position: relative; margin-top: 82px; overflow: visible; isolation: isolate; background: #ffeded; }
+.quest-boss { position: relative; margin-top: 82px; overflow: visible; isolation: isolate; background: transparent; }
+.quest-boss::before { position: absolute; z-index: 0; inset: 0; border-radius: 14px; background: #ffeded; content: ""; pointer-events: none; }
 .boss-screen .quest-boss { margin-top: 72px; }
-.quest-boss img { width: 90%; height: 188px; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); object-fit: contain; mix-blend-mode: multiply; }
+.quest-boss img { width: 90%; height: 188px; position: absolute; z-index: 1; top: -80px; left: 50%; transform: translateX(-50%); object-fit: contain; mix-blend-mode: multiply; }
 .task-create-screen { width: min(100%, 412px); height: 100dvh; min-height: 100dvh; margin: 0 auto; position: relative; overflow-y: auto; overscroll-behavior-y: contain; background: #fff; }
 .task-create-inventory { width: 100%; }
 .task-create-content { min-height: calc(100dvh - 62px); padding: 88px 21px 20px; display: flex; flex-direction: column; }
@@ -747,12 +748,12 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .anime-pip-controls button[data-pip-action="toggle-playback"] { width: 44px; height: 44px; }
 .anime-pip-close { width: 30px; height: 30px; padding: 0; position: absolute; z-index: 3; top: 7px; right: 7px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #fff; background: #0009; font-size: 22px; line-height: 1; opacity: 1; transition: opacity .2s ease; }
 .anime-pip-controls-hidden .anime-pip-close, .anime-pip-controls-hidden .anime-pip-controls { opacity: 0; pointer-events: none; }
-.anime-back-control { width: 38px; height: 38px; padding: 7px; position: absolute; z-index: 2; top: 10px; left: 10px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #fff; background: #0008; cursor: pointer; }
+.anime-back-control { width: 38px; height: 38px; padding: 7px; position: absolute; z-index: 2; top: 10px; left: 10px; display: grid; place-items: center; border: 0; border-radius: 0; color: #fff; background: transparent; cursor: pointer; }
 .anime-back-control svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .anime-video-controls { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; pointer-events: none; transition: opacity .2s ease; }
 .anime-play-control { width: 48px; height: 48px; padding: 11px; display: grid; place-items: center; border: 0; border-radius: 50%; color: #fff; background: rgb(0 0 0 / 48%); cursor: pointer; pointer-events: auto; }
 .anime-play-control svg { width: 26px; height: 26px; fill: currentColor; }
-.anime-fullscreen-control { width: 34px; height: 34px; padding: 7px; position: absolute; right: 10px; bottom: 12px; display: grid; place-items: center; border: 0; border-radius: 6px; color: #fff; background: #0008; cursor: pointer; pointer-events: auto; }
+.anime-fullscreen-control { width: 34px; height: 34px; padding: 7px; position: absolute; right: 10px; bottom: 12px; display: grid; place-items: center; border: 0; border-radius: 0; color: #fff; background: transparent; cursor: pointer; pointer-events: auto; }
 .anime-fullscreen-control svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .stream-fullscreen-status { margin: 0; padding: 4px 8px; position: absolute; right: 50px; bottom: 12px; border-radius: 4px; color: #fff; background: #000b; font-size: 11px; pointer-events: none; }
 .anime-video-seek { width: 100%; height: 3px; margin: 0; padding: 0; position: absolute; right: 0; bottom: 0; left: 0; appearance: none; background: transparent; cursor: pointer; pointer-events: auto; }
@@ -907,6 +908,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .admin-proof-link img { max-width: 100%; max-height: 260px; object-fit: contain; }
 .admin-proof-link span { position: absolute; right: 0; bottom: 0; left: 0; padding: 7px 9px; color: #fff; background: #29283acc; font-size: 9px; text-align: center; }
 .admin-order-card > p, .admin-empty, .admin-panel-message, .admin-panel-error { margin: 0; font-size: 10px; line-height: 1.5; }
+.admin-empty-state { display: grid; justify-items: center; gap: 8px; padding: 8px 0; text-align: center; }
+.admin-empty-state img { width: min(220px, 78%); height: 150px; object-fit: contain; }
 .admin-order-actions > .button:disabled { color: #888; background: #eeeeF3; box-shadow: none; cursor: not-allowed; }
 .admin-proof-missing { padding: 10px; border-radius: 7px; color: #8b681e; background: #fff7e7; text-align: center; }
 .admin-orders-pagination { margin-top: 1px; display: flex; align-items: center; justify-content: center; gap: 14px; color: #bfbfbf; font-family: Poppins, sans-serif; font-size: 10px; font-weight: 400; }
@@ -1049,7 +1052,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .messages-page { display: grid; gap: 10px; }
 .message-list { display: grid; gap: 9px; }
 .message-card { min-width: 0; padding: 12px; display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: start; gap: 10px; border: 2px solid #e2e2e2; border-radius: 10px; background: #fff; }
-.message-card-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: #7775ff; background: #f1f0ff; font-size: 18px; font-weight: 700; }
+.message-card-icon { width: 34px; height: 34px; display: block; border-radius: 50%; object-fit: contain; }
 .message-card h2 { margin: 0 0 5px; color: #333652; font-size: 12px; font-weight: 700; }
 .message-card p { margin: 0 0 7px; color: #656677; font-size: 10px; line-height: 1.5; }
 .message-card time { color: #999; font-size: 9px; }
@@ -1107,7 +1110,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .performance-history-description { color: #656677; font-size: 10px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 .performance-history-mood { width: 34px; height: 34px; flex: 0 0 34px; display: block; object-fit: contain; }
 .performance-history-empty { padding: 16px 10px; border: 2px dashed #ddd; border-radius: 10px; color: #bfbfbf; font-size: 10px; text-align: center; }
-.performance-history-pagination { margin: 10px 0 10px; display: flex; align-items: center; justify-content: center; gap: 14px; color: #bfbfbf; font-family: Poppins, sans-serif; font-size: 10px; font-weight: 400; }
+.performance-history-pagination { margin: 10px 0 18px; display: flex; align-items: center; justify-content: center; gap: 14px; color: #bfbfbf; font-family: Poppins, sans-serif; font-size: 10px; font-weight: 400; }
 .performance-history-pagination button { width: 30px; height: 30px; padding: 0; position: relative; display: grid; place-items: center; border: 0; border-radius: 0; color: #999; background: transparent; }
 .performance-history-pagination button::before { width: 10px; height: 10px; content: ''; border-left: 3px solid currentColor; border-bottom: 3px solid currentColor; border-radius: 1px; transform: rotate(45deg); }
 .performance-history-pagination button[data-page]:not([disabled]) { color: #797dff; }
