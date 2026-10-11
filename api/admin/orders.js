@@ -21,6 +21,35 @@ async function signedProofUrl(proofPath) {
   return new URL(signedPath, process.env.SUPABASE_URL).toString();
 }
 
+async function loadUserNames(userIds) {
+  const pendingIds = new Set(userIds.filter(Boolean).map(String));
+  const names = new Map();
+  let page = 1;
+
+  while (pendingIds.size) {
+    const result = await supabaseRequest(`/auth/v1/admin/users?${new URLSearchParams({
+      page: String(page),
+      per_page: '1000',
+    })}`);
+    const users = Array.isArray(result) ? result : result?.users;
+    if (!Array.isArray(users)) throw new Error('Admin user response was invalid.');
+
+    for (const user of users) {
+      const userId = String(user.id || '');
+      if (!pendingIds.has(userId)) continue;
+      const metadata = user.user_metadata || {};
+      const name = metadata.name || metadata.full_name || metadata.username;
+      names.set(userId, typeof name === 'string' && name.trim() ? name.trim() : 'Pengguna');
+      pendingIds.delete(userId);
+    }
+
+    if (users.length < 1000) break;
+    page += 1;
+  }
+
+  return names;
+}
+
 module.exports = async function adminOrders(request, response) {
   if (!['GET', 'POST'].includes(request.method)) {
     response.setHeader('Allow', 'GET, POST');
@@ -50,10 +79,15 @@ module.exports = async function adminOrders(request, response) {
       if (!Array.isArray(orders) || !Array.isArray(verifiedOrders)) {
         throw new Error('Admin payment order response was invalid.');
       }
+      const userNames = await loadUserNames([
+        ...orders.map((order) => order.user_id),
+        ...verifiedOrders.map((order) => order.user_id),
+      ]);
       return sendJson(response, 200, {
         orders: await Promise.all(orders.map(async (order) => ({
           invoiceNumber: order.invoice_number,
           userId: order.user_id,
+          userName: userNames.get(String(order.user_id)) || 'Pengguna tidak ditemukan',
           diamonds: order.diamonds,
           amount: order.amount_idr,
           status: order.status,
@@ -63,6 +97,7 @@ module.exports = async function adminOrders(request, response) {
         verifiedOrders: await Promise.all(verifiedOrders.map(async (order) => ({
           invoiceNumber: order.invoice_number,
           userId: order.user_id,
+          userName: userNames.get(String(order.user_id)) || 'Pengguna tidak ditemukan',
           diamonds: order.diamonds,
           amount: order.amount_idr,
           status: order.status,

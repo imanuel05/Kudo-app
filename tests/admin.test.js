@@ -157,6 +157,16 @@ test('admin order listing signs private payment proofs for review', async () => 
         text: async () => JSON.stringify([{ user_id: 'admin-user' }]),
       };
     }
+    if (url.includes('/auth/v1/admin/users?')) {
+      return {
+        ok: true,
+        text: async () => JSON.stringify({ users: [
+          { id: 'customer-user', user_metadata: { name: 'Customer' } },
+          { id: 'verified-customer', user_metadata: { name: 'Verified Customer' } },
+          { id: 'rejected-customer', user_metadata: { name: 'Rejected Customer' } },
+        ] }),
+      };
+    }
     if (url.includes('/rest/v1/payment_orders')) {
       const status = new URL(url).searchParams.get('status');
       return {
@@ -210,6 +220,7 @@ test('admin order listing signs private payment proofs for review', async () => 
     assert.deepEqual(result.verifiedOrders[0], {
       invoiceNumber: 'KUDO-00000000-0000-4000-8000-000000000001',
       userId: 'verified-customer',
+      userName: 'Verified Customer',
       diamonds: 2000,
       amount: 15000,
       status: 'paid',
@@ -220,6 +231,7 @@ test('admin order listing signs private payment proofs for review', async () => 
     assert.deepEqual(result.verifiedOrders[1], {
       invoiceNumber: 'KUDO-00000000-0000-4000-8000-000000000002',
       userId: 'rejected-customer',
+      userName: 'Rejected Customer',
       diamonds: 1200,
       amount: 10,
       status: 'rejected',
