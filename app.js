@@ -96,6 +96,19 @@ const FIRST_VISIT_CHECKIN_KEY = 'kudo-first-visit-checkin-v1';
 const CHECKIN_FIRST_COMPLETED_KEY = 'kudo-first-checkin-completed-v1';
 const SHOP_INVENTORY_BALANCE_KEY = 'kudo-shop-inventory-balance-v3';
 
+const BOSS_AVATARS = {
+  'paper-task': {
+    name: 'Paper Task',
+    image: ASSETS.bossPaper,
+    alt: 'Tumpukan tugas yang menjadi boss',
+  },
+  'error-code': {
+    name: 'Error Code',
+    image: 'assets/error-code-boss.png',
+    alt: 'Boss Error Code berbentuk laptop',
+  },
+};
+
 const STARTER_STATE = {
   crystals: 2000,
   hourglasses: 10,
@@ -110,6 +123,7 @@ const STARTER_STATE = {
   dailyMissionOpened: {},
   chestSession: null,
   bossHealth: 100,
+  bossAvatar: 'paper-task',
   animeVideoAssets: {},
   strictMode: false
 };
@@ -141,6 +155,7 @@ let taskDeadlineRefreshTimer = null;
 let performanceHistoryPage = 0;
 let messagePage = 0;
 let taskListPages = { daily: 0, boss: 0 };
+let selectedBossAvatar = null;
 let analysisToken = 0;
 let taskPhotoData = '';
 let audioContext = null;
@@ -1044,6 +1059,9 @@ function dailyMissions() {
 }
 
 function navigate(page) {
+  if (currentPage() === 'boss-select' && page !== 'boss-select') {
+    selectedBossAvatar = null;
+  }
   modal = null;
   toast = '';
   if (currentPage() === 'purchase-history' && page !== 'purchase-history') {
@@ -1150,6 +1168,8 @@ function appFrame(
   const navPage =
     page.startsWith('watch-') || page === 'media-stream' || page === 'anime-episodes' || page === 'kdrama-episodes'
       ? 'focus'
+      : page === 'boss-select'
+        ? 'home'
       : page === 'performance' || page === 'messages'
         ? 'profile'
         : page === 'purchase-history' || isAdminPage(page)
@@ -1167,6 +1187,8 @@ function appFrame(
 
   const bossPageHeader =
     page === 'boss';
+  const bossAvatarPageHeader =
+    page === 'boss-select';
 
   const watchCatalogHeader =
     page.startsWith('watch-');
@@ -1186,6 +1208,7 @@ function appFrame(
     focusModeHeader ||
     dailyPageHeader ||
     bossPageHeader ||
+    bossAvatarPageHeader ||
     watchCatalogHeader ||
     performancePageHeader ||
     transactionPageHeader ||
@@ -1204,6 +1227,8 @@ function appFrame(
           ? 'Daily Quest'
           : page === 'boss'
             ? 'Boss Fight'
+          : page === 'boss-select'
+            ? 'Pilih Boss'
             : page === 'focus'
               ? 'Nonton'
               : page === 'focus-mode'
@@ -1237,6 +1262,8 @@ function appFrame(
     ? `<div class="mode-page-heading"><button class="catalog-back" type="button" data-nav="${
         page === 'focus-session'
           ? 'focus-mode'
+          : bossAvatarPageHeader
+            ? 'home'
           : watchCatalogHeader
             ? 'focus'
             : showEpisodesPageHeader
@@ -1558,7 +1585,7 @@ function renderHome() {
     <button
       class="feature-card feature-hard"
       type="button"
-      data-nav="boss">
+      data-nav="boss-select">
 
       <div class="feature-art">
         <img
@@ -1760,13 +1787,14 @@ function renderTaskPage(kind) {
     : 0;
 
   const hp = Math.max(0, Math.min(100, Number(state.bossHealth ?? 100)));
+  const activeBoss = BOSS_AVATARS[state.bossAvatar] || BOSS_AVATARS['paper-task'];
 
   const content = `
     ${
       hard
         ? `
           <h2 class="boss-subtitle">
-            Paper Task
+            ${escapeHtml(activeBoss.name)}
           </h2>
 
           <div class="boss-health">
@@ -1784,7 +1812,7 @@ function renderTaskPage(kind) {
 
     ${
       hard
-        ? `<div class="quest-illustration quest-boss"><div class="quest-boss-panel"></div><img src="${ASSETS.bossPaper}" alt="Tumpukan tugas yang menjadi boss" /></div>`
+        ? `<div class="quest-illustration quest-boss"><div class="quest-boss-panel"></div><img src="${activeBoss.image}" alt="${escapeHtml(activeBoss.alt)}" /></div>`
         : `<div class="quest-illustration quest-daily"><img src="${ASSETS.artDaily}" alt="Dua anak belajar bersama kucing" /></div>`
     }
 
@@ -1856,6 +1884,17 @@ function renderTaskPage(kind) {
       page,
       content
     );
+}
+
+function renderBossAvatarSelection() {
+  if (!Object.hasOwn(BOSS_AVATARS, selectedBossAvatar)) {
+    selectedBossAvatar = Object.hasOwn(BOSS_AVATARS, state.bossAvatar) ? state.bossAvatar : 'paper-task';
+  }
+  const choices = Object.entries(BOSS_AVATARS).map(([id, boss]) => (
+    `<button class="boss-avatar-choice ${selectedBossAvatar === id ? 'is-selected' : ''}" type="button" data-action="select-boss-avatar" data-boss-avatar="${id}" aria-pressed="${selectedBossAvatar === id}"><img src="${boss.image}" alt="" /><strong>${boss.name}</strong></button>`
+  )).join('');
+  const content = `<section class="boss-avatar-page"><h2>Pilih boss yang ingin kamu lawan</h2><p>Avatar boss bisa diganti kapan saja.</p><div class="boss-avatar-grid">${choices}</div><button class="button button-primary boss-avatar-confirm" type="button" data-action="confirm-boss-avatar">Konfirmasi</button></section>`;
+  app.innerHTML = appFrame('boss-select', content);
 }
 
 function normalizeShowTitle(title) {
@@ -4175,7 +4214,7 @@ function modalView() {
     const task = modal.task;
     body = `<div class="dialog result-dialog task-added-dialog"><img class="task-added-art" src="${ASSETS.artDaily}" alt="Anak-anak belajar bersama" /><h2>Tugas ditambahkan</h2><p>${escapeHtml(task.title)} masuk ke ${task.difficulty === 'hard' ? 'Boss Fight' : 'Daily Quest'}.</p><button class="button button-primary" type="button" data-action="close-and-home">Kembali</button></div>`;
   } else if (modal.type === 'boss-victory') {
-    body = `<div class="dialog result-dialog boss-victory-dialog"><h2>Selamat!!</h2><p>Kamu berhasil mengalahkan paper task.</p><img class="boss-victory-art" src="assets/boss-victory-art.png" alt="Kudo merayakan keberhasilan mengalahkan paper task" /><button class="button button-primary" type="button" data-action="boss-victory-back">Kembali</button></div>`;
+    body = `<div class="dialog result-dialog boss-victory-dialog"><h2>Selamat!!</h2><p>Kamu berhasil mengalahkan ${escapeHtml(modal.bossName || 'boss')}.</p><img class="boss-victory-art" src="assets/boss-victory-art.png" alt="Kudo merayakan kemenangan" /><button class="button button-primary" type="button" data-action="boss-victory-back">Kembali</button></div>`;
   } else if (modal.type === 'watch-filter') {
     const title = modal.filterKey === 'genre' ? 'Pilih genre' : 'Pilih jenis';
     body = `<div class="filter-sheet"><h2>${title}</h2><div class="filter-sheet-options">${modal.options.map((option) => `<button class="filter-chip ${modal.selection === option ? 'is-selected' : ''}" type="button" data-filter-option="${escapeHtml(option)}" aria-pressed="${modal.selection === option}">${escapeHtml(option)}</button>`).join('')}</div><button class="button button-primary filter-confirm" type="button" data-action="confirm-watch-filter">Terapkan</button></div>`;
@@ -4255,6 +4294,7 @@ function render() {
   processTaskDeadlineMessages();
   scheduleTaskDeadlineRefresh();
   const page = currentPage();
+  if (page !== 'boss-select') selectedBossAvatar = null;
   const isStreamingPage = page === 'anime-stream' || page === 'media-stream';
   if (page === 'focus-session') {
     if (mediaVideoElement || mediaPiPWindow) closeMediaPiP();
@@ -4287,6 +4327,7 @@ function render() {
   else if (page === 'add-task') renderTaskCreate();
   else if (page === 'daily') renderTaskPage('easy');
   else if (page === 'boss') renderTaskPage('hard');
+  else if (page === 'boss-select') renderBossAvatarSelection();
   else if (page === 'focus') renderFocus();
   else if (page === 'focus-mode') renderFocusMode();
   else if (page === 'focus-session') renderFocusSession();
@@ -4464,6 +4505,16 @@ app.addEventListener('click', async (event) => {
     modal.selection = button.dataset.avatarChoice;
     app.querySelectorAll('.avatar-choice').forEach((choice) => {
       const selected = choice.dataset.avatarChoice === modal.selection;
+      choice.classList.toggle('is-selected', selected);
+      choice.setAttribute('aria-pressed', String(selected));
+    });
+    return;
+  }
+  if (button.dataset.action === 'select-boss-avatar') {
+    if (!Object.hasOwn(BOSS_AVATARS, button.dataset.bossAvatar)) return;
+    selectedBossAvatar = button.dataset.bossAvatar;
+    app.querySelectorAll('.boss-avatar-choice').forEach((choice) => {
+      const selected = choice.dataset.bossAvatar === selectedBossAvatar;
       choice.classList.toggle('is-selected', selected);
       choice.setAttribute('aria-pressed', String(selected));
     });
@@ -5061,7 +5112,9 @@ app.addEventListener('click', async (event) => {
       const defeatedBoss = task.difficulty === 'hard';
       if (defeatedBoss) state.bossHealth = Math.max(0, Number(state.bossHealth ?? 100) - 25);
       persist();
-      modal = defeatedBoss && state.bossHealth === 0 ? { type: 'boss-victory' } : null;
+      modal = defeatedBoss && state.bossHealth === 0
+        ? { type: 'boss-victory', bossName: (BOSS_AVATARS[state.bossAvatar] || BOSS_AVATARS['paper-task']).name }
+        : null;
       break;
     }
     case 'boss-victory-back':
@@ -5069,6 +5122,13 @@ app.addEventListener('click', async (event) => {
       persist();
       modal = null;
       break;
+    case 'confirm-boss-avatar':
+      if (!Object.hasOwn(BOSS_AVATARS, selectedBossAvatar)) return;
+      state.bossAvatar = selectedBossAvatar;
+      selectedBossAvatar = null;
+      persist();
+      navigate('boss');
+      return;
     case 'use-hourglass':
       if (state.hourglasses < 1) { modal = { type: 'focus-empty' }; break; }
       state.hourglasses -= 1;
