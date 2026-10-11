@@ -864,6 +864,13 @@ function processTaskDeadlineMessages() {
   if (!Array.isArray(state.messages)) state.messages = [];
   let changed = false;
   const now = Date.now();
+  const messageCutoff = now - 30 * 24 * 60 * 60 * 1000;
+  const originalMessageCount = state.messages.length;
+  state.messages = state.messages.filter((message) => {
+    const receivedAt = Date.parse(message.createdAt);
+    return !Number.isFinite(receivedAt) || receivedAt > messageCutoff;
+  });
+  changed = state.messages.length !== originalMessageCount;
 
   const addMessage = (id, type, title, body, task) => {
     if (state.messages.some((message) => message.id === id)) return;
@@ -914,7 +921,7 @@ function processTaskDeadlineMessages() {
 function scheduleTaskDeadlineRefresh() {
   clearTimeout(taskDeadlineRefreshTimer);
   const now = Date.now();
-  const nextRefresh = (state.tasks || []).reduce((earliest, task) => {
+  const nextTaskRefresh = (state.tasks || []).reduce((earliest, task) => {
     if (task.done || !task.deadline) return earliest;
     const daysUntilDeadline = taskDaysUntilDeadline(task.deadline);
     if (daysUntilDeadline === null) return earliest;
@@ -925,6 +932,12 @@ function scheduleTaskDeadlineRefresh() {
       ? Math.min(earliest, thresholdAt)
       : earliest;
   }, Infinity);
+  const nextMessageExpiry = (state.messages || []).reduce((earliest, message) => {
+    const receivedAt = Date.parse(message.createdAt);
+    const expiresAt = Number.isFinite(receivedAt) ? receivedAt + 30 * 24 * 60 * 60 * 1000 : Infinity;
+    return expiresAt > now ? Math.min(earliest, expiresAt) : earliest;
+  }, Infinity);
+  const nextRefresh = Math.min(nextTaskRefresh, nextMessageExpiry);
 
   if (!Number.isFinite(nextRefresh)) return;
   taskDeadlineRefreshTimer = setTimeout(() => {
@@ -1095,7 +1108,8 @@ function inventoryBar() {
 }
 
 function bottomNav(page) {
-  const hasUnreadMessages = (state.messages || []).some((message) => !message.readAt);
+  const unreadCount = unreadMessagesCount();
+  const unreadBadge = unreadCount > 99 ? '99+' : String(unreadCount);
   const links = [
     ['home', ASSETS.navHome, 'Beranda'],
     ['rewards', ASSETS.navChest, 'Peti'],
@@ -1110,14 +1124,23 @@ function bottomNav(page) {
         page === key
           ? 'is-current'
           : ''
-      }${key === 'profile' && hasUnreadMessages ? ' has-unread-messages' : ''}" type="button" data-nav="${key}" aria-label="${label}${key === 'profile' && hasUnreadMessages ? ', ada pesan belum dibaca' : ''}" aria-current="${
+      }${key === 'profile' && unreadCount ? ' has-unread-messages' : ''}" type="button" data-nav="${key}" aria-label="${label}${key === 'profile' && unreadCount ? `, ${unreadCount} pesan belum dibaca` : ''}" aria-current="${
         page === key
           ? 'page'
           : 'false'
       }">
         <img src="${icon}" alt="" />
+        ${key === 'profile' && unreadCount ? `<span class="nav-message-count">${unreadBadge}</span>` : ''}
       </button>`
   ).join('')}</nav>`;
+}
+
+function unreadMessagesCount() {
+  return (state.messages || []).filter((message) => !message.readAt).length;
+}
+
+function messageCountBadge(count) {
+  return count > 99 ? '99+' : String(count);
 }
 
 function appFrame(
@@ -3183,6 +3206,7 @@ function renderChestReward() {
 
 function renderProfile() {
   const done = state.tasks.filter((task) => task.done).length;
+  const unreadCount = unreadMessagesCount();
   const username = escapeHtml(currentAccount?.name || state.username || 'Tayaki');
   const adminProfileLinks = [
     ['admin-verification', 'Verifikasi pembelian'],
@@ -3192,7 +3216,7 @@ function renderProfile() {
   ];
   app.innerHTML = `<section class="product-screen profile-screen"><header class="profile-banner"><h1>${username}</h1><div class="profile-avatar-window"><img src="${getAccountAvatarSource()}" alt="Foto profil ${username}" /></div></header><main class="profile-settings">
     <section class="profile-settings-section"><h2>Akun</h2><div class="profile-settings-card"><button type="button" data-nav="account"><span>Profil</span><b>›</b></button><button type="button" data-action="profile-performance"><span>Performa</span><b>›</b></button></div></section>
-    <section class="profile-settings-section"><h2>Notifikasi</h2><div class="profile-settings-card"><button class="message-entry ${(state.messages || []).some((message) => !message.readAt) ? 'has-unread-messages' : ''}" type="button" data-nav="messages"><span>Pesan</span><b>›</b></button><button type="button" data-nav="purchase-history"><span>Histori pembelian</span><b>›</b></button></div></section>
+    <section class="profile-settings-section"><h2>Notifikasi</h2><div class="profile-settings-card"><button class="message-entry ${unreadCount ? 'has-unread-messages' : ''}" type="button" data-nav="messages"><span>Pesan</span>${unreadCount ? `<span class="message-count-badge" aria-label="${unreadCount} pesan belum dibaca">${messageCountBadge(unreadCount)}</span>` : ''}<b>›</b></button><button type="button" data-nav="purchase-history"><span>Histori pembelian</span><b>›</b></button></div></section>
     <section class="profile-settings-section"><h2>Dukungan</h2><div class="profile-settings-card"><button type="button" data-action="profile-info" data-title="Pusat bantuan" data-message="Butuh bantuan menggunakan Kudo? Di sini kamu bisa mengatur tugas, memakai mode fokus, dan membuka hadiah. Untuk bantuan lebih lanjut, hubungi bantuan@kudo_task_management_app"><span>Pusat bantuan</span><b>›</b></button><button type="button" data-action="open-suggestions"><span>Saran</span><b>›</b></button></div></section>
     ${isAdminUser ? `<section class="profile-settings-section"><h2>Panel admin</h2><div class="profile-settings-card">${adminProfileLinks.map(([page, label]) => `<button type="button" data-nav="${page}"><span>${label}</span><b>›</b></button>`).join('')}</div></section>` : ''}
     <button class="profile-logout" type="button" data-action="logout">Keluar</button><div class="profile-legal"><button type="button" data-action="profile-info" data-title="Ketentuan" data-message="Dengan menggunakan Kudo, kamu setuju memakai fitur aplikasi secara wajar, menjaga keamanan akun, dan bertanggung jawab atas tugas serta konten yang kamu tambahkan. Fitur pada aplikasi ini disediakan untuk membantu mengatur kebiasaan belajar.">Ketentuan</button><button type="button" data-action="profile-info" data-title="Kebijakan Privasi" data-message="Aplikasi Kudo menyimpan nama pengguna, tugas, dan preferensi secara aman untuk kenyamanan pengguna.">Kebijakan Privasi</button><button type="button" data-action="profile-info" data-title="Ucapan terima kasih" data-message="Terima kasih telah menggunakan Kudo dan meluangkan waktu untuk menyelesaikan setiap tugas. Semoga Kudo membuat proses belajar dan beristirahat terasa lebih menyenangkan.">Ucapan terima kasih</button></div>
@@ -3205,13 +3229,14 @@ function renderProfile() {
 
 function renderMessages() {
   if (!Array.isArray(state.messages)) state.messages = [];
+  processTaskDeadlineMessages();
   const pageSize = 6;
   const pageCount = Math.max(1, Math.ceil(state.messages.length / pageSize));
   messagePage = Math.min(messagePage, pageCount - 1);
   const pageMessages = state.messages.slice(messagePage * pageSize, (messagePage + 1) * pageSize);
   const list = pageMessages.length
     ? `<div class="message-list">${pageMessages.map((message) => `<article class="message-card"><span class="message-card-icon" aria-hidden="true">${message.type === 'task-moved' ? '↗' : '!'}</span><div><h2>${escapeHtml(message.title)}</h2><p>${escapeHtml(message.body)}</p><time datetime="${escapeHtml(message.createdAt)}">${new Date(message.createdAt).toLocaleString('id-ID')}</time></div></article>`).join('')}</div>${pageCount > 1 ? `<nav class="message-pagination" aria-label="Navigasi pesan"><button type="button" data-action="message-page" data-page="${messagePage - 1}" aria-label="Pesan sebelumnya" ${messagePage === 0 ? 'disabled' : ''}></button><span>Halaman ${messagePage + 1} dari ${pageCount}</span><button type="button" data-action="message-page" data-page="${messagePage + 1}" aria-label="Pesan berikutnya" ${messagePage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
-    : '<p class="messages-empty">Belum ada pesan.</p>';
+    : `<div class="messages-empty-state"><img src="${ASSETS.focusShortage}" alt="" /><p>Belum ada pesan masuk</p></div>`;
 
   let markedRead = false;
   for (const message of state.messages) {

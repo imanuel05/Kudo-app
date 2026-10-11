@@ -357,7 +357,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .nav-button { width: 52px; height: 52px; min-width: 0; justify-self: center; display: grid; place-items: center; padding: 5px; border: 1.5px solid transparent; border-radius: 10px; background: transparent; }
 .nav-button img { display: block; width: 32px; height: 32px; object-fit: contain; }
 .nav-button.has-unread-messages { position: relative; }
-.nav-button.has-unread-messages::after { width: 9px; height: 9px; position: absolute; top: 7px; right: 7px; border: 1px solid #fff; border-radius: 50%; background: #f04444; content: ""; }
+.nav-message-count, .message-count-badge { min-width: 18px; height: 18px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #fff; border-radius: 999px; color: #fff; background: #f04444; font-size: 9px; font-weight: 700; line-height: 1; }
+.nav-message-count { position: absolute; top: 2px; right: 1px; }
 .nav-button.is-current { border: 3px solid var(--lavender); }
 .nav-button:focus-visible { outline: 2px solid var(--lavender); outline-offset: 2px; }
 .nav-button:active { transform: translateY(1px) scale(.96); }
@@ -1042,7 +1043,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .profile-settings-card > button:not(.strict-toggle) { width: 100%; min-height: 43px; padding: 7px 12px; display: flex; align-items: center; justify-content: space-between; border: 0; color: #333652; background: #fff; font-size: 12px; font-weight: 700; text-align: left; }
 .profile-settings-card > button + button { border-top: 2px solid #e4e4e4 !important; }
 .profile-settings-card > .message-entry { position: relative; }
-.profile-settings-card > .message-entry.has-unread-messages::after { width: 9px; height: 9px; position: absolute; top: 8px; right: 34px; border: 1px solid #fff; border-radius: 50%; background: #f04444; content: ""; }
+.profile-settings-card > .message-entry .message-count-badge { margin-left: auto; margin-right: 8px; }
 .profile-settings-card > button b { width: 10px; height: 10px; display: block; border-top: 3px solid #999; border-right: 3px solid #999; color: transparent; font-size: 0; line-height: 0; transform: rotate(45deg); }
 .profile-settings-card.preference-row { min-height: 44px; padding: 5px 12px; display: flex; align-items: center; justify-content: space-between; color: #333652; font-size: 12px; font-weight: 700; }
 .messages-page { display: grid; gap: 10px; }
@@ -1058,7 +1059,9 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .message-pagination button:last-child::before { transform: rotate(225deg); }
 .message-pagination button:not(:disabled) { color: #797dff; }
 .message-pagination button:disabled { opacity: .45; }
-.messages-empty { margin: 0; padding: 18px 12px; border: 2px dashed #ddd; border-radius: 10px; color: #bfbfbf; font-size: 11px; text-align: center; }
+.messages-empty-state { min-height: calc(100dvh - 183px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+.messages-empty-state img { width: min(260px, 78%); height: 184px; object-fit: contain; }
+.messages-empty-state p { margin: 0; color: #bfbfbf; font-size: 14px; font-weight: 700; }
 .strict-toggle { width: 42px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: flex-start; border: 0; border-radius: 13px; background: #aaa; }
 .strict-toggle i { width: 24px; height: 24px; flex: 0 0 24px; border: 3px solid #aaa; border-radius: 8px; background: #fff; box-shadow: none; transition: transform .15s ease; }
 .strict-toggle.is-on { justify-content: flex-end; border-color: #7775ff; background: #aaa4ff; }
@@ -1104,7 +1107,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .performance-history-description { color: #656677; font-size: 10px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
 .performance-history-mood { width: 34px; height: 34px; flex: 0 0 34px; display: block; object-fit: contain; }
 .performance-history-empty { padding: 16px 10px; border: 2px dashed #ddd; border-radius: 10px; color: #bfbfbf; font-size: 10px; text-align: center; }
-.performance-history-pagination { margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 14px; color: #bfbfbf; font-family: Poppins, sans-serif; font-size: 10px; font-weight: 400; }
+.performance-history-pagination { margin: 10px 0 10px; display: flex; align-items: center; justify-content: center; gap: 14px; color: #bfbfbf; font-family: Poppins, sans-serif; font-size: 10px; font-weight: 400; }
 .performance-history-pagination button { width: 30px; height: 30px; padding: 0; position: relative; display: grid; place-items: center; border: 0; border-radius: 0; color: #999; background: transparent; }
 .performance-history-pagination button::before { width: 10px; height: 10px; content: ''; border-left: 3px solid currentColor; border-bottom: 3px solid currentColor; border-radius: 1px; transform: rotate(45deg); }
 .performance-history-pagination button[data-page]:not([disabled]) { color: #797dff; }
