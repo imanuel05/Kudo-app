@@ -19,6 +19,7 @@ const createPayment = require('../api/payments/create');
 const notifyPayment = require('../api/payments/notification');
 const submitPaymentProof = require('../api/payments/proof');
 const paymentHistory = require('../api/payments/history');
+const notificationEmail = require('../api/notifications/email');
 
 function createResponse() {
   return {
@@ -102,6 +103,51 @@ test('payment history is authenticated and returns only the current user orders'
     assert.ok(requestedCutoff >= thirtyDaysAgo - 1000);
   } finally {
     global.fetch = originalFetch;
+  }
+});
+
+test('task notifications are emailed to the authenticated account through Resend', async () => {
+  const originalFetch = global.fetch;
+  const originalApiKey = process.env.RESEND_API_KEY;
+  const originalSender = process.env.RESEND_FROM_EMAIL;
+  let resendRequest;
+  process.env.RESEND_API_KEY = 'unit-test-placeholder';
+  process.env.RESEND_FROM_EMAIL = 'Kudo <notifications@example.com>';
+  global.fetch = async (input, options = {}) => {
+    const url = String(input);
+    if (url.endsWith('/auth/v1/user')) {
+      return { ok: true, json: async () => ({ id: 'current-user', email: 'user@example.com' }) };
+    }
+    resendRequest = { url, options };
+    return { ok: true, status: 200 };
+  };
+
+  try {
+    const response = createResponse();
+    await notificationEmail({
+      method: 'POST',
+      headers: { authorization: 'Bearer test-token' },
+      body: JSON.stringify({
+        id: 'task-deadline-task_123',
+        title: 'Tenggat tugas hampir tiba',
+        body: 'Segera kerjakan tugas.',
+        createdAt: new Date().toISOString(),
+      }),
+    }, response);
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(JSON.parse(response.body), { sent: true });
+    assert.equal(resendRequest.url, 'https://api.resend.com/emails');
+    assert.equal(resendRequest.options.headers.Authorization, 'Bearer unit-test-placeholder');
+    assert.match(resendRequest.options.headers['Idempotency-Key'], /^[a-f0-9]{64}$/);
+    assert.deepEqual(JSON.parse(resendRequest.options.body).to, ['user@example.com']);
+    assert.equal(JSON.parse(resendRequest.options.body).subject, 'Tenggat tugas hampir tiba');
+  } finally {
+    global.fetch = originalFetch;
+    if (originalApiKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = originalApiKey;
+    if (originalSender === undefined) delete process.env.RESEND_FROM_EMAIL;
+    else process.env.RESEND_FROM_EMAIL = originalSender;
   }
 });
 

@@ -66,6 +66,10 @@ send them in chat.
 7. Deploy the Vercel project. Confirm the `api/` functions are included in the
    deployment and test DOKU sandbox payments before switching credentials to
    production.
+8. To email task deadline notifications, configure `RESEND_API_KEY` and
+   `RESEND_FROM_EMAIL` as Vercel environment variables. Verify the sender
+   address/domain with Resend first. The API key stays server-side; new task
+   notifications are emailed to the authenticated account address.
 
 DOKU prices and diamond quantities are selected from the fixed package list.
 DOKU payments are credited only after a DOKU-signed success notification passes
@@ -83,6 +87,8 @@ endpoint and reloads account state after payment.
   from the private `payment-proofs` bucket.
 - `GET /api/payments/history` — authenticated purchase history for the current
   user only.
+- `POST /api/notifications/email` — sends a task notification to the email
+  address of the authenticated account using Resend.
 - `POST /api/payments/notification` — DOKU notification endpoint.
 - `GET /api/admin/access` — checks admin allowlist membership.
 - `GET /api/admin/orders` and `POST /api/admin/orders` — lists proofs awaiting

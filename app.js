@@ -351,6 +351,7 @@ let purchaseHistoryExpiryTimer = null;
 let purchaseHistoryLoading = false;
 let purchaseHistoryError = '';
 let purchaseHistoryLoaded = false;
+const messageEmailAttempts = new Set();
 let catalogVideos = [];
 let catalogVideosLoaded = false;
 let catalogVideosLoading = false;
@@ -897,6 +898,7 @@ function processTaskDeadlineMessages() {
       taskId: task.id,
       createdAt: new Date(now).toISOString(),
       readAt: '',
+      emailDeliveryStatus: currentAccount?.id ? 'pending' : 'not-applicable',
     });
     changed = true;
   };
@@ -930,7 +932,31 @@ function processTaskDeadlineMessages() {
   }
 
   if (changed) persist();
+  sendPendingMessageEmails();
   return changed;
+}
+
+function sendPendingMessageEmails() {
+  if (!currentAccount?.id) return;
+  for (const message of state.messages || []) {
+    if (message.emailDeliveryStatus !== 'pending' || messageEmailAttempts.has(message.id)) continue;
+    messageEmailAttempts.add(message.id);
+    void authenticatedRequest('/api/notifications/email', {
+      method: 'POST',
+      body: JSON.stringify({
+        id: message.id,
+        title: message.title,
+        body: message.body,
+        createdAt: message.createdAt,
+      }),
+    }).then(() => {
+      message.emailDeliveryStatus = 'sent';
+      message.emailSentAt = new Date().toISOString();
+      persist();
+    }).catch((error) => {
+      console.error('Email notifikasi gagal dikirim:', error);
+    });
+  }
 }
 
 function scheduleTaskDeadlineRefresh() {
@@ -1517,6 +1543,20 @@ function renderForgot() {
 
       </form>
 
+    </div>
+  </section>`;
+}
+
+function renderPasswordReset() {
+  app.innerHTML = `<section class="phone-screen auth-screen" aria-label="Buat kata sandi baru">
+    <div class="screen-content auth-content">
+      <form class="auth-form" data-form="password-reset">
+        <h1>Buat kata sandi baru</h1>
+        <label class="field-label" for="reset-new-password">Password baru</label>
+        <input id="reset-new-password" name="password" type="password" autocomplete="new-password" minlength="6" required />
+        <p class="form-message" role="status"></p>
+        <button class="button button-primary submit-button" type="submit">Simpan password</button>
+      </form>
     </div>
   </section>`;
 }
@@ -4323,6 +4363,7 @@ function render() {
   if (page !== 'media-stream' && mediaVideoElement) showMediaPiP();
   if (page === 'login' || page === 'signup') renderAuth(page);
   else if (page === 'forgot') renderForgot();
+  else if (page === 'reset-password') renderPasswordReset();
   else if (page === 'home') renderHome();
   else if (page === 'add-task') renderTaskCreate();
   else if (page === 'daily') renderTaskPage('easy');
@@ -5574,6 +5615,26 @@ app.addEventListener('submit', async (event) => {
   return;
 }
 
+  if (form.dataset.form === 'password-reset') {
+    const password = String(formData.get('password') || '');
+    const message = form.querySelector('.form-message');
+    if (password.length < 6) {
+      if (message) message.textContent = 'Password minimal terdiri dari 6 karakter.';
+      return;
+    }
+
+    try {
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if (error) throw error;
+      if (message) message.textContent = 'Password berhasil diperbarui.';
+      window.setTimeout(() => navigate('home'), 1200);
+    } catch (error) {
+      console.error('Pembaruan password gagal:', error);
+      if (message) message.textContent = error.message || 'Password tidak dapat diperbarui.';
+    }
+    return;
+  }
+
   if (form.dataset.form === 'signup') {
   const name = String(
     formData.get('name') || ''
@@ -5730,7 +5791,7 @@ app.addEventListener('submit', async (event) => {
     try {
         const { error } =
             await supabaseClient.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/reset-password.html`
+                redirectTo: `${window.location.origin}/?mode=reset-password`
             });
 
         if (error) {
@@ -5849,6 +5910,9 @@ async function startKudo() {
     scheduleDailyMissionRefresh();
 
     const oauthParams = new URLSearchParams(window.location.search);
+    const recoveryParams = new URLSearchParams(window.location.hash.slice(1));
+    const isPasswordRecovery = oauthParams.get('mode') === 'reset-password'
+      || recoveryParams.get('type') === 'recovery';
     const oauthError =
       oauthParams.get('error_description') || oauthParams.get('error');
 
@@ -5869,6 +5933,11 @@ async function startKudo() {
       }
 
       return;
+    }
+
+    if (isPasswordRecovery) {
+        navigate('reset-password');
+        return;
     }
 
     if (currentAccount) {
