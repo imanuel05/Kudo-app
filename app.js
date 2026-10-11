@@ -102,6 +102,7 @@ const STARTER_STATE = {
   chests: 10,
   username: '',
   tasks: [],
+  messages: [],
   moodLog: [],
   chestClaimedOn: '',
   dailyMissionDay: '',
@@ -136,7 +137,9 @@ let modal = null;
 let toast = '';
 let focusTicker = null;
 let dailyMissionRefreshTimer = null;
+let taskDeadlineRefreshTimer = null;
 let performanceHistoryPage = 0;
+let messagePage = 0;
 let taskListPages = { daily: 0, boss: 0 };
 let analysisToken = 0;
 let taskPhotoData = '';
@@ -692,6 +695,9 @@ function cloudProfile(account) {
 }
 
 function resetAccountScopedPages() {
+  clearTimeout(taskDeadlineRefreshTimer);
+  taskDeadlineRefreshTimer = null;
+  messagePage = 0;
   window.clearTimeout(purchaseHistoryExpiryTimer);
   purchaseHistoryExpiryTimer = null;
   purchaseHistory = [];
@@ -828,6 +834,14 @@ function localDayKey(
   ).padStart(2, '0')}`;
 }
 
+function taskDaysUntilDeadline(deadline) {
+  const dueDate = new Date(`${deadline}T00:00:00`);
+  if (Number.isNaN(dueDate.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.floor((dueDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+}
+
 function pruneExpiredCompletedTasks() {
   const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const taskCount = (state.tasks || []).length;
@@ -844,6 +858,81 @@ function pruneExpiredCompletedTasks() {
   const removed = state.tasks.length !== taskCount || state.moodLog.length !== moodCount;
   if (removed) persist();
   return removed;
+}
+
+function processTaskDeadlineMessages() {
+  if (!Array.isArray(state.messages)) state.messages = [];
+  let changed = false;
+  const now = Date.now();
+
+  const addMessage = (id, type, title, body, task) => {
+    if (state.messages.some((message) => message.id === id)) return;
+    state.messages.unshift({
+      id,
+      type,
+      title,
+      body,
+      taskId: task.id,
+      createdAt: new Date(now).toISOString(),
+      readAt: '',
+    });
+    changed = true;
+  };
+
+  for (const task of state.tasks || []) {
+    if (task.done || !task.deadline || !task.id) continue;
+    const daysUntilDeadline = taskDaysUntilDeadline(task.deadline);
+    if (daysUntilDeadline === null) continue;
+
+    if (task.difficulty !== 'hard' && daysUntilDeadline < 7) {
+      task.difficulty = 'hard';
+      addMessage(
+        `task-moved-${task.id}`,
+        'task-moved',
+        'Tugas dipindahkan ke Boss Fight',
+        `“${task.title}” dipindahkan karena belum dikerjakan dan tenggatnya kurang dari 7 hari lagi.`,
+        task
+      );
+      changed = true;
+    }
+
+    if (task.difficulty === 'hard' && daysUntilDeadline < 3) {
+      addMessage(
+        `task-deadline-${task.id}`,
+        'task-deadline',
+        'Tenggat tugas hampir tiba',
+        `Tenggat “${task.title}” kurang dari 3 hari lagi. Segera kerjakan tugasmu.`,
+        task
+      );
+    }
+  }
+
+  if (changed) persist();
+  return changed;
+}
+
+function scheduleTaskDeadlineRefresh() {
+  clearTimeout(taskDeadlineRefreshTimer);
+  const now = Date.now();
+  const nextRefresh = (state.tasks || []).reduce((earliest, task) => {
+    if (task.done || !task.deadline) return earliest;
+    const daysUntilDeadline = taskDaysUntilDeadline(task.deadline);
+    if (daysUntilDeadline === null) return earliest;
+    const threshold = new Date(`${task.deadline}T00:00:00`);
+    threshold.setDate(threshold.getDate() - (task.difficulty === 'hard' ? 2 : 6));
+    const thresholdAt = threshold.getTime();
+    return daysUntilDeadline >= (task.difficulty === 'hard' ? 3 : 7) && thresholdAt > now
+      ? Math.min(earliest, thresholdAt)
+      : earliest;
+  }, Infinity);
+
+  if (!Number.isFinite(nextRefresh)) return;
+  taskDeadlineRefreshTimer = setTimeout(() => {
+    const changed = processTaskDeadlineMessages();
+    const isStreamingPage = ['anime-stream', 'media-stream', 'anime-episodes', 'kdrama-episodes'].includes(currentPage());
+    if (changed && !isStreamingPage) render();
+    else scheduleTaskDeadlineRefresh();
+  }, Math.max(1000, nextRefresh - now));
 }
 
 function completeDailyCheckIn() {
@@ -888,7 +977,11 @@ function refreshDailyMissionsIfDateChanged() {
   const previousDay = state.dailyMissionDay;
   completeDailyCheckIn();
   const removedExpiredTasks = pruneExpiredCompletedTasks();
+  const taskDeadlinesChanged = processTaskDeadlineMessages();
+  const isStreamingPage = ['anime-stream', 'media-stream', 'anime-episodes', 'kdrama-episodes'].includes(currentPage());
   if ((previousDay !== state.dailyMissionDay || removedExpiredTasks) && ['rewards', 'daily', 'boss', 'performance'].includes(currentPage())) render();
+  else if (taskDeadlinesChanged && !isStreamingPage) render();
+  scheduleTaskDeadlineRefresh();
   scheduleDailyMissionRefresh();
 }
 
@@ -1002,6 +1095,7 @@ function inventoryBar() {
 }
 
 function bottomNav(page) {
+  const hasUnreadMessages = (state.messages || []).some((message) => !message.readAt);
   const links = [
     ['home', ASSETS.navHome, 'Beranda'],
     ['rewards', ASSETS.navChest, 'Peti'],
@@ -1016,7 +1110,7 @@ function bottomNav(page) {
         page === key
           ? 'is-current'
           : ''
-      }" type="button" data-nav="${key}" aria-label="${label}" aria-current="${
+      }${key === 'profile' && hasUnreadMessages ? ' has-unread-messages' : ''}" type="button" data-nav="${key}" aria-label="${label}${key === 'profile' && hasUnreadMessages ? ', ada pesan belum dibaca' : ''}" aria-current="${
         page === key
           ? 'page'
           : 'false'
@@ -1033,7 +1127,7 @@ function appFrame(
   const navPage =
     page.startsWith('watch-') || page === 'media-stream' || page === 'anime-episodes' || page === 'kdrama-episodes'
       ? 'focus'
-      : page === 'performance'
+      : page === 'performance' || page === 'messages'
         ? 'profile'
         : page === 'purchase-history' || isAdminPage(page)
           ? 'profile'
@@ -1059,7 +1153,7 @@ function appFrame(
 
   const transactionPageHeader =
     page === 'transaction';
-  const profileToolPageHeader = page === 'purchase-history' || isAdminPage(page);
+  const profileToolPageHeader = page === 'purchase-history' || page === 'messages' || isAdminPage(page);
   const mediaStreamPageHeader = page === 'media-stream';
   const animeEpisodesPageHeader = page === 'anime-episodes';
   const kdramaEpisodesPageHeader = page === 'kdrama-episodes';
@@ -1103,6 +1197,8 @@ function appFrame(
                           ? 'Transaksi'
                           : page === 'purchase-history'
                             ? 'Histori pembelian'
+                          : page === 'messages'
+                            ? 'Pesan'
                             : isAdminPage(page)
                               ? page === 'admin' ? 'Panel admin' : ({
                                 'admin-verification': 'Verifikasi pembelian',
@@ -3096,7 +3192,7 @@ function renderProfile() {
   ];
   app.innerHTML = `<section class="product-screen profile-screen"><header class="profile-banner"><h1>${username}</h1><div class="profile-avatar-window"><img src="${getAccountAvatarSource()}" alt="Foto profil ${username}" /></div></header><main class="profile-settings">
     <section class="profile-settings-section"><h2>Akun</h2><div class="profile-settings-card"><button type="button" data-nav="account"><span>Profil</span><b>›</b></button><button type="button" data-action="profile-performance"><span>Performa</span><b>›</b></button></div></section>
-    <section class="profile-settings-section"><h2>Notifikasi</h2><div class="profile-settings-card"><button type="button" data-action="profile-info" data-title="Pesan" data-message="Belum ada pesan untuk ditampilkan."><span>Pesan</span><b>›</b></button><button type="button" data-nav="purchase-history"><span>Histori pembelian</span><b>›</b></button></div></section>
+    <section class="profile-settings-section"><h2>Notifikasi</h2><div class="profile-settings-card"><button class="message-entry ${(state.messages || []).some((message) => !message.readAt) ? 'has-unread-messages' : ''}" type="button" data-nav="messages"><span>Pesan</span><b>›</b></button><button type="button" data-nav="purchase-history"><span>Histori pembelian</span><b>›</b></button></div></section>
     <section class="profile-settings-section"><h2>Dukungan</h2><div class="profile-settings-card"><button type="button" data-action="profile-info" data-title="Pusat bantuan" data-message="Butuh bantuan menggunakan Kudo? Di sini kamu bisa mengatur tugas, memakai mode fokus, dan membuka hadiah. Untuk bantuan lebih lanjut, hubungi bantuan@kudo_task_management_app"><span>Pusat bantuan</span><b>›</b></button><button type="button" data-action="open-suggestions"><span>Saran</span><b>›</b></button></div></section>
     ${isAdminUser ? `<section class="profile-settings-section"><h2>Panel admin</h2><div class="profile-settings-card">${adminProfileLinks.map(([page, label]) => `<button type="button" data-nav="${page}"><span>${label}</span><b>›</b></button>`).join('')}</div></section>` : ''}
     <button class="profile-logout" type="button" data-action="logout">Keluar</button><div class="profile-legal"><button type="button" data-action="profile-info" data-title="Ketentuan" data-message="Dengan menggunakan Kudo, kamu setuju memakai fitur aplikasi secara wajar, menjaga keamanan akun, dan bertanggung jawab atas tugas serta konten yang kamu tambahkan. Fitur pada aplikasi ini disediakan untuk membantu mengatur kebiasaan belajar.">Ketentuan</button><button type="button" data-action="profile-info" data-title="Kebijakan Privasi" data-message="Aplikasi Kudo menyimpan nama pengguna, tugas, dan preferensi secara aman untuk kenyamanan pengguna.">Kebijakan Privasi</button><button type="button" data-action="profile-info" data-title="Ucapan terima kasih" data-message="Terima kasih telah menggunakan Kudo dan meluangkan waktu untuk menyelesaikan setiap tugas. Semoga Kudo membuat proses belajar dan beristirahat terasa lebih menyenangkan.">Ucapan terima kasih</button></div>
@@ -3105,6 +3201,26 @@ function renderProfile() {
   if (currentAccount?.id && adminCheckedForUserId !== currentAccount.id && !adminAccessLoading) {
     void checkAdminAccess();
   }
+}
+
+function renderMessages() {
+  if (!Array.isArray(state.messages)) state.messages = [];
+  const pageSize = 6;
+  const pageCount = Math.max(1, Math.ceil(state.messages.length / pageSize));
+  messagePage = Math.min(messagePage, pageCount - 1);
+  const pageMessages = state.messages.slice(messagePage * pageSize, (messagePage + 1) * pageSize);
+  const list = pageMessages.length
+    ? `<div class="message-list">${pageMessages.map((message) => `<article class="message-card"><span class="message-card-icon" aria-hidden="true">${message.type === 'task-moved' ? '↗' : '!'}</span><div><h2>${escapeHtml(message.title)}</h2><p>${escapeHtml(message.body)}</p><time datetime="${escapeHtml(message.createdAt)}">${new Date(message.createdAt).toLocaleString('id-ID')}</time></div></article>`).join('')}</div>${pageCount > 1 ? `<nav class="message-pagination" aria-label="Navigasi pesan"><button type="button" data-action="message-page" data-page="${messagePage - 1}" aria-label="Pesan sebelumnya" ${messagePage === 0 ? 'disabled' : ''}></button><span>Halaman ${messagePage + 1} dari ${pageCount}</span><button type="button" data-action="message-page" data-page="${messagePage + 1}" aria-label="Pesan berikutnya" ${messagePage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
+    : '<p class="messages-empty">Belum ada pesan.</p>';
+
+  let markedRead = false;
+  for (const message of state.messages) {
+    if (message.readAt) continue;
+    message.readAt = new Date().toISOString();
+    markedRead = true;
+  }
+  if (markedRead) persist();
+  app.innerHTML = appFrame('messages', `<section class="messages-page">${list}</section>`);
 }
 
 function renderPurchaseHistory() {
@@ -4115,6 +4231,8 @@ function modalView() {
 
 function render() {
   if (!state.activeFocus || state.activeFocus.paused) clearInterval(focusTicker);
+  processTaskDeadlineMessages();
+  scheduleTaskDeadlineRefresh();
   const page = currentPage();
   const isStreamingPage = page === 'anime-stream' || page === 'media-stream';
   if (page === 'focus-session') {
@@ -4164,6 +4282,7 @@ function render() {
   else if (page === 'chest-opening') renderChestOpening();
   else if (page === 'chest-reward') renderChestReward();
   else if (page === 'profile') renderProfile();
+  else if (page === 'messages') renderMessages();
   else if (page === 'account') renderAccount();
   else if (page === 'purchase-history') renderPurchaseHistory();
   else if (isAdminPage(page)) renderAdminPanel();
@@ -4187,10 +4306,8 @@ function render() {
 
 function classifyTask(title, deadline, photo) {
   if (!deadline) return 'hard';
-  const dueDate = new Date(`${deadline}T00:00:00`);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const daysUntil = Math.floor((dueDate.getTime() - today.getTime()) / 86400000);
+  const daysUntil = taskDaysUntilDeadline(deadline);
+  if (daysUntil === null) return 'hard';
   return daysUntil > 7 ? 'easy' : 'hard';
 }
 
@@ -4418,6 +4535,11 @@ app.addEventListener('click', async (event) => {
   if (button.dataset.action === 'performance-history-page') {
     performanceHistoryPage = Math.max(0, Number(button.dataset.page) || 0);
     render();
+    return;
+  }
+  if (button.dataset.action === 'message-page') {
+    messagePage = Math.max(0, Number(button.dataset.page) || 0);
+    renderMessages();
     return;
   }
   if (button.dataset.action === 'purchase-history-page') {
