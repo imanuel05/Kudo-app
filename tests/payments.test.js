@@ -151,6 +151,52 @@ test('task notifications are emailed to the authenticated account through Resend
   }
 });
 
+test('Resend accepts both task moved and upcoming deadline notification types', async () => {
+  const originalFetch = global.fetch;
+  const originalApiKey = process.env.RESEND_API_KEY;
+  const originalSender = process.env.RESEND_FROM_EMAIL;
+  const deliveredEmails = [];
+  process.env.RESEND_API_KEY = 'unit-test-placeholder';
+  process.env.RESEND_FROM_EMAIL = 'Kudo <notifications@example.com>';
+  global.fetch = async (input, options = {}) => {
+    if (String(input).endsWith('/auth/v1/user')) {
+      return { ok: true, json: async () => ({ id: 'current-user', email: 'user@example.com' }) };
+    }
+    deliveredEmails.push(JSON.parse(options.body));
+    return { ok: true, status: 200 };
+  };
+
+  try {
+    for (const notification of [
+      { id: 'task-moved-task_123', title: 'Tugas dipindahkan ke Boss Fight' },
+      { id: 'task-deadline-task_123', title: 'Tenggat tugas hampir tiba' },
+    ]) {
+      const response = createResponse();
+      await notificationEmail({
+        method: 'POST',
+        headers: { authorization: 'Bearer test-token' },
+        body: JSON.stringify({
+          ...notification,
+          body: 'Pengingat tenggat tugas.',
+          createdAt: new Date().toISOString(),
+        }),
+      }, response);
+      assert.equal(response.statusCode, 200);
+    }
+    assert.deepEqual(deliveredEmails.map((email) => email.subject), [
+      'Tugas dipindahkan ke Boss Fight',
+      'Tenggat tugas hampir tiba',
+    ]);
+    assert.ok(deliveredEmails.every((email) => email.from === 'Kudo <notifications@example.com>'));
+  } finally {
+    global.fetch = originalFetch;
+    if (originalApiKey === undefined) delete process.env.RESEND_API_KEY;
+    else process.env.RESEND_API_KEY = originalApiKey;
+    if (originalSender === undefined) delete process.env.RESEND_FROM_EMAIL;
+    else process.env.RESEND_FROM_EMAIL = originalSender;
+  }
+});
+
 test('DOKU notification signatures reject tampered bodies', () => {
   const body = Buffer.from(JSON.stringify({
     order: { invoice_number: 'KUDO-00000000-0000-4000-8000-000000000000', amount: 10000 },

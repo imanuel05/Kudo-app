@@ -352,6 +352,7 @@ let purchaseHistoryLoading = false;
 let purchaseHistoryError = '';
 let purchaseHistoryLoaded = false;
 const messageEmailAttempts = new Set();
+const messageEmailRetryTimers = new Map();
 let catalogVideos = [];
 let catalogVideosLoaded = false;
 let catalogVideosLoading = false;
@@ -938,9 +939,15 @@ function processTaskDeadlineMessages() {
 
 function sendPendingMessageEmails() {
   if (!currentAccount?.id) return;
+  const requestedUserId = currentAccount.id;
   for (const message of state.messages || []) {
-    if (message.emailDeliveryStatus !== 'pending' || messageEmailAttempts.has(message.id)) continue;
-    messageEmailAttempts.add(message.id);
+    const requestKey = `${requestedUserId}:${message.id}`;
+    if (
+      message.emailDeliveryStatus !== 'pending'
+      || messageEmailAttempts.has(requestKey)
+      || messageEmailRetryTimers.has(requestKey)
+    ) continue;
+    messageEmailAttempts.add(requestKey);
     void authenticatedRequest('/api/notifications/email', {
       method: 'POST',
       body: JSON.stringify({
@@ -950,11 +957,25 @@ function sendPendingMessageEmails() {
         createdAt: message.createdAt,
       }),
     }).then(() => {
+      if (currentAccount?.id !== requestedUserId) {
+        messageEmailAttempts.delete(requestKey);
+        return;
+      }
       message.emailDeliveryStatus = 'sent';
       message.emailSentAt = new Date().toISOString();
       persist();
     }).catch((error) => {
       console.error('Email notifikasi gagal dikirim:', error);
+      if (currentAccount?.id !== requestedUserId) {
+        messageEmailAttempts.delete(requestKey);
+        return;
+      }
+      const retryTimer = window.setTimeout(() => {
+        messageEmailAttempts.delete(requestKey);
+        messageEmailRetryTimers.delete(requestKey);
+        sendPendingMessageEmails();
+      }, 60 * 1000);
+      messageEmailRetryTimers.set(requestKey, retryTimer);
     });
   }
 }
