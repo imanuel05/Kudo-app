@@ -9,11 +9,6 @@ const {
 
 const emailAttachments = [
   {
-    filename: 'kudo-email-logo.png',
-    content: readFileSync(join(__dirname, '../../assets/kudo-email-logo.png')).toString('base64'),
-    content_id: 'kudo-logo',
-  },
-  {
     filename: 'email-reminder-art.png',
     content: readFileSync(join(__dirname, '../../assets/email-reminder-art.png')).toString('base64'),
     content_id: 'kudo-reminder-art',
@@ -80,7 +75,7 @@ module.exports = async function notificationEmail(request, response) {
         to: [user.email],
         subject: notification.title,
         text: `${notification.message}\n\nDiterima: ${receivedAt}`,
-        html: `<!doctype html><html><body style="margin:0;padding:24px 12px;background:#f7f7fb;font-family:Arial,sans-serif;color:#333652;"><table role="presentation" style="width:100%;max-width:560px;margin:0 auto;border-collapse:collapse;background:#fff;border:1px solid #ececf2;border-radius:16px;"><tr><td style="padding:24px 20px 8px;text-align:center;"><img src="cid:kudo-logo" width="112" height="112" alt="Kudo" style="display:block;width:112px;height:112px;margin:0 auto;object-fit:contain;"></td></tr><tr><td style="padding:0 20px 12px;text-align:center;"><img src="cid:kudo-reminder-art" width="360" alt="Anak-anak belajar bersama" style="display:block;width:100%;max-width:360px;height:auto;margin:0 auto;"></td></tr><tr><td style="padding:16px 24px 24px;"><h1 style="margin:0 0 12px;font-size:20px;line-height:1.4;color:#333652;">${escapeHtml(notification.title)}</h1><p style="margin:0;font-size:15px;line-height:1.6;color:#55566a;">${messageHtml}</p><p style="margin:20px 0 0;font-size:12px;color:#88899a;">Diterima: ${escapeHtml(receivedAt)}</p></td></tr></table></body></html>`,
+        html: `<!doctype html><html><body style="margin:0;padding:24px 12px;background:#f7f7fb;font-family:Arial,sans-serif;color:#333652;"><table role="presentation" style="width:100%;max-width:560px;margin:0 auto;border-collapse:collapse;background:#fff;border:1px solid #ececf2;border-radius:16px;"><tr><td style="padding:24px 20px 12px;text-align:center;"><img src="cid:kudo-reminder-art" width="360" alt="Anak-anak belajar bersama" style="display:block;width:100%;max-width:360px;height:auto;margin:0 auto;"></td></tr><tr><td style="padding:16px 24px 24px;"><h1 style="margin:0 0 12px;font-size:20px;line-height:1.4;color:#333652;">${escapeHtml(notification.title)}</h1><p style="margin:0;font-size:15px;line-height:1.6;color:#55566a;">${messageHtml}</p><p style="margin:20px 0 0;font-size:12px;color:#88899a;">Diterima: ${escapeHtml(receivedAt)}</p></td></tr></table></body></html>`,
         attachments: emailAttachments,
       }),
     });

@@ -161,12 +161,12 @@ test('task notifications are emailed to the authenticated account through Resend
     assert.equal(email.subject, 'Tenggat tugas hampir tiba');
     assert.match(email.text, /^Segera <kerjakan> tugas\./);
     assert.match(email.html, /Segera &lt;kerjakan&gt; tugas\./);
-    assert.match(email.html, /src="cid:kudo-logo"/);
+    assert.doesNotMatch(email.html, /alt="Kudo"|cid:kudo-logo|kudo-email-logo/i);
     assert.match(email.html, /src="cid:kudo-reminder-art"/);
-    assert.deepEqual(email.attachments.map(({ filename, content_id }) => ({ filename, content_id })), [
-      { filename: 'kudo-email-logo.png', content_id: 'kudo-logo' },
-      { filename: 'email-reminder-art.png', content_id: 'kudo-reminder-art' },
-    ]);
+    assert.deepEqual(email.attachments.map(({ filename, content_id }) => ({ filename, content_id })), [{
+      filename: 'email-reminder-art.png',
+      content_id: 'kudo-reminder-art',
+    }]);
     const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     assert.ok(email.attachments.every(({ content }) => (
       Buffer.from(content, 'base64').subarray(0, 8).equals(pngSignature)
