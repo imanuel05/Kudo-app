@@ -1782,25 +1782,11 @@ function renderTaskPage(kind) {
         : ''
     }
 
-    <div class="quest-illustration ${
+    ${
       hard
-        ? 'quest-boss'
-        : 'quest-daily'
-    }">
-
-      ${
-        hard
-          ? `<img
-              src="${ASSETS.bossPaper}"
-              alt="Tumpukan tugas yang menjadi boss"
-            />`
-          : `<img
-              src="${ASSETS.artDaily}"
-              alt="Dua anak belajar bersama kucing"
-            />`
-      }
-
-    </div>
+        ? `<div class="quest-illustration quest-boss"><div class="quest-boss-panel"></div><img src="${ASSETS.bossPaper}" alt="Tumpukan tugas yang menjadi boss" /></div>`
+        : `<div class="quest-illustration quest-daily"><img src="${ASSETS.artDaily}" alt="Dua anak belajar bersama kucing" /></div>`
+    }
 
     <section class="quest-stats ${
       hard
