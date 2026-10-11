@@ -146,7 +146,7 @@ test('task notifications are emailed to the authenticated account through Resend
       body: JSON.stringify({
         id: 'task-deadline-task_123',
         title: 'Tenggat tugas hampir tiba',
-        body: 'Segera kerjakan tugas.',
+        body: 'Segera <kerjakan> tugas.',
         createdAt: new Date().toISOString(),
       }),
     }, response);
@@ -156,8 +156,21 @@ test('task notifications are emailed to the authenticated account through Resend
     assert.equal(resendRequest.url, 'https://api.resend.com/emails');
     assert.equal(resendRequest.options.headers.Authorization, 'Bearer unit-test-placeholder');
     assert.match(resendRequest.options.headers['Idempotency-Key'], /^[a-f0-9]{64}$/);
-    assert.deepEqual(JSON.parse(resendRequest.options.body).to, ['user@example.com']);
-    assert.equal(JSON.parse(resendRequest.options.body).subject, 'Tenggat tugas hampir tiba');
+    const email = JSON.parse(resendRequest.options.body);
+    assert.deepEqual(email.to, ['user@example.com']);
+    assert.equal(email.subject, 'Tenggat tugas hampir tiba');
+    assert.match(email.text, /^Segera <kerjakan> tugas\./);
+    assert.match(email.html, /Segera &lt;kerjakan&gt; tugas\./);
+    assert.match(email.html, /src="cid:kudo-logo"/);
+    assert.match(email.html, /src="cid:kudo-reminder-art"/);
+    assert.deepEqual(email.attachments.map(({ filename, content_id }) => ({ filename, content_id })), [
+      { filename: 'kudo-email-logo.png', content_id: 'kudo-logo' },
+      { filename: 'email-reminder-art.png', content_id: 'kudo-reminder-art' },
+    ]);
+    const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    assert.ok(email.attachments.every(({ content }) => (
+      Buffer.from(content, 'base64').subarray(0, 8).equals(pngSignature)
+    )));
   } finally {
     global.fetch = originalFetch;
     if (originalApiKey === undefined) delete process.env.RESEND_API_KEY;
