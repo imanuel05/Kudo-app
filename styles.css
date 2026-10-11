@@ -1051,8 +1051,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .profile-settings-card.preference-row { min-height: 44px; padding: 5px 12px; display: flex; align-items: center; justify-content: space-between; color: #333652; font-size: 12px; font-weight: 700; }
 .messages-page { display: grid; gap: 10px; }
 .message-list { display: grid; gap: 9px; }
-.message-card { min-width: 0; padding: 12px; display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: start; gap: 10px; border: 2px solid #e2e2e2; border-radius: 10px; background: #fff; }
-.message-card-icon { width: 34px; height: 34px; display: block; border-radius: 50%; object-fit: contain; }
+.message-card { min-width: 0; padding: 12px; display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: start; gap: 10px; border: 2px solid #e2e2e2; border-radius: 10px; background: #fff; }
+.message-card-icon { width: 56px; height: 56px; display: block; object-fit: contain; }
 .message-card h2 { margin: 0 0 5px; color: #333652; font-size: 12px; font-weight: 700; }
 .message-card p { margin: 0 0 7px; color: #656677; font-size: 10px; line-height: 1.5; }
 .message-card time { color: #999; font-size: 9px; }
