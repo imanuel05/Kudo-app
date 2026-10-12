@@ -4674,7 +4674,7 @@ app.addEventListener('click', async (event) => {
       const { data, error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/#home`,
+          redirectTo: `${window.location.origin}/?source=pwa`,
           skipBrowserRedirect: true,
         },
       });
@@ -5739,7 +5739,7 @@ app.addEventListener('submit', async (event) => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/#home`,
+          emailRedirectTo: `${window.location.origin}/?source=pwa`,
           data: {
             name
           }
