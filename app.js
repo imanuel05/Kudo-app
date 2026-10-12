@@ -4674,7 +4674,7 @@ app.addEventListener('click', async (event) => {
       const { data, error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/#home`,
           skipBrowserRedirect: true,
         },
       });
@@ -5739,6 +5739,7 @@ app.addEventListener('submit', async (event) => {
         email,
         password,
         options: {
+          emailRedirectTo: `${window.location.origin}/#home`,
           data: {
             name
           }
@@ -5749,22 +5750,28 @@ app.addEventListener('submit', async (event) => {
       throw error;
     }
 
-    currentAccount = null;
-    localStorage.removeItem(ACTIVE_ACCOUNT_STORAGE_KEY);
-
     if (data.session) {
-      const { error: signOutError } = await supabaseClient.auth.signOut({ scope: 'local' });
-      if (signOutError) throw signOutError;
+      const synced = await syncSupabaseSession();
+
+      if (!synced || !currentAccount) {
+        throw new Error(
+          'Pendaftaran berhasil, tetapi data akun gagal dimuat.'
+        );
+      }
+
+      completeDailyCheckIn();
+      persist();
+      modal = null;
+      navigate('home');
+      return;
     }
+
     currentAccount = null;
     localStorage.removeItem(ACTIVE_ACCOUNT_STORAGE_KEY);
     if (message) {
       message.textContent =
-        'Registrasi berhasil. Silakan cek email untuk verifikasi akun.';
+        'Registrasi berhasil. Buka tautan verifikasi di email untuk langsung masuk ke beranda.';
     }
-    window.setTimeout(() => {
-      if (currentPage() === 'signup') navigate('login');
-    }, 1500);
   } catch (error) {
     console.error('Register Supabase gagal:', error);
 
