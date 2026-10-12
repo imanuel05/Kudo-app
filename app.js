@@ -82,6 +82,7 @@ const DEFAULT_ANIME_VIDEO_ASSETS = Object.freeze({
 const STORAGE_KEY = 'kudo-prototype-state-v1';
 const ACCOUNTS_STORAGE_KEY = 'kudo-local-accounts-v1';
 const ACTIVE_ACCOUNT_STORAGE_KEY = 'kudo-active-account-v1';
+const GOOGLE_AUTH_REDIRECT_PENDING_KEY = 'kudo-google-auth-redirect-pending-v1';
 const SUPABASE_URL = 'https://uipmsrfepoghoshqlfzy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpcG1zcmZlcG9naG9zaHFsZnp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEwMDIzNDksImV4cCI6MjEwNjU3ODM0OX0._-mdl4w4QHTQy-9cFfAWr8PRMmu0VJYrBXJ3MLzil_Y';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -4681,8 +4682,10 @@ app.addEventListener('click', async (event) => {
 
       if (error) throw error;
       if (!data.url) throw new Error('URL login Google tidak tersedia.');
+      localStorage.setItem(GOOGLE_AUTH_REDIRECT_PENDING_KEY, 'true');
       window.location.assign(data.url);
     } catch (error) {
+      localStorage.removeItem(GOOGLE_AUTH_REDIRECT_PENDING_KEY);
       console.error('Login Google melalui Supabase gagal:', error);
 
       if (message) {
@@ -5992,6 +5995,34 @@ window.addEventListener('hashchange', (event) => {
 async function startKudo() {
     scheduleDailyMissionRefresh();
 
+    const isGoogleAuthRedirectPending =
+      localStorage.getItem(GOOGLE_AUTH_REDIRECT_PENDING_KEY) === 'true';
+    let waitForGoogleAuthSession = Promise.resolve(null);
+
+    if (isGoogleAuthRedirectPending) {
+      waitForGoogleAuthSession = new Promise((resolve) => {
+        let settled = false;
+        let timeoutId;
+        let subscription;
+
+        const finish = (session) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeoutId);
+          subscription?.unsubscribe();
+          resolve(session);
+        };
+
+        const { data } = supabaseClient.auth.onAuthStateChange(
+          (event, session) => {
+            if (event === 'SIGNED_IN' && session) finish(session);
+          }
+        );
+        subscription = data.subscription;
+        timeoutId = window.setTimeout(() => finish(null), 15000);
+      });
+    }
+
     const oauthParams = new URLSearchParams(window.location.search);
     const recoveryParams = new URLSearchParams(window.location.hash.slice(1));
     const isPasswordRecovery = oauthParams.get('mode') === 'reset-password'
@@ -6004,8 +6035,19 @@ async function startKudo() {
         throw new Error(oauthError);
       }
 
-      await syncSupabaseSession();
+      const synced = await syncSupabaseSession();
+
+      if (!synced && isGoogleAuthRedirectPending) {
+        const session = await waitForGoogleAuthSession;
+        if (session) {
+          const restored = await syncSupabaseSession();
+          if (!restored || !currentAccount) {
+            throw new Error('Sesi Google berhasil, tetapi data akun gagal dimuat.');
+          }
+        }
+      }
     } catch (error) {
+      localStorage.removeItem(GOOGLE_AUTH_REDIRECT_PENDING_KEY);
       console.error('Sesi login tidak dapat dipulihkan:', error);
       navigate('login');
 
@@ -6024,6 +6066,7 @@ async function startKudo() {
     }
 
     if (currentAccount) {
+        localStorage.removeItem(GOOGLE_AUTH_REDIRECT_PENDING_KEY);
         completeDailyCheckIn();
         if (currentPage() === 'transaction' && pendingDiamondOrder?.invoiceNumber) {
           render();
@@ -6031,6 +6074,19 @@ async function startKudo() {
         }
         navigate('home');
         return;
+    }
+
+    if (isGoogleAuthRedirectPending) {
+      localStorage.removeItem(GOOGLE_AUTH_REDIRECT_PENDING_KEY);
+      navigate('login');
+
+      const message = app.querySelector('.form-message');
+      if (message) {
+        message.textContent =
+          'Login Google berhasil dimulai, tetapi sesi akun tidak dapat dipulihkan. Silakan coba masuk kembali.';
+      }
+
+      return;
     }
 
     render();
