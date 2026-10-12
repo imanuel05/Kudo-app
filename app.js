@@ -1397,7 +1397,7 @@ function renderWelcome() {
   app.innerHTML = `<section class="phone-screen welcome-screen" aria-label="Splash screen Kudo">
     <div class="screen-content welcome-content">
       <div class="brand-lockup" aria-label="Kudo">
-        <img class="brand-logo" src="${ASSETS.kudo}" alt="Kudo" />
+        <img class="brand-logo" src="ikon/512.png" alt="Kudo" />
         <p>Apresiasi untuk setiap tugasmu</p>
       </div>
 
