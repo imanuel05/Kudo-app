@@ -21,6 +21,8 @@
   .app-shell { width: 100%; min-height: 100vh; min-height: 100dvh; }
   .phone-screen { position: relative; width: min(100vw, 412px); margin-inline: auto; height: 100vh; height: 100dvh; min-height: 100dvh; overflow: hidden; background: #fff; }
   .screen-content { position: absolute; inset: 0; }
+  .splash-content { display: grid; place-items: center; }
+  .splash-logo { display: block; width: min(46vw, 190px); height: auto; object-fit: contain; }
   .auth-content { left: 50%; right: auto; transform: translateX(-50%); }
   .welcome-content { display: flex; flex-direction: column; align-items: center; }
   .brand-lockup { position: absolute; top: 41%; text-align: center; transform: translateY(-50%); }
@@ -35,20 +37,13 @@
 </head>
 <body>
 <main id="app" class="app-shell" aria-live="polite">
-  <section class="phone-screen welcome-screen" aria-label="Splash screen Kudo">
-    <div class="screen-content welcome-content">
-      <div class="brand-lockup" aria-label="Kudo">
-        <img class="brand-logo" src="assets/kudo-login-logo.png" alt="Kudo" />
-        <p>Apresiasi untuk setiap tugasmu</p>
-      </div>
-      <div class="welcome-actions">
-        <button class="button button-primary" data-go="signup">Ayo mulai</button>
-        <button class="button button-secondary" data-go="login">Sudah memiliki akun</button>
-      </div>
+  <section class="phone-screen splash-screen" aria-label="Splash screen Kudo">
+    <div class="screen-content splash-content">
+      <img class="splash-logo" src="assets/kudo-login-logo.png" alt="Kudo" />
     </div>
   </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="app.js?v=home-after-auth-44" defer></script>
+<script src="app.js?v=home-after-auth-46" defer></script>
 </body>
 </html>

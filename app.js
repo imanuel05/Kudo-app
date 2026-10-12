@@ -1154,7 +1154,7 @@ function resetWatchFiltersOnReturn(fromPage, toPage) {
 function currentPage() {
   return (
     location.hash.slice(1) ||
-    'welcome'
+    'splash'
   );
 }
 
@@ -1396,7 +1396,7 @@ function appFrame(
 }
 
 function renderWelcome() {
-  app.innerHTML = `<section class="phone-screen welcome-screen" aria-label="Splash screen Kudo">
+  app.innerHTML = `<section class="phone-screen welcome-screen" aria-label="Halaman sambutan Kudo">
     <div class="screen-content welcome-content">
       <div class="brand-lockup" aria-label="Kudo">
         <img class="brand-logo" src="assets/kudo-login-logo.png" alt="Kudo" />
@@ -1412,6 +1412,14 @@ function renderWelcome() {
           Sudah memiliki akun
         </button>
       </div>
+    </div>
+  </section>`;
+}
+
+function renderSplash() {
+  app.innerHTML = `<section class="phone-screen splash-screen" aria-label="Splash screen Kudo">
+    <div class="screen-content splash-content">
+      <img class="splash-logo" src="assets/kudo-login-logo.png" alt="Kudo" />
     </div>
   </section>`;
 }
@@ -3797,7 +3805,7 @@ function renderAdminPanel() {
     : `<div class="admin-empty-state"><img src="${ASSETS.focusShortage}" alt="" /><p class="admin-empty">Tidak ada transaksi yang menunggu verifikasi.</p></div>`;
   const videoMarkup = adminVideos.length
     ? (() => {
-      const pageSize = 6;
+      const pageSize = 7;
       const pageCount = Math.ceil(adminVideos.length / pageSize);
       adminVideosPage = Math.min(adminVideosPage, pageCount - 1);
       const pageVideos = adminVideos.slice(adminVideosPage * pageSize, (adminVideosPage + 1) * pageSize);
@@ -3806,7 +3814,7 @@ function renderAdminPanel() {
     : '<p class="admin-empty">Belum ada video yang ditambahkan.</p>';
   const verifiedOrderMarkup = adminVerifiedOrders.length
     ? (() => {
-      const pageSize = 4;
+      const pageSize = 5;
       const pageCount = Math.ceil(adminVerifiedOrders.length / pageSize);
       adminVerifiedOrdersPage = Math.min(adminVerifiedOrdersPage, pageCount - 1);
       const pageOrders = adminVerifiedOrders.slice(
@@ -4430,7 +4438,8 @@ function render() {
   if (existingAnimeFrame) animeTrailerFrame = existingAnimeFrame;
   if (page !== 'anime-stream' && (animeVideoElement || animeTrailerFrame)) showAnimePiP();
   if (page !== 'media-stream' && mediaVideoElement) showMediaPiP();
-  if (page === 'login' || page === 'signup') renderAuth(page);
+  if (page === 'splash') renderSplash();
+  else if (page === 'login' || page === 'signup') renderAuth(page);
   else if (page === 'forgot') renderForgot();
   else if (page === 'reset-password') renderPasswordReset();
   else if (page === 'home') renderHome();
@@ -5993,6 +6002,14 @@ window.addEventListener('hashchange', (event) => {
 });
 
 async function startKudo() {
+    const showSplashOnLaunch = currentPage() === 'splash';
+    const startupStartedAt = Date.now();
+    const finishSplash = async () => {
+      const remaining = 900 - (Date.now() - startupStartedAt);
+      if (showSplashOnLaunch && remaining > 0) {
+        await new Promise((resolve) => window.setTimeout(resolve, remaining));
+      }
+    };
     scheduleDailyMissionRefresh();
 
     const isGoogleAuthRedirectPending =
@@ -6075,6 +6092,7 @@ async function startKudo() {
           render();
           return;
         }
+        await finishSplash();
         navigate('home');
         return;
     }
@@ -6089,6 +6107,12 @@ async function startKudo() {
           'Login Google berhasil dimulai, tetapi sesi akun tidak dapat dipulihkan. Silakan coba masuk kembali.';
       }
 
+      return;
+    }
+
+    if (showSplashOnLaunch) {
+      await finishSplash();
+      navigate('welcome');
       return;
     }
 
