@@ -12,17 +12,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" as="style" href="styles.css?v=auth-google-button-35" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="styles.css?v=auth-google-button-35"></noscript>
-<script>
-  const authReturnPending =
-    localStorage.getItem('kudo-google-auth-redirect-pending-v1') === 'true'
-    || window.location.hash.includes('access_token=')
-    || new URLSearchParams(window.location.search).has('code');
-  if (authReturnPending) {
-    document.documentElement.classList.add('auth-return-pending');
-  }
-</script>
+<link rel="preload" as="style" href="styles.css?v=auth-google-button-36" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="styles.css?v=auth-google-button-36"></noscript>
 <style>
   :root { font-family: Arial, sans-serif; color: #99999c; background: #fff; --lavender: #7775ff; --deep-blue: #181bff; --outline: #a8a8a8; }
   * { box-sizing: border-box; }
@@ -30,6 +21,7 @@
   .app-shell { width: 100%; min-height: 100vh; min-height: 100dvh; }
   .phone-screen { position: relative; width: min(100vw, 412px); margin-inline: auto; height: 100vh; height: 100dvh; min-height: 100dvh; overflow: hidden; background: #fff; }
   .screen-content { position: absolute; inset: 0; }
+  .auth-content { left: 50%; right: auto; transform: translateX(-50%); }
   .welcome-content { display: flex; flex-direction: column; align-items: center; }
   .brand-lockup { position: absolute; top: 41%; text-align: center; transform: translateY(-50%); }
   .brand-logo { display: block; width: 190px; height: auto; margin-inline: auto; object-fit: contain; }
@@ -39,11 +31,6 @@
   .button { width: 100%; min-height: 60px; border-radius: 8px; font-size: 14px; font-weight: 700; }
   .button-primary { border: 0; color: white; background: var(--lavender); box-shadow: 0 4px 0 var(--deep-blue); }
   .button-secondary { color: var(--lavender); border: 1px solid var(--outline); background: white; box-shadow: 0 4px 0 #aaa; }
-  .auth-return-loader { display: none; position: absolute; inset: 0; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: #7775ff; font-size: 14px; font-weight: 600; }
-  .auth-return-loader::before { width: 30px; height: 30px; border: 3px solid #e7e6ff; border-top-color: #7775ff; border-radius: 50%; content: ""; animation: auth-return-spin .8s linear infinite; }
-  html.auth-return-pending .welcome-content { display: none; }
-  html.auth-return-pending .auth-return-loader { display: flex; }
-  @keyframes auth-return-spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -56,13 +43,12 @@
       </div>
       <div class="welcome-actions">
         <button class="button button-primary" data-go="signup">Ayo mulai</button>
-        <button class="button button-secondary" data-go="signup">Belum memiliki akun</button>
+        <button class="button button-secondary" data-go="login">Sudah memiliki akun</button>
       </div>
     </div>
-    <div class="auth-return-loader" role="status">Menyiapkan beranda…</div>
   </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="app.js?v=home-after-auth-41" defer></script>
+<script src="app.js?v=home-after-auth-43" defer></script>
 </body>
 </html>

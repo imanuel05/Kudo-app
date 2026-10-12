@@ -1408,8 +1408,8 @@ function renderWelcome() {
           Ayo mulai
         </button>
 
-        <button class="button button-secondary" data-go="signup">
-          Belum memiliki akun
+        <button class="button button-secondary" data-go="login">
+          Sudah memiliki akun
         </button>
       </div>
     </div>
