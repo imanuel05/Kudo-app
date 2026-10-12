@@ -1162,7 +1162,7 @@ function isAdminPage(page = currentPage()) {
 
 function inventoryBar() {
   return `<div class="inventory-bar" aria-label="Inventori">
-    <button class="inventory-item" type="button" data-nav="rewards" aria-label="Tiket: ${state.chests}">
+    <button class="inventory-item" type="button" data-nav="shop" aria-label="Tiket: ${state.chests}">
       <span class="item-token token-chest">
         <img src="${ASSETS.ticket}" alt="" />
       </span>
@@ -1188,6 +1188,8 @@ function inventoryBar() {
 function bottomNav(page) {
   const unreadCount = unreadMessagesCount() + unreadVerifiedPurchaseCount();
   const unreadBadge = unreadCount > 99 ? '99+' : String(unreadCount);
+  const hasPendingAdminOrders = isAdminUser === true && adminOrders.length > 0;
+  const hasReadyMissionChest = dailyMissions().some((mission) => mission.done && !mission.opened);
   const links = [
     ['home', ASSETS.navHome, 'Beranda'],
     ['rewards', ASSETS.navChest, 'Peti'],
@@ -1202,13 +1204,15 @@ function bottomNav(page) {
         page === key
           ? 'is-current'
           : ''
-      }${key === 'profile' && unreadCount ? ' has-unread-messages' : ''}" type="button" data-nav="${key      }" aria-label="${label}${key === 'profile' && unreadCount ? `, ${unreadCount} notifikasi belum dibaca` : ''}" aria-current="${
+      }${key === 'profile' && (unreadCount || hasPendingAdminOrders) ? ' has-unread-messages' : ''}${key === 'profile' && hasPendingAdminOrders ? ' has-admin-pending' : ''}${key === 'rewards' && hasReadyMissionChest ? ' has-pending-reward' : ''}" type="button" data-nav="${key      }" aria-label="${label}${key === 'profile' && unreadCount ? `, ${unreadCount} notifikasi belum dibaca` : ''}${key === 'profile' && hasPendingAdminOrders ? `${unreadCount ? ' dan' : ','} ada transaksi menunggu verifikasi` : ''}${key === 'rewards' && hasReadyMissionChest ? ', ada hadiah misi siap dibuka' : ''}" aria-current="${
         page === key
           ? 'page'
           : 'false'
       }">
         <img src="${icon}" alt="" />
         ${key === 'profile' && unreadCount ? `<span class="nav-message-count">${unreadBadge}</span>` : ''}
+        ${key === 'profile' && hasPendingAdminOrders ? '<span class="nav-pending-indicator" aria-hidden="true"></span>' : ''}
+        ${key === 'rewards' && hasReadyMissionChest ? '<span class="nav-pending-indicator" aria-hidden="true"></span>' : ''}
       </button>`
   ).join('')}</nav>`;
 }
@@ -3349,12 +3353,15 @@ function renderProfile() {
     <section class="profile-settings-section"><h2>Akun</h2><div class="profile-settings-card"><button type="button" data-nav="account"><span>Profil</span><b>›</b></button><button type="button" data-action="profile-performance"><span>Performa</span><b>›</b></button></div></section>
     <section class="profile-settings-section"><h2>Notifikasi</h2><div class="profile-settings-card"><button class="message-entry ${unreadCount ? 'has-unread-messages' : ''}" type="button" data-nav="messages"><span>Pesan</span>${unreadCount ? `<span class="message-count-badge" aria-label="${unreadCount} pesan belum dibaca">${messageCountBadge(unreadCount)}</span>` : ''}<b>›</b></button><button class="message-entry ${unreadPurchaseCount ? 'has-unread-messages' : ''}" type="button" data-nav="purchase-history"><span>Histori pembelian</span>${unreadPurchaseCount ? `<span class="message-count-badge" aria-label="${unreadPurchaseCount} transaksi belum dibaca">${messageCountBadge(unreadPurchaseCount)}</span>` : ''}<b>›</b></button></div>${purchaseHistoryError ? `<p class="purchase-history-error" role="alert">${escapeHtml(purchaseHistoryError)} <button type="button" data-action="retry-profile-purchase-history">Coba lagi</button></p>` : ''}</section>
     <section class="profile-settings-section"><h2>Dukungan</h2><div class="profile-settings-card"><button type="button" data-action="profile-info" data-title="Pusat bantuan" data-message="Butuh bantuan menggunakan Kudo? Di sini kamu bisa mengatur tugas, memakai mode fokus, dan membuka hadiah. Untuk bantuan lebih lanjut, hubungi bantuan@kudo_task_management_app"><span>Pusat bantuan</span><b>›</b></button><button type="button" data-action="open-suggestions"><span>Saran</span><b>›</b></button></div></section>
-    ${isAdminUser ? `<section class="profile-settings-section"><h2>Panel admin</h2><div class="profile-settings-card">${adminProfileLinks.map(([page, label]) => `<button type="button" data-nav="${page}"><span>${label}</span><b>›</b></button>`).join('')}</div></section>` : ''}
+    ${isAdminUser ? `<section class="profile-settings-section"><h2>Panel admin</h2>${adminPanelError ? `<p class="admin-panel-error" role="alert">${escapeHtml(adminPanelError)} <button type="button" data-action="retry-admin-panel">Coba lagi</button></p>` : ''}<div class="profile-settings-card">${adminProfileLinks.map(([page, label]) => `<button type="button" data-nav="${page}"><span>${label}</span><b>›</b></button>`).join('')}</div></section>` : ''}
     <button class="profile-logout" type="button" data-action="logout">Keluar</button><div class="profile-legal"><button type="button" data-action="profile-info" data-title="Ketentuan" data-message="Dengan menggunakan Kudo, kamu setuju memakai fitur aplikasi secara wajar, menjaga keamanan akun, dan bertanggung jawab atas tugas serta konten yang kamu tambahkan. Fitur pada aplikasi ini disediakan untuk membantu mengatur kebiasaan belajar.">Ketentuan</button><button type="button" data-action="profile-info" data-title="Kebijakan Privasi" data-message="Aplikasi Kudo menyimpan nama pengguna, tugas, dan preferensi secara aman untuk kenyamanan pengguna.">Kebijakan Privasi</button><button type="button" data-action="profile-info" data-title="Ucapan terima kasih" data-message="Terima kasih telah menggunakan Kudo dan meluangkan waktu untuk menyelesaikan setiap tugas. Semoga Kudo membuat proses belajar dan beristirahat terasa lebih menyenangkan.">Ucapan terima kasih</button></div>
     </main>
     ${bottomNav('profile')}</section>`;
   if (currentAccount?.id && adminCheckedForUserId !== currentAccount.id && !adminAccessLoading) {
     void checkAdminAccess();
+  }
+  if (isAdminUser === true && !adminPanelAttempted && !adminPanelLoading) {
+    void loadAdminPanel();
   }
   if (currentAccount?.id && !purchaseHistoryLoaded && !purchaseHistoryLoading && !purchaseHistoryError) {
     void loadPurchaseHistory();
@@ -3826,7 +3833,7 @@ function renderAdminPanel() {
     'admin-latest-videos': `<section class="admin-panel-section admin-latest-videos-section"><h2>Video terbaru</h2>${adminPanelLoading ? '<p class="admin-empty" role="status">Memuat video...</p>' : videoMarkup}</section>`,
   };
   const content = page === 'admin'
-    ? `<nav class="admin-menu" aria-label="Menu panel admin">${adminChoices.map(([target, label]) => `<button class="admin-menu-item" type="button" data-nav="${target}"><span>${label}</span><b aria-hidden="true">›</b></button>`).join('')}</nav>`
+    ? `<nav class="admin-menu" aria-label="Menu panel admin">${adminChoices.map(([target, label]) => `<button class="admin-menu-item" type="button" data-nav="${target}"><span>${label}</span><span class="admin-menu-trailing">${target === 'admin-verification' && adminOrders.length ? `<span class="admin-menu-pending-count" aria-label="${adminOrders.length} transaksi menunggu verifikasi">${adminOrders.length}</span>` : ''}<b aria-hidden="true">›</b></span></button>`).join('')}</nav>`
     : adminContent[page] || '';
   app.innerHTML = appFrame(page, `<section class="admin-panel">
     ${adminPanelMessage ? `<p class="admin-panel-message" role="status">${escapeHtml(adminPanelMessage)}</p>` : ''}
@@ -3867,6 +3874,7 @@ async function loadAdminPanel() {
   } finally {
     adminPanelLoading = false;
     if (currentAccount?.id === requestedUserId && isAdminPage()) renderAdminPanel();
+    else if (currentAccount?.id === requestedUserId && currentPage() === 'profile') renderProfile();
   }
 }
 
@@ -4991,7 +4999,8 @@ app.addEventListener('click', async (event) => {
       adminPanelLoaded = false;
       adminPanelAttempted = false;
       adminPanelError = '';
-      renderAdminPanel();
+      if (currentPage() === 'profile') renderProfile();
+      else renderAdminPanel();
       return;
     case 'toggle-strict': state.strictMode = !state.strictMode; persist(); break;
     case 'logout':
