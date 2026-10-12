@@ -1140,6 +1140,13 @@ function navigate(page) {
   }
 }
 
+function navigateHomeThroughSplash() {
+  navigate('splash');
+  window.setTimeout(() => {
+    if (currentPage() === 'splash') navigate('home');
+  }, 900);
+}
+
 function resetWatchFiltersOnReturn(fromPage, toPage) {
   const kind = fromPage === 'anime-episodes' && toPage === 'watch-anime'
     ? 'anime'
@@ -1152,10 +1159,11 @@ function resetWatchFiltersOnReturn(fromPage, toPage) {
 }
 
 function currentPage() {
-  return (
-    location.hash.slice(1) ||
-    'splash'
-  );
+  const hash = location.hash.slice(1);
+  if (/access_token=|refresh_token=|provider_token=|error_description=/.test(hash)) {
+    return 'splash';
+  }
+  return hash.split('#')[0] || 'splash';
 }
 
 function isAdminPage(page = currentPage()) {
@@ -5689,7 +5697,7 @@ app.addEventListener('submit', async (event) => {
     persist();
 
     modal = null;
-    navigate('home');
+    navigateHomeThroughSplash();
   } catch (error) {
     console.error('Login Supabase gagal:', error);
 
@@ -5774,7 +5782,7 @@ app.addEventListener('submit', async (event) => {
       completeDailyCheckIn();
       persist();
       modal = null;
-      navigate('home');
+      navigateHomeThroughSplash();
       return;
     }
 
@@ -6092,8 +6100,12 @@ async function startKudo() {
           render();
           return;
         }
-        await finishSplash();
-        navigate('home');
+        if (showSplashOnLaunch) {
+          await finishSplash();
+          navigate('home');
+        } else {
+          navigateHomeThroughSplash();
+        }
         return;
     }
 
