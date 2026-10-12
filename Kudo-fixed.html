@@ -4,15 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#ffffff">
-<title>Kudo — apresiasi untuk setiap tugasmu</title>
-<link rel="manifest" href="manifest.json?v=kudo-pwa-1">
+<title>Kudo</title>
+<link rel="manifest" href="manifest.json?v=kudo-pwa-2">
 <link rel="icon" type="image/png" sizes="192x192" href="ikon/192.png?v=kudo-wordmark-1">
 <link rel="icon" type="image/png" sizes="512x512" href="ikon/512.png?v=kudo-wordmark-1">
 <link rel="apple-touch-icon" sizes="192x192" href="ikon/192.png?v=kudo-wordmark-1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=episode-navigation-33">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" as="style" href="styles.css?v=first-paint-34" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="styles.css?v=first-paint-34"></noscript>
+<style>
+  :root { font-family: Arial, sans-serif; color: #99999c; background: #fff; --lavender: #7775ff; --deep-blue: #181bff; --outline: #a8a8a8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; background: #fff; }
+  .app-shell { width: 100%; min-height: 100vh; min-height: 100dvh; }
+  .phone-screen { position: relative; width: min(100vw, 412px); margin-inline: auto; height: 100vh; height: 100dvh; min-height: 100dvh; overflow: hidden; background: #fff; }
+  .screen-content { position: absolute; inset: 0; }
+  .welcome-content { display: flex; flex-direction: column; align-items: center; }
+  .brand-lockup { position: absolute; top: 41%; text-align: center; transform: translateY(-50%); }
+  .brand-logo { display: block; width: 190px; height: auto; margin-inline: auto; object-fit: contain; }
+  .brand-lockup p { margin: 8px 0 0; color: #bfbfbf; font-size: 10px; font-weight: 400; letter-spacing: .1px; }
+  .welcome-actions { position: absolute; width: min(84%, 348px); left: 50%; bottom: 31px; transform: translateX(-50%); display: grid; gap: 16px; }
+  button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .button { width: 100%; min-height: 60px; border-radius: 8px; font-size: 14px; font-weight: 700; }
+  .button-primary { border: 0; color: white; background: var(--lavender); box-shadow: 0 4px 0 var(--deep-blue); }
+  .button-secondary { color: var(--lavender); border: 1px solid var(--outline); background: white; box-shadow: 0 4px 0 #aaa; }
+</style>
 </head>
 <body>
 <main id="app" class="app-shell" aria-live="polite">
@@ -30,6 +48,6 @@
   </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="app.js?v=google-session-recovery-37" defer></script>
+<script src="app.js?v=first-paint-39" defer></script>
 </body>
 </html>

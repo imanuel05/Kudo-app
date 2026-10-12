@@ -4675,7 +4675,7 @@ app.addEventListener('click', async (event) => {
       const { data, error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/?source=pwa`,
+          redirectTo: window.location.origin,
           skipBrowserRedirect: true,
         },
       });
@@ -5742,7 +5742,7 @@ app.addEventListener('submit', async (event) => {
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/?source=pwa`,
+          emailRedirectTo: window.location.origin,
           data: {
             name
           }
@@ -6014,8 +6014,8 @@ async function startKudo() {
         };
 
         const { data } = supabaseClient.auth.onAuthStateChange(
-          (event, session) => {
-            if (event === 'SIGNED_IN' && session) finish(session);
+          (_event, session) => {
+            if (session) finish(session);
           }
         );
         subscription = data.subscription;
