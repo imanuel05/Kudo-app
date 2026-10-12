@@ -1189,7 +1189,7 @@ function bottomNav(page) {
   const unreadCount = unreadMessagesCount() + unreadVerifiedPurchaseCount();
   const unreadBadge = unreadCount > 99 ? '99+' : String(unreadCount);
   const hasPendingAdminOrders = isAdminUser === true && adminOrders.length > 0;
-  const hasReadyMissionChest = dailyMissions().some((mission) => mission.done && !mission.opened);
+  const readyMissionChestCount = dailyMissions().filter((mission) => mission.done && !mission.opened).length;
   const links = [
     ['home', ASSETS.navHome, 'Beranda'],
     ['rewards', ASSETS.navChest, 'Peti'],
@@ -1204,15 +1204,15 @@ function bottomNav(page) {
         page === key
           ? 'is-current'
           : ''
-      }${key === 'profile' && (unreadCount || hasPendingAdminOrders) ? ' has-unread-messages' : ''}${key === 'profile' && hasPendingAdminOrders ? ' has-admin-pending' : ''}${key === 'rewards' && hasReadyMissionChest ? ' has-pending-reward' : ''}" type="button" data-nav="${key      }" aria-label="${label}${key === 'profile' && unreadCount ? `, ${unreadCount} notifikasi belum dibaca` : ''}${key === 'profile' && hasPendingAdminOrders ? `${unreadCount ? ' dan' : ','} ada transaksi menunggu verifikasi` : ''}${key === 'rewards' && hasReadyMissionChest ? ', ada hadiah misi siap dibuka' : ''}" aria-current="${
+      }${key === 'profile' && (unreadCount || hasPendingAdminOrders) ? ' has-unread-messages' : ''}${key === 'rewards' && readyMissionChestCount ? ' has-pending-reward' : ''}" type="button" data-nav="${key      }" aria-label="${label}${key === 'profile' && hasPendingAdminOrders ? `, ${adminOrders.length} transaksi menunggu verifikasi` : ''}${key === 'profile' && unreadCount ? `${hasPendingAdminOrders ? ' dan ' : ', '}${unreadCount} notifikasi belum dibaca` : ''}${key === 'rewards' && readyMissionChestCount ? `, ${readyMissionChestCount} peti misi siap dibuka` : ''}" aria-current="${
         page === key
           ? 'page'
           : 'false'
       }">
         <img src="${icon}" alt="" />
-        ${key === 'profile' && unreadCount ? `<span class="nav-message-count">${unreadBadge}</span>` : ''}
-        ${key === 'profile' && hasPendingAdminOrders ? '<span class="nav-pending-indicator" aria-hidden="true"></span>' : ''}
-        ${key === 'rewards' && hasReadyMissionChest ? '<span class="nav-pending-indicator" aria-hidden="true"></span>' : ''}
+        ${key === 'profile' && hasPendingAdminOrders ? `<span class="nav-pending-count" aria-hidden="true">${messageCountBadge(adminOrders.length)}</span>` : ''}
+        ${key === 'profile' && !hasPendingAdminOrders && unreadCount ? `<span class="nav-message-count">${unreadBadge}</span>` : ''}
+        ${key === 'rewards' && readyMissionChestCount ? `<span class="nav-pending-count" aria-label="${readyMissionChestCount} peti misi siap dibuka">${messageCountBadge(readyMissionChestCount)}</span>` : ''}
       </button>`
   ).join('')}</nav>`;
 }

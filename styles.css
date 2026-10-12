@@ -357,10 +357,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .nav-button { width: 52px; height: 52px; min-width: 0; justify-self: center; display: grid; place-items: center; padding: 5px; border: 1.5px solid transparent; border-radius: 10px; background: transparent; }
 .nav-button img { display: block; width: 32px; height: 32px; object-fit: contain; }
 .nav-button.has-unread-messages, .nav-button.has-pending-reward { position: relative; }
-.nav-message-count, .message-count-badge { min-width: 18px; height: 18px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #fff; border-radius: 999px; color: #fff; background: #f04444; font-size: 9px; font-weight: 700; line-height: 1; }
-.nav-message-count { position: absolute; top: 2px; right: 1px; }
-.nav-pending-indicator { width: 10px; height: 10px; position: absolute; top: 3px; right: 2px; border: 1px solid #fff; border-radius: 50%; background: #f04444; }
-.nav-button.has-admin-pending .nav-message-count { right: 9px; }
+.nav-message-count, .nav-pending-count, .message-count-badge { min-width: 18px; height: 18px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #fff; border-radius: 999px; color: #fff; background: #f04444; font-size: 9px; font-weight: 700; line-height: 1; }
+.nav-message-count, .nav-pending-count { position: absolute; top: 2px; right: 1px; }
 .nav-button.is-current { border: 3px solid var(--lavender); }
 .nav-button:focus-visible { outline: 2px solid var(--lavender); outline-offset: 2px; }
 .nav-button:active { transform: translateY(1px) scale(.96); }
