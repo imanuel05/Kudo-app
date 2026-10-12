@@ -5,17 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#f4f4f4">
 <title>Kudo — apresiasi untuk setiap tugasmu</title>
-<link rel="icon" type="image/png" sizes="192x192" href="ikon/192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="ikon/512.png">
-<link rel="apple-touch-icon" sizes="192x192" href="ikon/192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="ikon/192.png?v=kudo-wordmark-1">
+<link rel="icon" type="image/png" sizes="512x512" href="ikon/512.png?v=kudo-wordmark-1">
+<link rel="apple-touch-icon" sizes="192x192" href="ikon/192.png?v=kudo-wordmark-1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=episode-navigation-33">
 </head>
 <body>
-<main id="app" class="app-shell" aria-live="polite"></main>
+<main id="app" class="app-shell" aria-live="polite">
+  <section class="phone-screen welcome-screen" aria-label="Splash screen Kudo">
+    <div class="screen-content welcome-content">
+      <div class="brand-lockup" aria-label="Kudo">
+        <img class="brand-logo" src="assets/kudo-login-logo.png" alt="Kudo" />
+        <p>Apresiasi untuk setiap tugasmu</p>
+      </div>
+      <div class="welcome-actions">
+        <button class="button button-primary" data-go="signup">Ayo mulai</button>
+        <button class="button button-secondary" data-go="signup">Belum memiliki akun</button>
+      </div>
+    </div>
+  </section>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="app.js?v=email-notifications-34" defer></script>
+<script src="app.js?v=startup-assets-35" defer></script>
 </body>
 </html>
