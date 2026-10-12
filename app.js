@@ -386,7 +386,8 @@ let pendingDiamondOrder = (() => {
 })();
 
 const icons = {
-  eye: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>',
+  eyeOpen: '<img class="password-eye-icon" src="assets/password-eye-open.png" alt="" />',
+  eyeClosed: '<img class="password-eye-icon" src="assets/password-eye-closed.png" alt="" />',
 
   home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H5V10m5 10v-6h4v6"/></svg>',
 
@@ -1397,7 +1398,7 @@ function renderWelcome() {
   app.innerHTML = `<section class="phone-screen welcome-screen" aria-label="Splash screen Kudo">
     <div class="screen-content welcome-content">
       <div class="brand-lockup" aria-label="Kudo">
-        <img class="brand-logo" src="ikon/512.png" alt="Kudo" />
+        <img class="brand-logo" src="assets/kudo-login-logo.png" alt="Kudo" />
         <p>Apresiasi untuk setiap tugasmu</p>
       </div>
 
@@ -1434,12 +1435,6 @@ function renderAuth(mode) {
         data-form="${mode}"
         ${signup ? '' : 'novalidate'}>
 
-        ${
-          signup
-            ? ''
-            : '<img class="auth-logo" src="assets/kudo-login-logo.png" alt="Kudo" />'
-        }
-
         <h1>${title}</h1>
 
         ${
@@ -1457,11 +1452,7 @@ function renderAuth(mode) {
           name="email"
           type="${signup ? 'email' : 'text'}"
           autocomplete="username"
-          placeholder="${
-            signup
-              ? 'Email'
-              : 'Nama pengguna atau email'
-          }"
+          placeholder="${signup ? 'Email' : 'Nama pengguna atau email'}"
           required
         />
 
@@ -1487,8 +1478,9 @@ function renderAuth(mode) {
           <button
             class="password-toggle"
             type="button"
-            aria-label="Tampilkan password">
-            ${icons.eye}
+            aria-label="Tampilkan password"
+            aria-pressed="false">
+            ${icons.eyeClosed}
           </button>
         </div>
 
@@ -1512,7 +1504,7 @@ function renderAuth(mode) {
 
         <div class="social-actions">
           <button
-            class="social-button"
+            class="social-button${signup ? ' signup-google-button' : ''}"
             type="button"
             data-social="Google">
             <img
@@ -1583,7 +1575,7 @@ function renderForgot() {
           name="email"
           type="email"
           autocomplete="email"
-          placeholder="Nama pengguna atau email"
+          placeholder="Email"
           required
         />
 
@@ -4719,6 +4711,8 @@ app.addEventListener('click', async (event) => {
     const visible = input.type === 'password';
     input.type = visible ? 'text' : 'password';
     button.setAttribute('aria-label', visible ? 'Sembunyikan password' : 'Tampilkan password');
+    button.setAttribute('aria-pressed', String(visible));
+    button.innerHTML = visible ? icons.eyeOpen : icons.eyeClosed;
     return;
   }
   if (button.dataset.action === 'performance-history-page') {

@@ -123,13 +123,6 @@ button:active { transform: translateY(2px) scale(.985); }
 
 .auth-form { position: relative; width: 100%; display: flex; flex-direction: column; }
 
-.auth-logo {
-  display: block;
-  width: min(200px, 70%);
-  height: auto;
-  margin: 0 auto 28px;
-}
-
 .auth-form h1 {
   margin: 0 0 51px;
   text-align: center;
@@ -150,35 +143,37 @@ button:active { transform: translateY(2px) scale(.985); }
 
 .auth-form input {
   width: 100%;
-  height: 52px;
-  padding: 0 11px;
-  border: 1px solid #a9a9a9;
-  border-radius: 8px;
-  outline: none;
+  height: 43px;
+  margin: 0 0 13px;
+  padding: 0 12px;
+  border: 2px solid #e4e4e4;
+  border-radius: 10px;
   background: #fff;
-  color: #747477;
-  font-size: 10px;
-  box-shadow: 0 1px 2px #0000000a;
+  color: #45475e;
+  font-size: 12px;
 }
 
-.auth-form input::placeholder { color: #aaa; opacity: 1; }
-.auth-form input:focus { border-color: var(--lavender); box-shadow: 0 0 0 2px #7775ff26; }
-#name, #email { margin-bottom: 15px; }
+.auth-form input::placeholder { color: #bfbfbf; opacity: 1; }
+.auth-form input:hover,
+.auth-form input:focus,
+.auth-form input:focus-visible { border-color: #e4e4e4; outline: none; box-shadow: none; }
+.auth-form .password-wrap input { padding-right: 40px; }
 
 .password-wrap { position: relative; }
-.password-wrap input { padding-right: 40px; }
 .password-toggle {
   position: absolute;
   top: 0;
   right: 4px;
-  height: 52px;
+  height: 43px;
   width: 34px;
   padding: 9px;
+  display: grid;
+  place-items: center;
   border: 0;
-  color: #999;
+  color: #797dff;
   background: transparent;
 }
-.password-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.password-eye-icon { display: block; width: 18px; height: 18px; object-fit: contain; }
 
 .forgot-link, .back-link {
   align-self: flex-end;
@@ -273,8 +268,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 @media (max-height: 700px) {
   .auth-content { --auth-top: 35px; padding-top: var(--auth-top); }
   .auth-form h1 { margin-bottom: 18px; }
-  .auth-form input { height: 42px; }
-  .password-toggle { height: 42px; }
+  .auth-form input { height: 43px; }
+  .password-toggle { height: 43px; }
   .submit-button { margin-top: 26px; height: 48px; min-height: 48px; }
   .auth-form[data-form="login"],
   .auth-form[data-form="signup"] { flex: 1; }
@@ -1088,7 +1083,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .strict-toggle i { width: 24px; height: 24px; flex: 0 0 24px; border: 3px solid #aaa; border-radius: 8px; background: #fff; box-shadow: none; transition: transform .15s ease; }
 .strict-toggle.is-on { justify-content: flex-end; border-color: #7775ff; background: #aaa4ff; }
 .strict-toggle.is-on i { border-color: #7775ff; }
-.profile-logout { width: 100%; min-height: 45px; margin-top: 2px; border: 2px solid #aaa; border-radius: 7px; color: #797dff; background: #fff; box-shadow: 0 3px 0 #bbb; font-size: 14px; font-weight: 700; }
+.profile-logout,
+.signup-google-button { width: 100%; height: 45px; min-height: 45px; margin-top: 2px; border: 2px solid #aaa; border-radius: 7px; color: #797dff; background: #fff; box-shadow: 0 3px 0 #bbb; font-size: 14px; font-weight: 700; }
 .profile-legal { margin-top: 13px; display: grid; justify-items: start; }
 .profile-legal button { padding: 4px 0; border: 0; color: #797dff; background: transparent; font-size: 12px; font-weight: 700; }
 .performance-page { padding: 8px 0 0; }
@@ -1245,7 +1241,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 #app button.item-purchase-decline,
 #app button.text-button,
 #app button.account-delete-button,
-#app button.profile-logout {
+#app button.profile-logout,
+#app button.signup-google-button {
   height: 45px;
   min-height: 45px;
   font-size: 14px;
