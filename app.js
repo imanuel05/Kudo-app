@@ -1505,7 +1505,7 @@ function renderAuth(mode) {
 
         <div class="social-actions">
           <button
-            class="social-button${signup ? ' signup-google-button' : ''}"
+            class="social-button auth-google-button"
             type="button"
             data-social="Google">
             <img
@@ -5996,7 +5996,9 @@ async function startKudo() {
     scheduleDailyMissionRefresh();
 
     const isGoogleAuthRedirectPending =
-      localStorage.getItem(GOOGLE_AUTH_REDIRECT_PENDING_KEY) === 'true';
+      localStorage.getItem(GOOGLE_AUTH_REDIRECT_PENDING_KEY) === 'true'
+      || window.location.hash.includes('access_token=')
+      || new URLSearchParams(window.location.search).has('code');
     let waitForGoogleAuthSession = Promise.resolve(null);
 
     if (isGoogleAuthRedirectPending) {
@@ -6061,6 +6063,7 @@ async function startKudo() {
     }
 
     if (isPasswordRecovery) {
+        localStorage.removeItem(GOOGLE_AUTH_REDIRECT_PENDING_KEY);
         navigate('reset-password');
         return;
     }
