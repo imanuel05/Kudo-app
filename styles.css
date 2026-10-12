@@ -123,6 +123,13 @@ button:active { transform: translateY(2px) scale(.985); }
 
 .auth-form { position: relative; width: 100%; display: flex; flex-direction: column; }
 
+.auth-logo {
+  display: block;
+  width: min(200px, 70%);
+  height: auto;
+  margin: 0 auto 28px;
+}
+
 .auth-form h1 {
   margin: 0 0 51px;
   text-align: center;

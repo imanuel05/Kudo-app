@@ -1434,6 +1434,12 @@ function renderAuth(mode) {
         data-form="${mode}"
         ${signup ? '' : 'novalidate'}>
 
+        ${
+          signup
+            ? ''
+            : '<img class="auth-logo" src="assets/kudo-login-logo.png" alt="Kudo" />'
+        }
+
         <h1>${title}</h1>
 
         ${
