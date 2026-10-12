@@ -1187,8 +1187,7 @@ function inventoryBar() {
 
 function bottomNav(page) {
   const unreadCount = unreadMessagesCount() + unreadVerifiedPurchaseCount();
-  const unreadBadge = unreadCount > 99 ? '99+' : String(unreadCount);
-  const hasPendingAdminOrders = isAdminUser === true && adminOrders.length > 0;
+  const profileBadgeCount = unreadCount + (isAdminUser === true ? adminOrders.length : 0);
   const readyMissionChestCount = dailyMissions().filter((mission) => mission.done && !mission.opened).length;
   const links = [
     ['home', ASSETS.navHome, 'Beranda'],
@@ -1204,14 +1203,13 @@ function bottomNav(page) {
         page === key
           ? 'is-current'
           : ''
-      }${key === 'profile' && (unreadCount || hasPendingAdminOrders) ? ' has-unread-messages' : ''}${key === 'rewards' && readyMissionChestCount ? ' has-pending-reward' : ''}" type="button" data-nav="${key      }" aria-label="${label}${key === 'profile' && hasPendingAdminOrders ? `, ${adminOrders.length} transaksi menunggu verifikasi` : ''}${key === 'profile' && unreadCount ? `${hasPendingAdminOrders ? ' dan ' : ', '}${unreadCount} notifikasi belum dibaca` : ''}${key === 'rewards' && readyMissionChestCount ? `, ${readyMissionChestCount} peti misi siap dibuka` : ''}" aria-current="${
+      }${key === 'profile' && profileBadgeCount ? ' has-unread-messages' : ''}${key === 'rewards' && readyMissionChestCount ? ' has-pending-reward' : ''}" type="button" data-nav="${key      }" aria-label="${label}${key === 'profile' && profileBadgeCount ? `, ${profileBadgeCount} notifikasi` : ''}${key === 'rewards' && readyMissionChestCount ? `, ${readyMissionChestCount} peti misi siap dibuka` : ''}" aria-current="${
         page === key
           ? 'page'
           : 'false'
       }">
         <img src="${icon}" alt="" />
-        ${key === 'profile' && hasPendingAdminOrders ? `<span class="nav-pending-count" aria-hidden="true">${messageCountBadge(adminOrders.length)}</span>` : ''}
-        ${key === 'profile' && !hasPendingAdminOrders && unreadCount ? `<span class="nav-message-count">${unreadBadge}</span>` : ''}
+        ${key === 'profile' && profileBadgeCount ? `<span class="nav-pending-count" aria-hidden="true">${messageCountBadge(profileBadgeCount)}</span>` : ''}
         ${key === 'rewards' && readyMissionChestCount ? `<span class="nav-pending-count" aria-label="${readyMissionChestCount} peti misi siap dibuka">${messageCountBadge(readyMissionChestCount)}</span>` : ''}
       </button>`
   ).join('')}</nav>`;
