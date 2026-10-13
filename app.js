@@ -1832,15 +1832,15 @@ function renderTaskCreate() {
               data-action="remove-task-photo"
               aria-label="Hapus gambar lampiran"
               hidden>×</button>
-          </div>
 
-          <input
-            id="task-photo-input"
-            name="photo"
-            type="file"
-            accept="image/*"
-            hidden
-          />
+            <input
+              id="task-photo-input"
+              name="photo"
+              type="file"
+              accept="image/*"
+              required
+            />
+          </div>
 
           <label for="task-description">
             Deskripsi (opsional)
