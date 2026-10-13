@@ -3878,7 +3878,7 @@ function renderAdminPanel() {
         adminVerifiedOrdersPage * pageSize,
         (adminVerifiedOrdersPage + 1) * pageSize
       );
-      return `${pageOrders.map((order) => `<article class="admin-verified-order"><div class="admin-verified-proof">${order.proofUrl ? `<a href="${escapeHtml(order.proofUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Lihat bukti pembayaran ${escapeHtml(order.invoiceNumber)}"><img src="${escapeHtml(order.proofUrl)}" alt="Bukti pembayaran ${escapeHtml(order.invoiceNumber)}" /></a>` : '<span>Tidak ada lampiran</span>'}</div><div class="admin-verified-details"><strong>${Number(order.diamonds).toLocaleString('id-ID')} berlian · Rp ${Number(order.amount).toLocaleString('id-ID')}</strong><small>${escapeHtml(order.invoiceNumber)} · ${new Date(order.verifiedAt || order.createdAt).toLocaleString('id-ID')}</small><small>User: ${escapeHtml(order.userName || 'Pengguna tidak ditemukan')}</small><span class="admin-order-status ${order.status === 'rejected' ? 'is-rejected' : ''}">${order.status === 'rejected' ? 'Pembelian ditolak' : 'Pembelian terverifikasi'}</span></div></article>`).join('')}${pageCount > 1 ? `<nav class="admin-orders-pagination" aria-label="Navigasi histori verifikasi"><button type="button" data-action="admin-history-page" data-page="${adminVerifiedOrdersPage - 1}" aria-label="Histori sebelumnya" ${adminVerifiedOrdersPage === 0 ? 'disabled' : ''}></button><span>Halaman ${adminVerifiedOrdersPage + 1} dari ${pageCount}</span><button type="button" data-action="admin-history-page" data-page="${adminVerifiedOrdersPage + 1}" aria-label="Histori berikutnya" ${adminVerifiedOrdersPage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`;
+      return `${pageOrders.map((order) => `<article class="admin-verified-order"><div class="admin-verified-proof">${order.proofUrl ? `<a href="${escapeHtml(order.proofUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Lihat bukti pembayaran ${escapeHtml(order.invoiceNumber)}"><img src="${escapeHtml(order.proofUrl)}" alt="Bukti pembayaran ${escapeHtml(order.invoiceNumber)}" /></a>` : '<span>Tidak ada lampiran</span>'}</div><div class="admin-verified-details"><div class="admin-verified-heading"><strong>${Number(order.diamonds).toLocaleString('id-ID')} berlian · Rp ${Number(order.amount).toLocaleString('id-ID')}</strong><button class="task-delete" type="button" data-action="admin-delete-verified-order" data-invoice="${escapeHtml(order.invoiceNumber)}" aria-label="Hapus histori transaksi ${escapeHtml(order.invoiceNumber)}" ${adminActionInProgress ? 'disabled' : ''}><img src="assets/trash-icon.png" alt="" /></button></div><small>${escapeHtml(order.invoiceNumber)} · ${new Date(order.verifiedAt || order.createdAt).toLocaleString('id-ID')}</small><small>User: ${escapeHtml(order.userName || 'Pengguna tidak ditemukan')}</small><span class="admin-order-status ${order.status === 'rejected' ? 'is-rejected' : ''}">${order.status === 'rejected' ? 'Pembelian ditolak' : 'Pembelian terverifikasi'}</span></div></article>`).join('')}${pageCount > 1 ? `<nav class="admin-orders-pagination" aria-label="Navigasi histori verifikasi"><button type="button" data-action="admin-history-page" data-page="${adminVerifiedOrdersPage - 1}" aria-label="Histori sebelumnya" ${adminVerifiedOrdersPage === 0 ? 'disabled' : ''}></button><span>Halaman ${adminVerifiedOrdersPage + 1} dari ${pageCount}</span><button type="button" data-action="admin-history-page" data-page="${adminVerifiedOrdersPage + 1}" aria-label="Histori berikutnya" ${adminVerifiedOrdersPage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`;
     })()
     : '<p class="admin-empty">Belum ada pembelian yang diverifikasi.</p>';
   const adminChoices = [
@@ -3968,6 +3968,34 @@ async function updateAdminOrder(invoiceNumber, action) {
   } catch (error) {
     console.error('Verifikasi transaksi admin gagal:', error);
     adminPanelError = error.message || 'Pembayaran tidak dapat diverifikasi.';
+  } finally {
+    adminActionInProgress = false;
+    if (isAdminPage()) {
+      if (adminPanelLoaded) renderAdminPanel();
+      else void loadAdminPanel();
+    }
+  }
+}
+
+async function deleteAdminVerifiedOrder(invoiceNumber) {
+  if (adminActionInProgress) return;
+  adminActionInProgress = true;
+  modal = null;
+  adminPanelMessage = 'Menghapus histori transaksi...';
+  adminPanelError = '';
+  renderAdminPanel();
+  try {
+    const { response, result } = await authenticatedRequest('/api/admin/orders', {
+      method: 'POST',
+      body: JSON.stringify({ invoiceNumber, action: 'delete' }),
+    });
+    if (!response.ok) throw new Error(result.error || 'Histori transaksi tidak dapat dihapus.');
+    adminPanelMessage = `Histori transaksi ${invoiceNumber} berhasil dihapus.`;
+    adminPanelLoaded = false;
+    adminPanelAttempted = false;
+  } catch (error) {
+    console.error('Histori transaksi admin gagal dihapus:', error);
+    adminPanelError = error.message || 'Histori transaksi tidak dapat dihapus.';
   } finally {
     adminActionInProgress = false;
     if (isAdminPage()) {
@@ -4437,6 +4465,8 @@ function modalView() {
     body = `<div class="dialog result-dialog"><div class="result-icon">💎</div><h2>Hadiah harian diklaim</h2><p>+20 kristal sudah masuk ke inventori.</p><button class="button button-primary" type="button" data-action="close-modal">Kembali</button></div>`;
   } else if (modal.type === 'confirm-delete') {
     body = `<div class="dialog result-dialog delete-confirm-dialog"><img class="delete-confirm-art" src="assets/delete-task-art.png" alt="Kudo kesulitan mengerjakan tugas" /><h2>Hapus tugas?</h2><p>${escapeHtml(modal.title)}</p><button class="button button-primary" type="button" data-action="delete-task">Hapus tugas</button><button class="button button-secondary" type="button" data-action="close-modal">Batal</button></div>`;
+  } else if (modal.type === 'admin-delete-order-confirm') {
+    body = `<div class="dialog result-dialog delete-confirm-dialog"><img class="delete-confirm-art" src="assets/delete-task-art.png" alt="" /><h2>Hapus histori?</h2><p>${escapeHtml(modal.invoiceNumber)}</p><button class="button button-primary" type="button" data-action="admin-confirm-delete-order">Hapus histori</button><button class="button button-secondary" type="button" data-action="close-modal">Batal</button></div>`;
   } else if (modal.type === 'reset') {
     body = `<div class="dialog result-dialog"><h2>Hapus data demo?</h2><p>Ini akan menghapus tugas dan progres yang tersimpan di browser ini.</p><button class="button button-primary" type="button" data-action="confirm-reset">Reset data</button><button class="text-button" type="button" data-action="close-modal">Batal</button></div>`;
   }
@@ -5061,6 +5091,18 @@ app.addEventListener('click', async (event) => {
     case 'admin-reject-order':
       if (!window.confirm('Tolak pembelian ini? Transaksi akan ditandai ditolak dan berlian tidak diberikan.')) return;
       await rejectAdminOrder(button.dataset.invoice);
+      return;
+    case 'admin-delete-verified-order':
+      modal = {
+        type: 'admin-delete-order-confirm',
+        invoiceNumber: button.dataset.invoice,
+      };
+      render();
+      return;
+    case 'admin-confirm-delete-order':
+      if (modal?.type === 'admin-delete-order-confirm') {
+        await deleteAdminVerifiedOrder(modal.invoiceNumber);
+      }
       return;
     case 'retry-admin-panel':
       adminPanelLoaded = false;

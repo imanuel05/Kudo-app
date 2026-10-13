@@ -114,8 +114,23 @@ module.exports = async function adminOrders(request, response) {
     if (!/^KUDO-[0-9a-f-]{36}$/i.test(invoiceNumber)) {
       return sendJson(response, 400, { error: 'Nomor transaksi tidak valid.' });
     }
-    if (!['verify', 'reject'].includes(action)) {
+    if (!['verify', 'reject', 'delete'].includes(action)) {
       return sendJson(response, 400, { error: 'Tindakan transaksi tidak valid.' });
+    }
+    if (action === 'delete') {
+      const query = new URLSearchParams({
+        invoice_number: `eq.${invoiceNumber}`,
+        status: 'in.(paid,rejected)',
+        select: 'invoice_number',
+      });
+      const deletedOrders = await supabaseRequest(`/rest/v1/payment_orders?${query}`, {
+        method: 'DELETE',
+        headers: { Prefer: 'return=representation' },
+      });
+      if (!Array.isArray(deletedOrders) || deletedOrders.length === 0) {
+        return sendJson(response, 404, { error: 'Histori transaksi tidak ditemukan.' });
+      }
+      return sendJson(response, 200, { status: 'deleted' });
     }
     const rpcName = action === 'reject' ? 'reject_qris_payment' : 'verify_qris_payment';
     const result = await supabaseRequest(`/rest/v1/rpc/${rpcName}`, {
@@ -126,7 +141,11 @@ module.exports = async function adminOrders(request, response) {
   } catch (error) {
     console.error('Admin payment action failed:', error);
     return sendJson(response, 500, {
-      error: action === 'reject' ? 'Pembelian tidak dapat ditolak.' : 'Pembayaran tidak dapat diverifikasi.',
+      error: action === 'reject'
+        ? 'Pembelian tidak dapat ditolak.'
+        : action === 'delete'
+          ? 'Histori transaksi tidak dapat dihapus.'
+          : 'Pembayaran tidak dapat diverifikasi.',
     });
   }
 };

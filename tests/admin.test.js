@@ -146,6 +146,43 @@ test('admin payment endpoint rejects unsupported order actions', async () => {
   }
 });
 
+test('admin can delete only completed or rejected payment history', async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (input, options = {}) => {
+    const url = String(input);
+    calls.push({ url, options });
+    if (url.endsWith('/auth/v1/user')) return jsonResponse({ id: 'admin-user' });
+    if (url.includes('/rest/v1/admin_users')) return jsonResponse([{ user_id: 'admin-user' }]);
+    if (url.includes('/rest/v1/payment_orders?')) {
+      return jsonResponse([{ invoice_number: 'KUDO-00000000-0000-4000-8000-000000000000' }]);
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    const response = createResponse();
+    await adminOrders({
+      method: 'POST',
+      headers: { authorization: 'Bearer test-token' },
+      body: {
+        invoiceNumber: 'KUDO-00000000-0000-4000-8000-000000000000',
+        action: 'delete',
+      },
+    }, response);
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(JSON.parse(response.body), { status: 'deleted' });
+    const deletion = calls.find(({ options }) => options.method === 'DELETE');
+    assert.ok(deletion);
+    const query = new URL(deletion.url).searchParams;
+    assert.equal(query.get('invoice_number'), 'eq.KUDO-00000000-0000-4000-8000-000000000000');
+    assert.equal(query.get('status'), 'in.(paid,rejected)');
+    assert.equal(deletion.options.headers.Prefer, 'return=representation');
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('admin order listing signs private payment proofs for review', async () => {
   const originalFetch = global.fetch;
   global.fetch = async (input) => {
