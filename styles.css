@@ -954,8 +954,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .admin-verified-details { min-width: 0; display: grid; gap: 4px; }
 .admin-verified-heading { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .admin-verified-heading strong { min-width: 0; overflow-wrap: anywhere; }
-.admin-verified-heading .task-delete { width: 28px; height: 28px; flex-basis: 28px; }
-.admin-verified-heading .task-delete img { width: 19px; height: 21px; }
+.admin-verified-heading .task-delete { width: 28px; height: 28px; flex-basis: 28px; padding: 0; place-items: center; }
+.admin-verified-heading .task-delete img { width: 18px; height: 18px; }
 .admin-verified-details strong { color: #333652; font-size: 11px; }
 .admin-verified-details small { overflow-wrap: anywhere; color: #888; font-size: 9px; }
 .admin-order-status { color: #24834b; font-size: 10px; font-weight: 700; }
