@@ -196,9 +196,10 @@ test('Resend accepts both task moved and upcoming deadline notification types', 
   };
 
   try {
+    const longTaskTitle = `Tugas ${'T'.repeat(90)} di pindah ke Boss Fight.`;
     for (const notification of [
-      { id: 'task-moved-task_123', title: 'Tugas dipindahkan ke Boss Fight' },
-      { id: 'task-deadline-task_123', title: 'Tenggat tugas hampir tiba' },
+      { id: 'task-moved-task_123', title: longTaskTitle },
+      { id: 'task-deadline-task_123', title: 'Deadline tugasmu tinggal 3 hari lagi' },
     ]) {
       const response = createResponse();
       await notificationEmail({
@@ -213,8 +214,8 @@ test('Resend accepts both task moved and upcoming deadline notification types', 
       assert.equal(response.statusCode, 200);
     }
     assert.deepEqual(deliveredEmails.map((email) => email.subject), [
-      'Tugas dipindahkan ke Boss Fight',
-      'Tenggat tugas hampir tiba',
+      longTaskTitle,
+      'Deadline tugasmu tinggal 3 hari lagi',
     ]);
     assert.ok(deliveredEmails.every((email) => email.from === 'Kudo <notifications@example.com>'));
   } finally {

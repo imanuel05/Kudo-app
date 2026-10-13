@@ -41,6 +41,7 @@ const ASSETS = {
   profileAvatar: "assets/kudo-image-ffaf02da2bd45468.png",
   profileAvatarFemale: "assets/kudo-image-34a1cf76c3d0db54.png",
   profileInfoArt: "assets/kudo-image-af5f4e4eb1854473.png",
+  taskMovedMessage: "assets/task-moved-message.png",
 };
 const KDRAMA_EPISODE_POSTER_OVERRIDES = Object.freeze({
   'nine puzzle': 'assets/nine-puzzle-episode-poster.png',
@@ -894,6 +895,15 @@ function processTaskDeadlineMessages() {
 
   for (const message of state.messages) {
     if (!['task-moved', 'task-deadline'].includes(message.type)) continue;
+    const task = (state.tasks || []).find((item) => item.id === message.taskId);
+    if (task) {
+      const notification = taskNotificationContent(message.type, task);
+      if (message.title !== notification.title || message.body !== notification.body) {
+        message.title = notification.title;
+        message.body = notification.body;
+        changed = true;
+      }
+    }
     if (!message.emailDeliveryStatus || message.emailDeliveryStatus === 'not-applicable') {
       message.emailDeliveryStatus = 'pending';
       changed = true;
@@ -922,22 +932,24 @@ function processTaskDeadlineMessages() {
 
     if (task.difficulty !== 'hard' && daysUntilDeadline < 7) {
       task.difficulty = 'hard';
+      const notification = taskNotificationContent('task-moved', task);
       addMessage(
         `task-moved-${task.id}`,
         'task-moved',
-        'Tugas dipindahkan ke Boss Fight',
-        `“${task.title}” dipindahkan karena belum dikerjakan dan tenggatnya kurang dari 7 hari lagi.`,
+        notification.title,
+        notification.body,
         task
       );
       changed = true;
     }
 
     if (task.difficulty === 'hard' && daysUntilDeadline < 3) {
+      const notification = taskNotificationContent('task-deadline', task);
       addMessage(
         `task-deadline-${task.id}`,
         'task-deadline',
-        'Tenggat tugas hampir tiba',
-        `Tenggat “${task.title}” kurang dari 3 hari lagi. Segera kerjakan tugasmu.`,
+        notification.title,
+        notification.body,
         task
       );
     }
@@ -946,6 +958,20 @@ function processTaskDeadlineMessages() {
   if (changed) persist();
   sendPendingMessageEmails();
   return changed;
+}
+
+function taskNotificationContent(type, task) {
+  if (type === 'task-moved') {
+    return {
+      title: `Tugas ${task.title} di pindah ke Boss Fight.`,
+      body: `tugas  "${task.title}"  dipindahkan ke boss fight karena belum kamu kerjakan dan deadlinenya kurang dari 7 hari lagi.`,
+    };
+  }
+
+  return {
+    title: 'Deadline tugasmu tinggal 3 hari lagi',
+    body: `Deadline "${task.title}" kurang dari 3 hari lagi. Ayo segera kerjakan kerjakan tugasmu!`,
+  };
 }
 
 function sendPendingMessageEmails() {
@@ -3403,7 +3429,7 @@ function renderMessages() {
   messagePage = Math.min(messagePage, pageCount - 1);
   const pageMessages = state.messages.slice(messagePage * pageSize, (messagePage + 1) * pageSize);
   const list = pageMessages.length
-    ? `<div class="message-list">${pageMessages.map((message) => `<article class="message-card"><img class="message-card-icon" src="assets/message-icon.png" alt="" /><div><h2>${escapeHtml(message.title)}</h2><p>${escapeHtml(message.body)}</p><time datetime="${escapeHtml(message.createdAt)}">${new Date(message.createdAt).toLocaleString('id-ID')}</time></div></article>`).join('')}</div>${pageCount > 1 ? `<nav class="message-pagination" aria-label="Navigasi pesan"><button type="button" data-action="message-page" data-page="${messagePage - 1}" aria-label="Pesan sebelumnya" ${messagePage === 0 ? 'disabled' : ''}></button><span>Halaman ${messagePage + 1} dari ${pageCount}</span><button type="button" data-action="message-page" data-page="${messagePage + 1}" aria-label="Pesan berikutnya" ${messagePage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
+    ? `<div class="message-list">${pageMessages.map((message) => `<article class="message-card"><img class="message-card-icon" src="${message.type === 'task-moved' ? ASSETS.taskMovedMessage : 'assets/message-icon.png'}" alt="" /><div><h2>${escapeHtml(message.title)}</h2><p>${escapeHtml(message.body)}</p><time datetime="${escapeHtml(message.createdAt)}">${new Date(message.createdAt).toLocaleString('id-ID')}</time></div></article>`).join('')}</div>${pageCount > 1 ? `<nav class="message-pagination" aria-label="Navigasi pesan"><button type="button" data-action="message-page" data-page="${messagePage - 1}" aria-label="Pesan sebelumnya" ${messagePage === 0 ? 'disabled' : ''}></button><span>Halaman ${messagePage + 1} dari ${pageCount}</span><button type="button" data-action="message-page" data-page="${messagePage + 1}" aria-label="Pesan berikutnya" ${messagePage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
     : `<div class="messages-empty-state"><img src="${ASSETS.focusShortage}" alt="" /><p>Belum ada pesan masuk</p></div>`;
 
   let markedRead = false;

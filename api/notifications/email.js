@@ -24,7 +24,7 @@ function notificationFields(body) {
   if (
     !/^(task-moved|task-deadline)-[A-Za-z0-9_-]{1,160}$/.test(id)
     || !title
-    || title.length > 120
+    || title.length > 121
     || !message
     || message.length > 1000
     || !Number.isFinite(Date.parse(createdAt))
