@@ -1199,6 +1199,7 @@ function bottomNav(page) {
   const unreadCount = unreadMessagesCount() + unreadVerifiedPurchaseCount();
   const profileBadgeCount = unreadCount + (isAdminUser === true ? adminOrders.length : 0);
   const readyMissionChestCount = dailyMissions().filter((mission) => mission.done && !mission.opened).length;
+  const pendingTaskCount = state.tasks.filter((task) => !task.done && ['easy', 'hard'].includes(task.difficulty)).length;
   const links = [
     ['home', ASSETS.navHome, 'Beranda'],
     ['rewards', ASSETS.navChest, 'Peti'],
@@ -1213,7 +1214,7 @@ function bottomNav(page) {
         page === key
           ? 'is-current'
           : ''
-      }${key === 'profile' && profileBadgeCount ? ' has-unread-messages' : ''}${key === 'rewards' && readyMissionChestCount ? ' has-pending-reward' : ''}" type="button" data-nav="${key      }" aria-label="${label}${key === 'profile' && profileBadgeCount ? `, ${profileBadgeCount} notifikasi` : ''}${key === 'rewards' && readyMissionChestCount ? `, ${readyMissionChestCount} peti misi siap dibuka` : ''}" aria-current="${
+      }${key === 'profile' && profileBadgeCount ? ' has-unread-messages' : ''}${key === 'rewards' && readyMissionChestCount ? ' has-pending-reward' : ''}${key === 'home' && pendingTaskCount ? ' has-pending-tasks' : ''}" type="button" data-nav="${key      }" aria-label="${label}${key === 'profile' && profileBadgeCount ? `, ${profileBadgeCount} notifikasi` : ''}${key === 'rewards' && readyMissionChestCount ? `, ${readyMissionChestCount} peti misi siap dibuka` : ''}${key === 'home' && pendingTaskCount ? `, ${pendingTaskCount} tugas belum selesai` : ''}" aria-current="${
         page === key
           ? 'page'
           : 'false'
@@ -1221,6 +1222,7 @@ function bottomNav(page) {
         <img src="${icon}" alt="" />
         ${key === 'profile' && profileBadgeCount ? `<span class="nav-pending-count" aria-hidden="true">${messageCountBadge(profileBadgeCount)}</span>` : ''}
         ${key === 'rewards' && readyMissionChestCount ? `<span class="nav-pending-count" aria-label="${readyMissionChestCount} peti misi siap dibuka">${messageCountBadge(readyMissionChestCount)}</span>` : ''}
+        ${key === 'home' && pendingTaskCount ? `<span class="nav-pending-count" aria-hidden="true">${messageCountBadge(pendingTaskCount)}</span>` : ''}
       </button>`
   ).join('')}</nav>`;
 }
@@ -1657,6 +1659,8 @@ function renderPasswordReset() {
 }
 
 function renderHome() {
+  const dailyTaskCount = state.tasks.filter((task) => !task.done && task.difficulty === 'easy').length;
+  const bossTaskCount = state.tasks.filter((task) => !task.done && task.difficulty === 'hard').length;
   const content = `
     <section class="add-task-card">
       <div>
@@ -1692,6 +1696,11 @@ function renderHome() {
         Daily Quest
       </span>
 
+      ${dailyTaskCount ? `<span class="feature-task-count" aria-label="${dailyTaskCount} tugas belum selesai">
+        <span>Tugas:</span>
+        <strong>${dailyTaskCount}</strong>
+      </span>` : ''}
+
     </button>
 
     <button
@@ -1709,6 +1718,11 @@ function renderHome() {
       <span class="feature-cta">
         Boss Fight
       </span>
+
+      ${bossTaskCount ? `<span class="feature-task-count" aria-label="${bossTaskCount} tugas belum selesai">
+        <span>Tugas:</span>
+        <strong>${bossTaskCount}</strong>
+      </span>` : ''}
 
     </button>
 
