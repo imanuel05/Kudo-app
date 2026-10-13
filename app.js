@@ -1320,6 +1320,15 @@ function appFrame(
   const transactionPageHeader =
     page === 'transaction';
   const profileToolPageHeader = page === 'purchase-history' || page === 'messages' || isAdminPage(page);
+  const hideInventoryPage = [
+    'performance',
+    'messages',
+    'purchase-history',
+    'admin-verification',
+    'admin-history',
+    'admin-add-video',
+    'admin-latest-videos',
+  ].includes(page);
   const mediaStreamPageHeader = page === 'media-stream';
   const animeEpisodesPageHeader = page === 'anime-episodes';
   const kdramaEpisodesPageHeader = page === 'kdrama-episodes';
@@ -1420,7 +1429,7 @@ function appFrame(
         : ''
     }">
       ${heading}
-      ${inventoryBar()}
+    ${hideInventoryPage ? '' : inventoryBar()}
     </header>
 
     <main class="page-content">
