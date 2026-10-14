@@ -3858,7 +3858,7 @@ function renderAdminPanel() {
     (adminOrdersPage + 1) * orderPageSize
   );
   const orderMarkup = adminOrders.length
-    ? `${pageOrders.map((order) => `<article class="admin-order-card"><div class="admin-order-summary"><strong>${Number(order.diamonds).toLocaleString('id-ID')} berlian · Rp ${Number(order.amount).toLocaleString('id-ID')}</strong><small>${escapeHtml(order.invoiceNumber)} · ${new Date(order.createdAt).toLocaleString('id-ID')}</small><small>User: ${escapeHtml(order.userId)}</small></div>${order.proofUrl ? `<a class="admin-proof-link" href="${escapeHtml(order.proofUrl)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(order.proofUrl)}" alt="Bukti pembayaran ${escapeHtml(order.invoiceNumber)}" /><span>Lihat bukti pembayaran</span></a>` : '<p class="admin-proof-missing">Bukti pembayaran belum diunggah.</p>'}<div class="admin-order-actions"><button class="button button-primary" type="button" data-action="admin-verify-order" data-invoice="${escapeHtml(order.invoiceNumber)}" ${adminActionInProgress || !order.proofUrl ? 'disabled' : ''}>${order.proofUrl ? 'Dana diterima' : 'Menunggu bukti pembayaran'}</button><button class="admin-reject-order" type="button" data-action="admin-reject-order" data-invoice="${escapeHtml(order.invoiceNumber)}" ${adminActionInProgress ? 'disabled' : ''}>Tolak pembelian</button></div></article>`).join('')}${orderPageCount > 1 ? `<nav class="admin-orders-pagination" aria-label="Navigasi transaksi menunggu verifikasi"><button type="button" data-action="admin-orders-page" data-page="${adminOrdersPage - 1}" aria-label="Halaman sebelumnya" ${adminOrdersPage === 0 ? 'disabled' : ''}></button><span>Halaman ${adminOrdersPage + 1} dari ${orderPageCount}</span><button type="button" data-action="admin-orders-page" data-page="${adminOrdersPage + 1}" aria-label="Halaman berikutnya" ${adminOrdersPage >= orderPageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
+    ? `${pageOrders.map((order) => `<article class="admin-order-card"><div class="admin-order-summary"><strong>${Number(order.diamonds).toLocaleString('id-ID')} berlian · Rp ${Number(order.amount).toLocaleString('id-ID')}</strong><small>${escapeHtml(order.invoiceNumber)} · ${new Date(order.createdAt).toLocaleString('id-ID')}</small><small>Nama pengguna: ${escapeHtml(order.userName || 'Pengguna tidak ditemukan')}</small></div>${order.proofUrl ? `<a class="admin-proof-link" href="${escapeHtml(order.proofUrl)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(order.proofUrl)}" alt="Bukti pembayaran ${escapeHtml(order.invoiceNumber)}" /><span>Lihat bukti pembayaran</span></a>` : '<p class="admin-proof-missing">Bukti pembayaran belum diunggah.</p>'}<div class="admin-order-actions"><button class="button button-primary" type="button" data-action="admin-verify-order" data-invoice="${escapeHtml(order.invoiceNumber)}" ${adminActionInProgress || !order.proofUrl ? 'disabled' : ''}>${order.proofUrl ? 'Dana diterima' : 'Menunggu bukti pembayaran'}</button><button class="admin-reject-order" type="button" data-action="admin-reject-order" data-invoice="${escapeHtml(order.invoiceNumber)}" ${adminActionInProgress ? 'disabled' : ''}>Tolak pembelian</button></div></article>`).join('')}${orderPageCount > 1 ? `<nav class="admin-orders-pagination" aria-label="Navigasi transaksi menunggu verifikasi"><button type="button" data-action="admin-orders-page" data-page="${adminOrdersPage - 1}" aria-label="Halaman sebelumnya" ${adminOrdersPage === 0 ? 'disabled' : ''}></button><span>Halaman ${adminOrdersPage + 1} dari ${orderPageCount}</span><button type="button" data-action="admin-orders-page" data-page="${adminOrdersPage + 1}" aria-label="Halaman berikutnya" ${adminOrdersPage >= orderPageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
     : `<div class="admin-empty-state"><img src="${ASSETS.focusShortage}" alt="" /><p class="admin-empty">Tidak ada transaksi yang menunggu verifikasi.</p></div>`;
   const videoMarkup = adminVideos.length
     ? (() => {
@@ -4422,6 +4422,8 @@ function modalView() {
     body = `<div class="avatar-options-sheet"><h2>Pilih avatar</h2><div class="avatar-options-grid"><button class="avatar-choice ${modal.selection === 'female' ? 'is-selected' : ''}" type="button" data-avatar-choice="female" aria-label="Avatar perempuan" aria-pressed="${modal.selection === 'female'}"><img src="assets/avatar-female.png" alt="Avatar perempuan" /></button><button class="avatar-choice ${modal.selection === 'male' ? 'is-selected' : ''}" type="button" data-avatar-choice="male" aria-label="Avatar laki-laki" aria-pressed="${modal.selection === 'male'}"><img src="assets/avatar-male.png" alt="Avatar laki-laki" /></button></div><button class="button button-primary" type="button" data-action="confirm-avatar">Konfirmasi</button></div>`;
   } else if (modal.type === 'profile-info') {
     body = `<div class="dialog result-dialog profile-info-dialog"><h2>${escapeHtml(modal.title)}</h2><img src="${ASSETS.profileInfoArt}" alt="Anak-anak belajar bersama" /><p>${escapeHtml(modal.message)}</p><button class="button button-primary" type="button" data-action="close-modal">Kembali</button></div>`;
+  } else if (modal.type === 'signup-confirmation') {
+    body = `<article class="message-card signup-confirmation-card" role="status" aria-live="polite"><img class="message-card-icon" src="assets/message-icon.png" alt="" /><div><h2>Cek email konfirmasi</h2><p>Pendaftaran berhasil. Silakan cek email kamu dan klik tautan konfirmasi untuk mengaktifkan akun Kudo.</p></div></article>`;
   } else if (modal.type === 'task-photo') {
     body = `<div class="task-photo-zoom"><button type="button" data-action="close-modal" aria-label="Tutup">×</button><img src="${modal.src}" alt="Lampiran tugas diperbesar" /></div>`;
   } else if (modal.type === 'delete-account-confirm') {
@@ -4483,6 +4485,8 @@ function modalView() {
       ? 'modal-overlay avatar-options-overlay'
     : modal.type === 'shop-item-purchase'
       ? 'modal-overlay item-purchase-overlay'
+    : modal.type === 'signup-confirmation'
+      ? 'modal-overlay signup-confirmation-overlay'
     : modal.type === 'focus-gate' || modal.type === 'anime-ticket-gate'
       ? 'modal-overlay focus-gate-overlay'
       : 'modal-overlay';
@@ -5879,10 +5883,8 @@ app.addEventListener('submit', async (event) => {
 
     currentAccount = null;
     localStorage.removeItem(ACTIVE_ACCOUNT_STORAGE_KEY);
-    if (message) {
-      message.textContent =
-        'Registrasi berhasil. Buka tautan verifikasi di email untuk langsung masuk ke beranda.';
-    }
+    modal = { type: 'signup-confirmation' };
+    render();
   } catch (error) {
     console.error('Register Supabase gagal:', error);
 
