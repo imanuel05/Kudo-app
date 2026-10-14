@@ -4423,7 +4423,7 @@ function modalView() {
   } else if (modal.type === 'profile-info') {
     body = `<div class="dialog result-dialog profile-info-dialog"><h2>${escapeHtml(modal.title)}</h2><img src="${ASSETS.profileInfoArt}" alt="Anak-anak belajar bersama" /><p>${escapeHtml(modal.message)}</p><button class="button button-primary" type="button" data-action="close-modal">Kembali</button></div>`;
   } else if (modal.type === 'signup-confirmation') {
-    body = `<article class="message-card signup-confirmation-card" role="status" aria-live="polite"><img class="message-card-icon" src="assets/message-icon.png" alt="" /><div><h2>Cek email konfirmasi</h2><p>Pendaftaran berhasil. Silakan cek email kamu dan klik tautan konfirmasi untuk mengaktifkan akun Kudo.</p></div></article>`;
+    body = `<div class="dialog result-dialog profile-info-dialog" role="status" aria-live="polite"><h2>Cek email konfirmasi</h2><img src="${ASSETS.profileInfoArt}" alt="Anak-anak belajar bersama" /><p>Pendaftaran berhasil. Silakan cek email kamu dan klik tautan konfirmasi untuk mengaktifkan akun Kudo.</p></div>`;
   } else if (modal.type === 'task-photo') {
     body = `<div class="task-photo-zoom"><button type="button" data-action="close-modal" aria-label="Tutup">×</button><img src="${modal.src}" alt="Lampiran tugas diperbesar" /></div>`;
   } else if (modal.type === 'delete-account-confirm') {
@@ -4485,8 +4485,6 @@ function modalView() {
       ? 'modal-overlay avatar-options-overlay'
     : modal.type === 'shop-item-purchase'
       ? 'modal-overlay item-purchase-overlay'
-    : modal.type === 'signup-confirmation'
-      ? 'modal-overlay signup-confirmation-overlay'
     : modal.type === 'focus-gate' || modal.type === 'anime-ticket-gate'
       ? 'modal-overlay focus-gate-overlay'
       : 'modal-overlay';

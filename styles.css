@@ -1084,7 +1084,6 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .message-card h2 { margin: 0 0 5px; color: #333652; font-size: 12px; font-weight: 700; }
 .message-card p { margin: 0 0 5px; color: #656677; font-size: 10px; line-height: 1.5; }
 .message-card time { color: #999; font-size: 9px; }
-.signup-confirmation-card { box-shadow: 0 16px 48px #2222; }
 .message-pagination { margin-top: 1px; display: flex; align-items: center; justify-content: center; gap: 14px; color: #bfbfbf; font-size: 10px; }
 .message-pagination button { width: 30px; height: 30px; padding: 0; position: relative; display: grid; place-items: center; border: 0; color: #999; background: transparent; }
 .message-pagination button::before { width: 10px; height: 10px; border-left: 3px solid currentColor; border-bottom: 3px solid currentColor; content: ""; transform: rotate(45deg); }
