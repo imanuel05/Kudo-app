@@ -111,6 +111,8 @@ const BOSS_AVATARS = {
     alt: 'Boss Error Code berbentuk laptop',
   },
 };
+const ERROR_CODE_SKIN_ID = 'error-code';
+const ERROR_CODE_SKIN_COST = 500;
 
 const STARTER_STATE = {
   crystals: 2000,
@@ -127,6 +129,7 @@ const STARTER_STATE = {
   chestSession: null,
   bossHealth: 100,
   bossAvatar: 'paper-task',
+  ownedBossSkins: [],
   animeVideoAssets: {},
   strictMode: false
 };
@@ -159,6 +162,7 @@ let performanceHistoryPage = 0;
 let messagePage = 0;
 let taskListPages = { daily: 0, boss: 0 };
 let selectedBossAvatar = null;
+let shopActiveTab = 'diamonds';
 let analysisToken = 0;
 let taskPhotoData = '';
 let audioContext = null;
@@ -175,6 +179,11 @@ const FOCUS_AUDIO_SOURCES = {
 
 function focusTrackSource(name) {
   return FOCUS_AUDIO_SOURCES[name] || '';
+}
+
+function ownsBossSkin(skinId) {
+  return skinId !== ERROR_CODE_SKIN_ID
+    || (Array.isArray(state.ownedBossSkins) && state.ownedBossSkins.includes(skinId));
 }
 
 function stopWhiteNoise() {
@@ -653,7 +662,7 @@ function loadState() {
       localStorage.setItem(SHOP_INVENTORY_BALANCE_KEY, '1');
     }
 
-    return saved
+    const loadedState = saved
       ? {
           ...structuredClone(STARTER_STATE),
           ...saved,
@@ -662,6 +671,13 @@ function loadState() {
             : { bossHealth: Math.max(0, 100 - (saved.tasks || []).filter((task) => task.difficulty === 'hard' && task.done).length * 25) })
         }
       : structuredClone(STARTER_STATE);
+    loadedState.ownedBossSkins = Array.isArray(loadedState.ownedBossSkins)
+      ? loadedState.ownedBossSkins.filter((skinId) => skinId === ERROR_CODE_SKIN_ID)
+      : [];
+    if (loadedState.bossAvatar === ERROR_CODE_SKIN_ID && !loadedState.ownedBossSkins.includes(ERROR_CODE_SKIN_ID)) {
+      loadedState.bossAvatar = 'paper-task';
+    }
+    return loadedState;
   } catch {
     return structuredClone(STARTER_STATE);
   }
@@ -1308,7 +1324,8 @@ function appFrame(
 
   const focusModeHeader =
     page === 'focus-mode' ||
-    page === 'focus-session';
+    page === 'focus-session' ||
+    page === 'focus';
 
   const dailyPageHeader =
     page === 'daily';
@@ -1402,6 +1419,8 @@ function appFrame(
         page === 'focus-session'
           ? 'focus-mode'
           : page === 'focus-mode'
+            ? 'entertainment'
+          : page === 'focus'
             ? 'entertainment'
           : bossAvatarPageHeader
             ? 'boss'
@@ -1942,7 +1961,9 @@ function renderTaskPage(kind) {
     : 0;
 
   const hp = Math.max(0, Math.min(100, Number(state.bossHealth ?? 100)));
-  const activeBoss = BOSS_AVATARS[state.bossAvatar] || BOSS_AVATARS['paper-task'];
+  const activeBoss = ownsBossSkin(state.bossAvatar)
+    ? BOSS_AVATARS[state.bossAvatar] || BOSS_AVATARS['paper-task']
+    : BOSS_AVATARS['paper-task'];
 
   const content = `
     ${
@@ -2042,13 +2063,19 @@ function renderTaskPage(kind) {
 }
 
 function renderBossAvatarSelection() {
-  if (!Object.hasOwn(BOSS_AVATARS, selectedBossAvatar)) {
-    selectedBossAvatar = Object.hasOwn(BOSS_AVATARS, state.bossAvatar) ? state.bossAvatar : 'paper-task';
+  if (!Object.hasOwn(BOSS_AVATARS, selectedBossAvatar) || !ownsBossSkin(selectedBossAvatar)) {
+    selectedBossAvatar = ownsBossSkin(state.bossAvatar) && Object.hasOwn(BOSS_AVATARS, state.bossAvatar)
+      ? state.bossAvatar
+      : 'paper-task';
   }
-  const choices = Object.entries(BOSS_AVATARS).map(([id, boss]) => (
-    `<button class="boss-avatar-choice ${selectedBossAvatar === id ? 'is-selected' : ''}" type="button" data-action="select-boss-avatar" data-boss-avatar="${id}" aria-label="${escapeHtml(boss.name)}" aria-pressed="${selectedBossAvatar === id}"><img src="${boss.image}" alt="" /></button>`
-  )).join('');
-  const content = `<section class="boss-avatar-page"><h2>Pilih boss yang ingin kamu lawan</h2><p>Avatar boss bisa diganti kapan saja.</p><div class="boss-avatar-grid">${choices}</div><button class="button button-primary boss-avatar-confirm" type="button" data-action="confirm-boss-avatar">Konfirmasi</button></section>`;
+  const choices = Object.entries(BOSS_AVATARS).map(([id, boss]) => {
+    const locked = !ownsBossSkin(id);
+    return `<button class="boss-avatar-choice ${selectedBossAvatar === id ? 'is-selected' : ''}${locked ? ' is-locked' : ''}" type="button" data-action="select-boss-avatar" data-boss-avatar="${id}" aria-label="${escapeHtml(boss.name)}${locked ? ', terkunci' : ''}" aria-pressed="${selectedBossAvatar === id}" ${locked ? 'disabled' : ''}><img src="${boss.image}" alt="" />${locked ? '<span class="boss-avatar-lock">Terkunci</span>' : ''}</button>`;
+  }).join('');
+  const lockedSkinAction = ownsBossSkin(ERROR_CODE_SKIN_ID)
+    ? ''
+    : '<button class="button button-secondary boss-avatar-shop-link" type="button" data-nav="shop" data-shop-tab="skins">Beli skin Error Code — 500 berlian</button>';
+  const content = `<section class="boss-avatar-page"><h2>Pilih boss yang ingin kamu lawan</h2><p>Avatar boss bisa diganti kapan saja.</p><div class="boss-avatar-grid">${choices}</div>${lockedSkinAction}<button class="button button-primary boss-avatar-confirm" type="button" data-action="confirm-boss-avatar">Konfirmasi</button></section>`;
   app.innerHTML = appFrame('boss-select', content);
 }
 
@@ -2061,14 +2088,14 @@ function normalizeShowTitle(title) {
 
 function renderEntertainment() {
   const content = `
-    <button class="feature-card feature-focus" type="button" data-nav="focus-mode">
+    <button class="feature-card feature-focus entertainment-card entertainment-noise-card" type="button" data-nav="focus-mode">
       <div class="feature-art">
         <img src="${ASSETS.entertainmentWhiteNoise}" alt="Anak-anak mendengarkan white noise bersama kucing" />
       </div>
       <span class="feature-cta">White Noise</span>
     </button>
 
-    <button class="feature-card feature-focus" type="button" data-nav="focus">
+    <button class="feature-card feature-focus entertainment-card entertainment-watch-card" type="button" data-nav="focus">
       <div class="feature-art">
         <img src="${ASSETS.watchHero}" alt="Anak-anak menonton bersama kucing" />
       </div>
@@ -2364,8 +2391,8 @@ function renderFocusMode() {
   const content = `
     <section class="focus-mode-hero">
       <img
-        src="${ASSETS.artFocus}"
-        alt="Kudo belajar bersama"
+        src="${ASSETS.entertainmentWhiteNoise}"
+        alt="Anak-anak mendengarkan white noise bersama kucing"
       />
     </section>
 
@@ -2595,10 +2622,20 @@ function renderFocusSession() {
     );
 }
 function renderShop() {
+  const tabs = [
+    ['diamonds', 'Berlian'],
+    ['items', 'Item'],
+    ['skins', 'Skin'],
+  ];
+  if (!tabs.some(([key]) => key === shopActiveTab)) shopActiveTab = 'diamonds';
+  const sectionContent = {
+    diamonds: `<section class="shop-section"><h2>Pilih paket berlian</h2><div class="diamond-pack-grid"><button class="diamond-pack-card" type="button" data-action="buy-diamond-pack" data-amount="1200"><img src="${ASSETS.rewardDiamonds}" alt="" /><strong>1.200</strong><span>Rp 10.000</span></button><button class="diamond-pack-card" type="button" data-action="buy-diamond-pack" data-amount="2000"><img src="${ASSETS.rewardDiamonds}" alt="" /><strong>2.000</strong><span>Rp 15.000</span></button></div></section>`,
+    items: `<section class="shop-section shop-item-list"><h2>Item</h2><article class="shop-product-card"><img class="shop-product-art" src="${ASSETS.hourglass}" alt="" /><div class="shop-product-copy"><h3>Penambah waktu</h3><p>Tambahkan waktu mu dan taklukan tugasmu</p><button type="button" data-action="buy-hourglass" data-cost="50"><img src="${ASSETS.diamondItem}" alt="" /> 50</button></div></article><article class="shop-product-card"><img class="shop-product-art shop-ticket-art" src="${ASSETS.ticket}" alt="" /><div class="shop-product-copy"><h3>Tiket nonton</h3><p>Nikmati waktu istirahat dengan menonton yang menarik</p><button type="button" data-action="buy-chest" data-cost="100"><img src="${ASSETS.diamondItem}" alt="" /> 100</button></div></article></section>`,
+    skins: `<section class="shop-section"><h2>Skin Boss</h2><article class="shop-product-card shop-skin-card"><img class="shop-product-art" src="${BOSS_AVATARS[ERROR_CODE_SKIN_ID].image}" alt="${escapeHtml(BOSS_AVATARS[ERROR_CODE_SKIN_ID].alt)}" /><div class="shop-product-copy"><h3>Skin Error Code</h3><p>${ownsBossSkin(ERROR_CODE_SKIN_ID) ? 'Skin ini sudah kamu miliki.' : 'Buka skin ini untuk menggunakannya di Boss Fight.'}</p>${ownsBossSkin(ERROR_CODE_SKIN_ID) ? '<span class="shop-skin-owned">Dimiliki</span>' : `<button type="button" data-action="buy-boss-skin"><img src="${ASSETS.diamondItem}" alt="" /> ${ERROR_CODE_SKIN_COST}</button>`}</div></article></section>`,
+  };
   const content = `<section class="shop-feature-banner"><div class="shop-feature-copy"><h1>Fitur-fitur untuk membantumu</h1><p>Jelajahi fitur untuk mendapatkan item yang dapat membantumu.</p></div><img src="${ASSETS.shopFeature}" alt="Kudo membawa berlian dan penambah waktu" /></section>
-    <section class="shop-section"><h2>Berlian</h2><div class="diamond-pack-grid"><button class="diamond-pack-card" type="button" data-action="buy-diamond-pack" data-amount="1200"><img src="${ASSETS.rewardDiamonds}" alt="" /><strong>1.200</strong><span>Rp 10.000</span></button><button class="diamond-pack-card" type="button" data-action="buy-diamond-pack" data-amount="2000"><img src="${ASSETS.rewardDiamonds}" alt="" /><strong>2.000</strong><span>Rp 15.000</span></button></div></section>
-    <section class="shop-section"><h2>Penambah waktu</h2><article class="shop-product-card"><img class="shop-product-art" src="${ASSETS.hourglass}" alt="" /><div class="shop-product-copy"><h3>Penambah waktu</h3><p>Tambahkan waktu mu dan taklukan tugasmu</p><button type="button" data-action="buy-hourglass" data-cost="50"><img src="${ASSETS.diamondItem}" alt="" /> 50</button></div></article></section>
-    <section class="shop-section"><h2>Tiket nonton</h2><article class="shop-product-card"><img class="shop-product-art shop-ticket-art" src="${ASSETS.ticket}" alt="" /><div class="shop-product-copy"><h3>Tiket nonton</h3><p>Nikmati waktu istirahat dengan menonton yang menarik</p><button type="button" data-action="buy-chest" data-cost="100"><img src="${ASSETS.diamondItem}" alt="" /> 100</button></div></article></section>
+    <div class="shop-tabs" role="tablist" aria-label="Kategori toko">${tabs.map(([key, label]) => `<button class="shop-tab ${shopActiveTab === key ? 'is-active' : ''}" type="button" role="tab" data-action="shop-tab" data-shop-tab="${key}" aria-controls="shop-panel-${key}" aria-selected="${shopActiveTab === key}">${label}</button>`).join('')}</div>
+    ${tabs.map(([key]) => `<div id="shop-panel-${key}" role="tabpanel" class="shop-tab-panel" ${shopActiveTab === key ? '' : 'hidden'}>${sectionContent[key]}</div>`).join('')}
     ${toast ? `<p class="inline-notice" role="status">${escapeHtml(toast)}</p>` : ''}`;
   app.innerHTML = appFrame('shop', content);
 }
@@ -4465,6 +4502,9 @@ function modalView() {
     const hourglassItem = modal.itemKey === 'hourglasses';
     const itemImage = hourglassItem ? ASSETS.hourglass : ASSETS.ticket;
     body = `<div class="item-purchase-sheet"><h2>${hourglassItem ? 'Tambah waktu?' : 'Tambah Tiket?'}</h2><div class="item-purchase-card ${hourglassItem ? '' : 'is-ticket'}"><img src="${itemImage}" alt="" /><strong>1X</strong><span class="item-purchase-price"><img src="${ASSETS.diamondItem}" alt="" />${Number(modal.cost).toLocaleString('id-ID')}</span></div><button class="button button-primary item-purchase-confirm" type="button" data-action="confirm-shop-buy">Dapatkan ${hourglassItem ? 'penambah waktu' : 'tiket nonton'}</button><button class="item-purchase-decline" type="button" data-action="decline-shop-purchase">Tidak, terima kasih</button></div>`;
+  } else if (modal.type === 'boss-skin-purchase') {
+    const skin = BOSS_AVATARS[ERROR_CODE_SKIN_ID];
+    body = `<div class="item-purchase-sheet"><h2>Beli Skin Boss?</h2><div class="item-purchase-card shop-skin-purchase-card"><img src="${skin.image}" alt="${escapeHtml(skin.alt)}" /><strong>${escapeHtml(skin.name)}</strong><span class="item-purchase-price"><img src="${ASSETS.diamondItem}" alt="" />${ERROR_CODE_SKIN_COST}</span></div><button class="button button-primary item-purchase-confirm" type="button" data-action="confirm-boss-skin-buy">Beli skin</button><button class="item-purchase-decline" type="button" data-action="decline-shop-purchase">Tidak, terima kasih</button></div>`;
   } else if (modal.type === 'free-chest-offer') {
     body = `<div class="dialog result-dialog free-chest-offer-dialog"><img class="free-chest-offer-art" src="${ASSETS.shopFreeChestArt}" alt="Anak-anak dan kucing berharap" /><h2>Penawaran peti gratis</h2><p>Iklan belum tersedia.</p><button class="button button-primary" type="button" data-action="close-modal">Kembali</button></div>`;
   } else if (modal.type === 'show-unavailable') {
@@ -4497,6 +4537,8 @@ function modalView() {
     : modal.type === 'avatar-options'
       ? 'modal-overlay avatar-options-overlay'
     : modal.type === 'shop-item-purchase'
+      ? 'modal-overlay item-purchase-overlay'
+    : modal.type === 'boss-skin-purchase'
       ? 'modal-overlay item-purchase-overlay'
     : modal.type === 'focus-gate' || modal.type === 'anime-ticket-gate'
       ? 'modal-overlay focus-gate-overlay'
@@ -4634,6 +4676,14 @@ app.addEventListener('click', async (event) => {
   const button = target.closest('button');
   if (!button) return;
   if (button.dataset.go) return navigate(button.dataset.go);
+  if (button.dataset.shopTab && button.dataset.action !== 'shop-tab') {
+    shopActiveTab = button.dataset.shopTab;
+  }
+  if (button.dataset.action === 'shop-tab') {
+    shopActiveTab = button.dataset.shopTab;
+    renderShop();
+    return;
+  }
   if (button.dataset.action === 'show-watch-all') {
     const kind = button.dataset.nav === 'watch-anime' ? 'anime' : 'kdrama';
     watchFilters[kind] = { genre: 'Semuanya', type: 'Semuanya' };
@@ -4733,7 +4783,7 @@ app.addEventListener('click', async (event) => {
     return;
   }
   if (button.dataset.action === 'select-boss-avatar') {
-    if (!Object.hasOwn(BOSS_AVATARS, button.dataset.bossAvatar)) return;
+    if (!Object.hasOwn(BOSS_AVATARS, button.dataset.bossAvatar) || !ownsBossSkin(button.dataset.bossAvatar)) return;
     selectedBossAvatar = button.dataset.bossAvatar;
     app.querySelectorAll('.boss-avatar-choice').forEach((choice) => {
       const selected = choice.dataset.bossAvatar === selectedBossAvatar;
@@ -5367,7 +5417,7 @@ app.addEventListener('click', async (event) => {
       modal = null;
       break;
     case 'confirm-boss-avatar':
-      if (!Object.hasOwn(BOSS_AVATARS, selectedBossAvatar)) return;
+      if (!Object.hasOwn(BOSS_AVATARS, selectedBossAvatar) || !ownsBossSkin(selectedBossAvatar)) return;
       state.bossAvatar = selectedBossAvatar;
       selectedBossAvatar = null;
       persist();
@@ -5448,6 +5498,29 @@ app.addEventListener('click', async (event) => {
       break;
     case 'dismiss-focus-player': stopWhiteNoise(); state.activeFocus = null; focusMiniPlayerAvailable = false; persist(); break;
     case 'stop-focus': stopWhiteNoise(); state.activeFocus = null; focusMiniPlayerAvailable = false; persist(); modal = { type: 'focus-ended' }; break;
+    case 'buy-boss-skin':
+      if (ownsBossSkin(ERROR_CODE_SKIN_ID)) {
+        toast = 'Skin Error Code sudah kamu miliki.';
+      } else if (state.crystals < ERROR_CODE_SKIN_COST) {
+        modal = { type: 'shop-insufficient' };
+      } else {
+        modal = { type: 'boss-skin-purchase' };
+      }
+      break;
+    case 'confirm-boss-skin-buy':
+      if (ownsBossSkin(ERROR_CODE_SKIN_ID)) {
+        modal = null;
+        toast = 'Skin Error Code sudah kamu miliki.';
+      } else if (state.crystals < ERROR_CODE_SKIN_COST) {
+        modal = { type: 'shop-insufficient' };
+      } else {
+        state.crystals -= ERROR_CODE_SKIN_COST;
+        state.ownedBossSkins = [...new Set([...(Array.isArray(state.ownedBossSkins) ? state.ownedBossSkins : []), ERROR_CODE_SKIN_ID])];
+        persist();
+        modal = null;
+        toast = 'Skin Error Code berhasil dibeli.';
+      }
+      break;
     case 'buy-item-pack': case 'buy-hourglass': case 'buy-chest': {
       const itemKey = button.dataset.itemKey || (button.dataset.action === 'buy-hourglass' ? 'hourglasses' : 'chests');
       const quantity = Number(button.dataset.quantity || 1);
