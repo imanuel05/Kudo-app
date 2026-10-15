@@ -533,7 +533,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .white-noise-hero .watch-hero-copy { width: 54%; transform: none; }
 .white-noise-hero h1 { font-size: 15px; }
 .white-noise-hero p { max-width: 165px; font-size: 11px; }
-.white-noise-hero > img { width: 48%; height: 170px; right: -3px; bottom: 4px; }
+.white-noise-hero > img { width: 44%; height: 156px; right: -3px; }
 .product-screen .noise-section h2 { margin-top: 18px; }
 .noise-icon { flex: 0 0 48px; width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
 .noise-rain { background: linear-gradient(145deg, #c4d8ff, #776fff); }
@@ -607,7 +607,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .watch-hero-copy { width: 53%; position: relative; z-index: 1; transform: translateY(-5px); }
 .watch-hero h1 { margin: 0 0 5px; color: #333652; font-size: 14px; line-height: 1.35; font-weight: 700; }
 .watch-hero p { max-width: 145px; margin: 0; color: #bfbfbf; font-size: 10px; font-weight: 400; line-height: 1.45; }
-.watch-hero > img { width: 56%; height: 151px; position: absolute; right: -6px; bottom: 5px; object-fit: contain; object-position: center bottom; }
+.watch-hero > img { width: 56%; height: 151px; position: absolute; top: 50%; right: -6px; transform: translateY(-50%); object-fit: contain; object-position: center; }
 .watch-category { margin-top: 9px; }
 .watch-category > h2 { margin: 0 0 8px; color: #333652; font-size: 14px; font-weight: 700; }
 .episode-panel { padding: 10px 10px 11px; border: 2px solid #dedee4; border-radius: 12px; background: #fff; }
