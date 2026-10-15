@@ -15,6 +15,7 @@ const ASSETS = {
   artBoss: "assets/kudo-image-4cd17bbbd753eb38.png",
   bossPaper: "assets/kudo-image-e792c9fe9bf116bb.jpg",
   artFocus: "assets/kudo-image-53729b94e5148453.png",
+  entertainmentWhiteNoise: "assets/entertainment-white-noise.png",
   focusMode: "assets/kudo-image-7585e18f44686642.png",
   focusShortage: "assets/kudo-image-042e9be18954cb08.png",
   animeEpisodeThumb: "assets/kudo-image-4e272acaa5cf7d73.png",
@@ -1229,7 +1230,7 @@ function bottomNav(page) {
   const links = [
     ['home', ASSETS.navHome, 'Beranda'],
     ['rewards', ASSETS.navChest, 'Peti'],
-    ['focus', ASSETS.navFocus, 'Fokus'],
+    ['entertainment', ASSETS.navFocus, 'Hiburan'],
     ['shop', ASSETS.navShop, 'Toko'],
     ['profile', ASSETS.navProfile, 'Profil'],
   ];
@@ -1287,8 +1288,14 @@ function appFrame(
   content
 ) {
   const navPage =
-    page.startsWith('watch-') || page === 'media-stream' || page === 'anime-episodes' || page === 'kdrama-episodes'
-      ? 'focus'
+    page === 'focus' ||
+    page === 'focus-mode' ||
+    page === 'focus-session' ||
+    page.startsWith('watch-') ||
+    page === 'media-stream' ||
+    page === 'anime-episodes' ||
+    page === 'kdrama-episodes'
+      ? 'entertainment'
       : page === 'boss-select'
         ? 'home'
       : page === 'performance' || page === 'messages'
@@ -1353,6 +1360,8 @@ function appFrame(
       ? 'K-drama season ini'
       : page === 'home'
         ? 'Beranda'
+        : page === 'entertainment'
+          ? 'Hiburan'
         : page === 'daily'
           ? 'Daily Quest'
           : page === 'boss'
@@ -1362,7 +1371,7 @@ function appFrame(
             : page === 'focus'
               ? 'Nonton'
               : page === 'focus-mode'
-                ? 'Mode Fokus'
+                ? 'White Noise'
                 : page === 'focus-session'
                   ? 'White Noise'
                   : page === 'shop'
@@ -1392,6 +1401,8 @@ function appFrame(
     ? `<div class="mode-page-heading"><button class="catalog-back" type="button" data-nav="${
         page === 'focus-session'
           ? 'focus-mode'
+          : page === 'focus-mode'
+            ? 'entertainment'
           : bossAvatarPageHeader
             ? 'boss'
           : watchCatalogHeader
@@ -1411,6 +1422,7 @@ function appFrame(
     : `<span class="${
         page === 'home' ||
         page === 'rewards' ||
+        page === 'entertainment' ||
         page === 'focus' ||
         page === 'shop' ||
         page.startsWith('watch-')
@@ -1759,24 +1771,6 @@ function renderHome() {
         <strong>${bossTaskCount}</strong>
       </span>` : ''}
 
-    </button>
-
-    <button
-      class="feature-card feature-focus"
-      type="button"
-      data-nav="focus-mode">
-
-      <div class="feature-art">
-        <img
-          src="${ASSETS.artFocus}"
-          alt="Anak-anak dan kucing belajar dengan semangat"
-        />
-      </div>
-
-      <span class="feature-cta">
-        Mode Fokus
-      </span>
-
     </button>`;
 
   app.innerHTML =
@@ -2063,6 +2057,25 @@ function normalizeShowTitle(title) {
   if (normalizedTitle === 'frieren') return "frieren: beyond journey's end";
   if (/^teach\s+(?:you|your)\s+(?:a\s+)?lesson$/.test(normalizedTitle)) return 'teach you a lesson';
   return normalizedTitle;
+}
+
+function renderEntertainment() {
+  const content = `
+    <button class="feature-card feature-focus" type="button" data-nav="focus-mode">
+      <div class="feature-art">
+        <img src="${ASSETS.entertainmentWhiteNoise}" alt="Anak-anak mendengarkan white noise bersama kucing" />
+      </div>
+      <span class="feature-cta">White Noise</span>
+    </button>
+
+    <button class="feature-card feature-focus" type="button" data-nav="focus">
+      <div class="feature-art">
+        <img src="${ASSETS.watchHero}" alt="Anak-anak menonton bersama kucing" />
+      </div>
+      <span class="feature-cta">Nonton</span>
+    </button>`;
+
+  app.innerHTML = appFrame('entertainment', content);
 }
 
 function renderFocus() {
@@ -4536,6 +4549,7 @@ function render() {
   else if (page === 'daily') renderTaskPage('easy');
   else if (page === 'boss') renderTaskPage('hard');
   else if (page === 'boss-select') renderBossAvatarSelection();
+  else if (page === 'entertainment') renderEntertainment();
   else if (page === 'focus') renderFocus();
   else if (page === 'focus-mode') renderFocusMode();
   else if (page === 'focus-session') renderFocusSession();
