@@ -2386,11 +2386,12 @@ function renderFocusMode() {
   ];
 
   const content = `
-    <section class="focus-mode-hero">
-      <img
-        src="${ASSETS.entertainmentWhiteNoise}"
-        alt="Anak-anak mendengarkan white noise bersama kucing"
-      />
+    <section class="watch-hero white-noise-hero">
+      <div class="watch-hero-copy">
+        <h1>Putar white noise kesukaanmu.</h1>
+        <p>Tingkatkan mood waktu nugas mu dengan musik white noise.</p>
+      </div>
+      <img src="${ASSETS.entertainmentWhiteNoise}" alt="Anak-anak menikmati musik white noise bersama kucing" />
     </section>
 
     <section class="noise-section">
