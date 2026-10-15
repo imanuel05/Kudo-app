@@ -2070,7 +2070,7 @@ function renderBossAvatarSelection() {
   }
   const choices = Object.entries(BOSS_AVATARS).map(([id, boss]) => {
     const locked = !ownsBossSkin(id);
-    return `<button class="boss-avatar-choice ${selectedBossAvatar === id ? 'is-selected' : ''}${locked ? ' is-locked' : ''}" type="button" data-action="select-boss-avatar" data-boss-avatar="${id}" aria-label="${escapeHtml(boss.name)}${locked ? ', terkunci' : ''}" aria-pressed="${selectedBossAvatar === id}" ${locked ? 'disabled' : ''}><img src="${boss.image}" alt="" />${locked ? '<span class="boss-avatar-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3M6 10h12v11H6z" /><path d="M12 14v3" /></svg></span>' : ''}</button>`;
+    return `<button class="boss-avatar-choice ${selectedBossAvatar === id ? 'is-selected' : ''}${locked ? ' is-locked' : ''}" type="button" data-action="select-boss-avatar" data-boss-avatar="${id}" aria-label="${escapeHtml(boss.name)}${locked ? ', terkunci' : ''}" aria-pressed="${selectedBossAvatar === id}" ${locked ? 'disabled' : ''}><img src="${boss.image}" alt="" /></button>`;
   }).join('');
   const content = `<section class="boss-avatar-page"><h2>Pilih boss yang ingin kamu lawan</h2><p>Avatar boss bisa diganti kapan saja.</p><div class="boss-avatar-grid">${choices}</div><button class="button button-primary boss-avatar-confirm" type="button" data-action="confirm-boss-avatar">Konfirmasi</button></section>`;
   app.innerHTML = appFrame('boss-select', content);

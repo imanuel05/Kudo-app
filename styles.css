@@ -357,7 +357,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .feature-art img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .feature-hard .feature-art { top: -73px; width: 68%; height: 112px; transform: translateX(-50%); }
 .feature-focus .feature-art { transform: translateX(-50%); }
-.entertainment-card { min-height: 160px; margin-top: 100px; overflow: visible; }
+.entertainment-card { min-height: 160px; margin-top: 55px; overflow: visible; }
 .feature-info { padding: 3px 1px 0; }
 .feature-info h2 { margin: 0; color: #42455f; font-size: 13px; font-weight: 700; }
 .feature-info p { margin: 3px 0 0; color: #777985; font-size: 10px; }
@@ -527,7 +527,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .noise-option small { font-size: 11px; }
 .noise-option:nth-child(3) { min-height: 72px; padding-block: 11px; }
 
-.focus-mode-hero { height: 100px; margin: 84px 4px 18px; position: relative; border-radius: 14px; background: #f1f0ff; }
+.focus-mode-hero { height: 100px; margin: 60px 4px 18px; position: relative; border-radius: 14px; background: #f1f0ff; }
 .focus-mode-hero img { width: 62%; height: 150px; position: absolute; top: -75px; left: 50%; transform: translateX(-50%); object-fit: contain; }
 .product-screen .noise-section h2 { margin-top: 18px; }
 .noise-icon { flex: 0 0 48px; width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
@@ -695,20 +695,19 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .diamond-pack-card { min-height: 136px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #dedee2; border-radius: 13px; background: #fff; }
 .diamond-pack-card img { width: 80px; height: 64px; margin-bottom: 2px; object-fit: contain; }
 .diamond-pack-card strong { color: #333652; font-size: 12px; font-weight: 700; }
-.diamond-pack-card span { margin-top: 2px; color: #797dff; font-size: 12px; font-weight: 700; }
+.diamond-pack-card span, .shop-product-copy button { font-size: 12px; font-weight: 700; }
+.diamond-pack-card span { margin-top: 2px; color: #797dff; }
 .shop-product-card { min-height: 112px; }
 .shop-item-list .shop-product-card + .shop-product-card { margin-top: 10px; }
 .shop-product-art { width: 76px; height: 78px; flex: 0 0 auto; object-fit: contain; }
 .shop-ticket-art { width: 76px; height: 64px; }
 .shop-product-copy h3 { font-size: 12px; }
-.shop-product-copy button { margin-top: 5px; padding: 0; display: inline-flex; align-items: center; gap: 4px; border: 0; color: #797dff; background: transparent; font-size: 12px; font-weight: 700; }
+.shop-product-copy button { margin-top: 5px; padding: 0; display: inline-flex; align-items: center; gap: 4px; border: 0; color: #797dff; background: transparent; }
 .shop-product-copy button img { width: 25px; height: 25px; object-fit: contain; }
 .shop-skin-card > .shop-product-art { width: 92px; height: 92px; }
 .shop-skin-owned { margin-top: 6px; color: #7775ff; font-size: 12px; font-weight: 700; }
 .boss-avatar-choice.is-locked { position: relative; border-color: #e4e3ed; background: #f5f5f8; cursor: not-allowed; }
 .boss-avatar-choice.is-locked img { opacity: .42; filter: grayscale(.65); }
-.boss-avatar-lock { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; color: #797dff; background: #ffffff9c; }
-.boss-avatar-lock svg { width: 38px; height: 38px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .modal-overlay.shop-purchase-overlay { position: fixed; inset: 0; padding: 0; display: flex; align-items: flex-end; justify-content: center; }
 .shop-purchase-sheet { width: min(100%, 412px); min-height: 0; padding: 20px 16px calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; border-radius: 18px 18px 0 0; background: #fff; box-shadow: 0 -8px 28px #181b2318; animation: sheet-up .2s ease-out; }
 .shop-purchase-sheet h2 { margin: 0 0 12px; color: #41435d; font-size: 17px; font-weight: 700; text-align: center; }
