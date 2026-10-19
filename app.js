@@ -210,7 +210,7 @@ function ownsBossSkin(skinId) {
 
 function diaryQuestIntroCard(step) {
   const currentStep = Math.min(Math.max(0, Number(step) || 0), DIARY_QUEST_INTRO_STEPS.length - 1);
-  return `<h2>Diary quest</h2><p>${DIARY_QUEST_INTRO_STEPS[currentStep]}</p><button class="button button-primary" type="button" data-action="next-diary-intro">${currentStep === DIARY_QUEST_INTRO_STEPS.length - 1 ? 'Tutup' : 'Lanjut'}</button>`;
+  return `<h2>Daily Quest</h2><p>${DIARY_QUEST_INTRO_STEPS[currentStep]}</p><button class="button button-primary" type="button" data-action="next-diary-intro">${currentStep === DIARY_QUEST_INTRO_STEPS.length - 1 ? 'Tutup' : 'Lanjut'}</button>`;
 }
 
 function stopWhiteNoise() {
@@ -4502,7 +4502,7 @@ function modalView() {
   } else if (modal.type === 'add-task-onboarding') {
     body = `<div class="dialog onboarding-dialog task-onboarding-dialog"><h2>Tambah tugas</h2><p>Isi semua kolom untuk menambahkan tugas, sistem akan memilih tugas untuk dimasukkan ke diary quest atau boss fight.</p><img src="${ASSETS.taskOnboarding}" alt="Anak perempuan dan laki-laki mencari tahu bersama kucing" /><button class="button button-primary" type="button" data-action="close-modal">Tutup</button></div>`;
   } else if (modal.type === 'diary-quest-onboarding') {
-    body = `<div class="dialog diary-onboarding-dialog"><img class="diary-onboarding-art" src="${ASSETS.diaryOnboarding}" alt="Anak perempuan dan laki-laki menyambutmu dengan buku" /><section class="diary-onboarding-card">${diaryQuestIntroCard(modal.step)}</section></div>`;
+    body = `<div class="diary-onboarding-dialog"><div class="diary-onboarding-art-window"><img class="diary-onboarding-art" src="${ASSETS.diaryOnboarding}" alt="Anak perempuan dan laki-laki menyambutmu dengan buku" /></div><section class="dialog diary-onboarding-card">${diaryQuestIntroCard(modal.step)}</section></div>`;
   } else if (modal.type === 'task-added') {
     const task = modal.task;
     body = `<div class="dialog result-dialog task-added-dialog"><img class="task-added-art" src="${ASSETS.artDaily}" alt="Anak-anak belajar bersama" /><h2>Tugas ditambahkan</h2><p>${escapeHtml(task.title)} masuk ke ${task.difficulty === 'hard' ? 'Boss Fight' : 'Daily Quest'}.</p><button class="button button-primary" type="button" data-action="close-and-home">Kembali</button></div>`;
