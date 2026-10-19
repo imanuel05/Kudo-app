@@ -46,6 +46,7 @@ const ASSETS = {
   taskMovedMessage: "assets/task-moved-message.png",
   taskOnboarding: "assets/task-onboarding-art.png",
   diaryOnboarding: "assets/diary-onboarding-art.png",
+  bossFightOnboarding: "assets/boss-fight-onboarding.png",
 };
 const KDRAMA_EPISODE_POSTER_OVERRIDES = Object.freeze({
   'nine puzzle': 'assets/nine-puzzle-episode-poster.png',
@@ -134,6 +135,13 @@ const DIARY_QUEST_INTRO_STEPS = Object.freeze([
   'Saat tugas mu belum kamu kerjakan dan tenggat waktu kurang dari 7 hari maka tugas akan berpindah ke Boss Fight.',
   'Kamu dapat mengecek progress mu di profil.',
 ]);
+const BOSS_FIGHT_INTRO_STEPS = Object.freeze([
+  'Di dalam boss fight, setiap kamu selesai mengerjakan tugasmu, darah boss akan berkurang.',
+  'Kamu dapat menambahkan tugas dengan menekan tombol tambah tugas.',
+  'Kolom total tugas menunjukkan jumlah total tugas kamu dan kolom selesai menunjukkan berapa tugas yang sudah kamu selesaikan.',
+  'Kamu juga bisa memilih boss mana yang ingin kamu kalahkan dengan cara menekan gambar boss.',
+  'Kamu dapat mengecek progress mu di profil.',
+]);
 
 const STARTER_STATE = {
   crystals: 2000,
@@ -154,6 +162,7 @@ const STARTER_STATE = {
   dismissedMessageIds: [],
   addTaskIntroSeen: false,
   diaryQuestIntroSeen: false,
+  bossFightIntroSeen: false,
   animeVideoAssets: {},
   strictMode: false
 };
@@ -210,9 +219,9 @@ function ownsBossSkin(skinId) {
     || (Array.isArray(state.ownedBossSkins) && state.ownedBossSkins.includes(skinId));
 }
 
-function diaryQuestIntroCard(step) {
-  const currentStep = Math.min(Math.max(0, Number(step) || 0), DIARY_QUEST_INTRO_STEPS.length - 1);
-  return `<h2>Daily Quest</h2><p>${DIARY_QUEST_INTRO_STEPS[currentStep]}</p><button class="button button-primary" type="button" data-action="next-diary-intro">${currentStep === DIARY_QUEST_INTRO_STEPS.length - 1 ? 'Tutup' : 'Lanjut'}</button>`;
+function questOnboardingCard(title, steps, step) {
+  const currentStep = Math.min(Math.max(0, Number(step) || 0), steps.length - 1);
+  return `<h2>${title}</h2><p>${steps[currentStep]}</p><button class="button button-primary" type="button" data-action="next-quest-intro">${currentStep === steps.length - 1 ? 'Tutup' : 'Lanjut'}</button>`;
 }
 
 function stopWhiteNoise() {
@@ -1966,6 +1975,10 @@ function renderTaskPage(kind) {
     state.diaryQuestIntroSeen = true;
     persist();
     modal = { type: 'diary-quest-onboarding', step: 0 };
+  } else if (kind === 'hard' && !state.bossFightIntroSeen) {
+    state.bossFightIntroSeen = true;
+    persist();
+    modal = { type: 'boss-fight-onboarding', step: 0 };
   }
   const hard = kind === 'hard';
   const page = hard
@@ -4503,8 +4516,17 @@ function modalView() {
     body = `<div class="dialog analyzing-dialog"><div class="loading-spinner" aria-hidden="true"></div><h2>Menganalisis tugas...</h2><p>Kudo sedang membaca tugasmu.</p></div>`;
   } else if (modal.type === 'add-task-onboarding') {
     body = `<div class="dialog onboarding-dialog task-onboarding-dialog"><h2>Tambah tugas</h2><p>Isi semua kolom untuk menambahkan tugas, sistem akan memilih tugas untuk dimasukkan ke diary quest atau boss fight.</p><img src="${ASSETS.taskOnboarding}" alt="Anak perempuan dan laki-laki mencari tahu bersama kucing" /><button class="button button-primary" type="button" data-action="close-modal">Tutup</button></div>`;
-  } else if (modal.type === 'diary-quest-onboarding') {
-    body = `<div class="diary-onboarding-dialog"><div class="diary-onboarding-art-window"><img class="diary-onboarding-art" src="${ASSETS.diaryOnboarding}" alt="Anak perempuan dan laki-laki menyambutmu dengan buku" /></div><section class="dialog diary-onboarding-card">${diaryQuestIntroCard(modal.step)}</section></div>`;
+  } else if (modal.type === 'diary-quest-onboarding' || modal.type === 'boss-fight-onboarding') {
+    const isBossFightIntro = modal.type === 'boss-fight-onboarding';
+    const title = isBossFightIntro ? 'Boss Fight' : 'Daily Quest';
+    const art = isBossFightIntro ? ASSETS.bossFightOnboarding : ASSETS.diaryOnboarding;
+    const artAlt = isBossFightIntro
+      ? 'Anak perempuan dan laki-laki bersiap melawan boss'
+      : 'Anak perempuan dan laki-laki menyambutmu dengan buku';
+    const steps = isBossFightIntro ? BOSS_FIGHT_INTRO_STEPS : DIARY_QUEST_INTRO_STEPS;
+    const cardClass = isBossFightIntro ? 'boss-fight-onboarding-card' : 'diary-onboarding-card';
+    const artClass = isBossFightIntro ? 'boss-fight-onboarding-art' : 'diary-onboarding-art';
+    body = `<div class="quest-onboarding-dialog"><div class="quest-onboarding-art-window"><img class="${artClass}" src="${art}" alt="${artAlt}" /></div><section class="dialog quest-onboarding-card ${cardClass}">${questOnboardingCard(title, steps, modal.step)}</section></div>`;
   } else if (modal.type === 'task-added') {
     const task = modal.task;
     body = `<div class="dialog result-dialog task-added-dialog"><img class="task-added-art" src="${ASSETS.artDaily}" alt="Anak-anak belajar bersama" /><h2>Tugas ditambahkan</h2><p>${escapeHtml(task.title)} masuk ke ${task.difficulty === 'hard' ? 'Boss Fight' : 'Daily Quest'}.</p><button class="button button-primary" type="button" data-action="close-and-home">Kembali</button></div>`;
@@ -4588,7 +4610,7 @@ function modalView() {
       ? 'modal-overlay item-purchase-overlay'
     : modal.type === 'boss-skin-purchase'
       ? 'modal-overlay item-purchase-overlay'
-    : modal.type === 'diary-quest-onboarding'
+    : modal.type === 'diary-quest-onboarding' || modal.type === 'boss-fight-onboarding'
       ? 'modal-overlay onboarding-overlay'
     : modal.type === 'focus-gate' || modal.type === 'anime-ticket-gate'
       ? 'modal-overlay focus-gate-overlay'
@@ -5648,13 +5670,15 @@ app.addEventListener('click', async (event) => {
     case 'claim-daily':
       if (state.chestClaimedOn !== new Date().toISOString().slice(0, 10)) { state.chestClaimedOn = new Date().toISOString().slice(0, 10); state.crystals += 20; persist(); modal = { type: 'daily-claimed' }; }
       break;
-    case 'next-diary-intro':
-      if (modal?.type === 'diary-quest-onboarding') {
+    case 'next-quest-intro':
+      if (modal?.type === 'diary-quest-onboarding' || modal?.type === 'boss-fight-onboarding') {
+        const isBossFightIntro = modal.type === 'boss-fight-onboarding';
+        const steps = isBossFightIntro ? BOSS_FIGHT_INTRO_STEPS : DIARY_QUEST_INTRO_STEPS;
         const nextStep = Number(modal.step) + 1;
-        if (nextStep < DIARY_QUEST_INTRO_STEPS.length) {
+        if (nextStep < steps.length) {
           modal.step = nextStep;
-          const card = app.querySelector('.diary-onboarding-card');
-          if (card) card.innerHTML = diaryQuestIntroCard(nextStep);
+          const card = app.querySelector(isBossFightIntro ? '.boss-fight-onboarding-card' : '.diary-onboarding-card');
+          if (card) card.innerHTML = questOnboardingCard(isBossFightIntro ? 'Boss Fight' : 'Daily Quest', steps, nextStep);
         } else {
           modal = null;
           button.closest('.modal-overlay')?.remove();
