@@ -4502,7 +4502,7 @@ function modalView() {
   } else if (modal.type === 'add-task-onboarding') {
     body = `<div class="dialog onboarding-dialog task-onboarding-dialog"><h2>Tambah tugas</h2><p>Isi semua kolom untuk menambahkan tugas, sistem akan memilih tugas untuk dimasukkan ke diary quest atau boss fight.</p><img src="${ASSETS.taskOnboarding}" alt="Anak perempuan dan laki-laki mencari tahu bersama kucing" /><button class="button button-primary" type="button" data-action="close-modal">Tutup</button></div>`;
   } else if (modal.type === 'diary-quest-onboarding') {
-    body = `<div class="diary-onboarding-dialog"><img class="diary-onboarding-art" src="${ASSETS.diaryOnboarding}" alt="Anak perempuan dan laki-laki menyambutmu dengan buku" /><section class="diary-onboarding-card">${diaryQuestIntroCard(modal.step)}</section></div>`;
+    body = `<div class="dialog diary-onboarding-dialog"><img class="diary-onboarding-art" src="${ASSETS.diaryOnboarding}" alt="Anak perempuan dan laki-laki menyambutmu dengan buku" /><section class="diary-onboarding-card">${diaryQuestIntroCard(modal.step)}</section></div>`;
   } else if (modal.type === 'task-added') {
     const task = modal.task;
     body = `<div class="dialog result-dialog task-added-dialog"><img class="task-added-art" src="${ASSETS.artDaily}" alt="Anak-anak belajar bersama" /><h2>Tugas ditambahkan</h2><p>${escapeHtml(task.title)} masuk ke ${task.difficulty === 'hard' ? 'Boss Fight' : 'Daily Quest'}.</p><button class="button button-primary" type="button" data-action="close-and-home">Kembali</button></div>`;

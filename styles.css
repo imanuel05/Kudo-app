@@ -461,7 +461,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .boss-avatar-page { min-height: calc(100dvh - 150px); box-sizing: border-box; padding: 4px 0 12px; display: grid; grid-template-rows: auto auto 1fr auto; gap: 10px; }
 .boss-avatar-page h2 { margin: 0; color: #333652; font-size: 16px; font-weight: 700; text-align: center; }
 .boss-avatar-page > p { margin: 0 0 5px; color: #999; font-size: 11px; text-align: center; }
-.boss-avatar-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.boss-avatar-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 12px; }
 .boss-avatar-choice { min-width: 0; aspect-ratio: 1; padding: 5px; overflow: hidden; border: 2px solid transparent; border-radius: 14px; background: #f4f3ff; }
 .boss-avatar-choice.is-selected { border-color: #797dff; background: #f8f7ff; }
 .boss-avatar-choice img { width: 100%; height: 100%; display: block; object-fit: contain; }
@@ -529,11 +529,11 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .noise-option small { font-size: 11px; }
 .noise-option:nth-child(3) { min-height: 72px; padding-block: 11px; }
 
-.white-noise-hero { min-height: 184px; margin: 18px 0 9px; }
-.white-noise-hero .watch-hero-copy { width: 54%; transform: none; }
+.white-noise-hero { min-height: 124px; margin: 18px 0 9px; }
+.white-noise-hero .watch-hero-copy { width: 56%; transform: none; }
 .white-noise-hero h1 { font-size: 15px; }
 .white-noise-hero p { max-width: 165px; font-size: 11px; }
-.white-noise-hero > img { width: 40%; height: 140px; right: -1px; }
+.white-noise-hero > img { width: 53%; height: 120px; right: -3px; }
 .product-screen .noise-section h2 { margin-top: 18px; }
 .noise-icon { flex: 0 0 48px; width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
 .noise-rain { background: linear-gradient(145deg, #c4d8ff, #776fff); }
@@ -603,11 +603,11 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .stop-control { background: #e97373; }
 .focus-player > p { color: #999; font-size: 10px; }
 
-.watch-hero { min-height: 158px; margin: -1px 0 9px; padding: 18px 16px; position: relative; overflow: hidden; display: flex; align-items: center; border-radius: 13px; background: #f1f0ff; }
-.watch-hero-copy { width: 53%; position: relative; z-index: 1; transform: translateY(-5px); }
+.watch-hero { min-height: 124px; margin: -1px 0 9px; padding: 16px 14px; position: relative; overflow: hidden; display: flex; align-items: center; border-radius: 13px; background: #f1f0ff; }
+.watch-hero-copy { width: 56%; position: relative; z-index: 1; transform: translateY(-5px); }
 .watch-hero h1 { margin: 0 0 5px; color: #333652; font-size: 14px; line-height: 1.35; font-weight: 700; }
 .watch-hero p { max-width: 145px; margin: 0; color: #bfbfbf; font-size: 10px; font-weight: 400; line-height: 1.45; }
-.watch-hero > img { width: 56%; height: 151px; position: absolute; top: 50%; right: -6px; transform: translateY(-50%); object-fit: contain; object-position: center; }
+.watch-hero > img { width: 53%; height: 120px; position: absolute; right: -3px; bottom: 0; object-fit: contain; object-position: center bottom; }
 .watch-category { margin-top: 9px; }
 .watch-category > h2 { margin: 0 0 8px; color: #333652; font-size: 14px; font-weight: 700; }
 .episode-panel { padding: 10px 10px 11px; border: 2px solid #dedee4; border-radius: 12px; background: #fff; }
@@ -1012,12 +1012,12 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .daily-reward strong { color: #4d4f64; font-size: 12px; }
 .daily-reward span { color: #999; font-size: 9px; }
 
-.mission-hero { min-height: 158px; margin: -1px 0 9px; padding: 18px 16px; border-radius: 13px; }
-.mission-hero-copy { width: 53%; position: relative; z-index: 1; }
+.mission-hero { min-height: 124px; margin: -1px 0 9px; padding: 16px 14px; border-radius: 13px; }
+.mission-hero-copy { width: 56%; position: relative; z-index: 1; }
 .mission-hero-copy h1 { margin: 0 0 5px; color: #333652; font-size: 16px; font-weight: 700; }
 .mission-hero-copy p { max-width: 180px; margin: 0; color: #bfbfbf; font-size: 10px; font-weight: 400; line-height: 1.45; }
-.mission-hero-art { width: 58%; height: 136px; position: absolute; right: -3px; bottom: 2px; display: flex; align-items: flex-end; justify-content: center; }
-.mission-hero-kids { width: 110%; height: 110%; object-fit: contain; object-position: center bottom; }
+.mission-hero-art { width: 53%; height: 120px; position: absolute; right: -3px; bottom: 0; display: flex; align-items: flex-end; justify-content: center; }
+.mission-hero-kids { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
 .mission-hero-chest { width: 55px; height: 55px; position: absolute; right: 36%; bottom: 12px; object-fit: contain; filter: drop-shadow(0 3px 2px #5752d633); }
 .daily-missions-title { margin: 26px 0 4px; color: #333652; font-size: 14px; font-weight: 700; }
 .mission-summary { margin-bottom: 15px; color: #bfbfbf; font-size: 10px; font-weight: 400; }
@@ -1099,8 +1099,8 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .message-card { min-width: 0; padding: 12px; display: grid; grid-template-columns: 66px minmax(0, 1fr) 28px; align-items: start; gap: 10px; border: 2px solid #e2e2e2; border-radius: 10px; background: #fff; }
 .message-card-icon { width: 66px; height: 66px; display: block; object-fit: contain; }
 .message-card-copy { min-width: 0; }
-.message-delete { width: 28px; height: 30px; padding: 3px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; }
-.message-delete img { width: 21px; height: 21px; display: block; object-fit: contain; }
+.message-delete { width: 28px; height: 28px; padding: 0; display: grid; place-items: center; border: 2px solid #f36565; border-radius: 7px; background: #fff; }
+.message-delete img { width: 18px; height: 18px; display: block; object-fit: contain; }
 .message-card h2 { margin: 0 0 5px; color: #333652; font-size: 12px; font-weight: 700; }
 .message-card p { margin: 0 0 5px; color: #656677; font-size: 10px; line-height: 1.5; }
 .message-card time { color: #999; font-size: 9px; }
@@ -1118,19 +1118,18 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .onboarding-dialog p { margin: 0 0 12px; color: #999; font-size: 11px; line-height: 1.55; text-align: justify; }
 .onboarding-dialog > img { width: 100%; height: 190px; margin: 2px auto 12px; display: block; object-fit: contain; }
 .onboarding-dialog .button-primary { min-height: 45px; margin-top: 0; font-size: 13px; }
-.task-onboarding-dialog > img { height: 186px; margin-block: 10px 12px; }
-.modal-overlay.onboarding-overlay { padding: 10px; background: rgb(245 245 245 / 96%); }
-.onboarding-overlay .modal-position { width: min(100%, 390px); max-height: 96dvh; overflow: visible; }
-.diary-onboarding-dialog { height: min(410px, 94dvh); position: relative; }
-.diary-onboarding-art { width: 110%; height: 225px; position: absolute; top: -8px; left: -5%; display: block; object-fit: cover; object-position: center 76%; }
-.diary-onboarding-card { position: absolute; inset: 176px 0 0; padding: 25px 26px 24px; display: flex; flex-direction: column; border-radius: 25px; background: #fff; }
-.diary-onboarding-card h2 { margin: 0 0 21px; color: #333652; font-size: 20px; font-weight: 700; text-align: center; }
-.diary-onboarding-card p { width: 100%; max-width: 310px; min-height: 63px; margin: 0 0 13px; color: #aaa; font-size: 13px; font-weight: 400; line-height: 1.48; text-align: justify; }
-.diary-onboarding-card .button-primary { min-height: 40px; margin-top: auto; flex: 0 0 40px; border-radius: 11px; font-size: 13px; box-shadow: 0 4px 0 var(--deep-blue); }
+.task-onboarding-dialog > img { height: 150px; margin-block: 10px 12px; }
+.modal-overlay.onboarding-overlay { padding: 18px; background: rgb(0 0 0 / 25%); }
+.onboarding-overlay .modal-position { width: min(100%, 352px); max-height: 92dvh; overflow-y: auto; }
+.diary-onboarding-dialog { height: auto; min-height: 373px; display: flex; flex-direction: column; }
+.diary-onboarding-art { width: 100%; height: 150px; margin: 0 auto 8px; display: block; object-fit: cover; object-position: center 26%; }
+.diary-onboarding-card { min-height: 0; position: static; padding: 0; display: flex; flex: 1; flex-direction: column; border-radius: 0; background: #fff; }
+.dialog .diary-onboarding-card h2 { margin: 0 0 8px; color: #333652; font-size: 16px; font-weight: 700; text-align: center; }
+.dialog .diary-onboarding-card p { width: 100%; max-width: none; min-height: 60px; margin: 0 0 10px; color: #aaa; font-size: 12px; font-weight: 400; line-height: 1.5; text-align: justify; }
+.diary-onboarding-card .button-primary { min-height: 45px; margin-top: auto; flex: 0 0 45px; font-size: 13px; }
 @media (max-height: 480px) {
-  .diary-onboarding-dialog { height: 94dvh; }
-  .diary-onboarding-art { height: 52%; }
-  .diary-onboarding-card { inset-block-start: 42%; padding-block: 16px; }
+  .diary-onboarding-art { height: 120px; }
+  .dialog .diary-onboarding-card p { min-height: 45px; }
 }
 .messages-empty-state p { margin: 0; color: #bfbfbf; font-size: 14px; font-weight: 700; }
 .strict-toggle { width: 42px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: flex-start; border: 0; border-radius: 13px; background: #aaa; }
