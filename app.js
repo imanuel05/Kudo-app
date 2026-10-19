@@ -162,7 +162,7 @@ const STARTER_STATE = {
   dismissedMessageIds: [],
   addTaskIntroSeen: false,
   diaryQuestIntroSeen: false,
-  bossFightIntroSeen: false,
+  bossFightIntroVersion: 0,
   animeVideoAssets: {},
   strictMode: false
 };
@@ -1975,9 +1975,7 @@ function renderTaskPage(kind) {
     state.diaryQuestIntroSeen = true;
     persist();
     modal = { type: 'diary-quest-onboarding', step: 0 };
-  } else if (kind === 'hard' && !state.bossFightIntroSeen) {
-    state.bossFightIntroSeen = true;
-    persist();
+  } else if (kind === 'hard' && state.bossFightIntroVersion !== 1) {
     modal = { type: 'boss-fight-onboarding', step: 0 };
   }
   const hard = kind === 'hard';
@@ -4736,6 +4734,10 @@ app.addEventListener('click', async (event) => {
   if (target.classList.contains('modal-overlay')) {
     if (modal?.type === 'strict-block') return;
     if (modal?.type === 'analyzing') analysisToken += 1;
+    if (modal?.type === 'boss-fight-onboarding') {
+      state.bossFightIntroVersion = 1;
+      persist();
+    }
     if (modal?.type === 'anime-ticket-gate' && currentPage() === 'anime-stream') {
       modal = null;
       target.remove();
@@ -5680,6 +5682,10 @@ app.addEventListener('click', async (event) => {
           const card = app.querySelector(isBossFightIntro ? '.boss-fight-onboarding-card' : '.diary-onboarding-card');
           if (card) card.innerHTML = questOnboardingCard(isBossFightIntro ? 'Boss Fight' : 'Daily Quest', steps, nextStep);
         } else {
+          if (isBossFightIntro) {
+            state.bossFightIntroVersion = 1;
+            persist();
+          }
           modal = null;
           button.closest('.modal-overlay')?.remove();
         }

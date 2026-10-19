@@ -1125,7 +1125,7 @@ button:focus-visible { outline: 3px solid #7775ff70; outline-offset: 3px; }
 .quest-onboarding-dialog { width: 100%; display: flex; flex-direction: column; }
 .quest-onboarding-art-window { height: 150px; position: relative; z-index: 1; overflow: hidden; border-radius: 24px 24px 0 0; background: transparent; }
 .diary-onboarding-art { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center 26%; }
-.boss-fight-onboarding-art { width: 100%; height: 100%; display: block; object-fit: contain; object-position: center bottom; }
+.boss-fight-onboarding-art { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center top; }
 .quest-onboarding-card { position: relative; z-index: 2; margin-top: -1px; padding: 22px 19px 18px; border-radius: 24px; text-align: center; }
 .dialog.quest-onboarding-card h2 { margin: 0 0 15px; color: #333652; font-size: 16px; font-weight: 700; text-align: center; }
 .dialog.quest-onboarding-card p { width: 100%; max-width: none; margin: 0 0 12px; color: #aaa; font-size: 12px; font-weight: 400; line-height: 1.5; text-align: justify; }
