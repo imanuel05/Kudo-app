@@ -130,7 +130,9 @@ const BOSS_SKIN_COSTS = Object.freeze({
 const DIARY_QUEST_INTRO_STEPS = Object.freeze([
   'Di dalam diary quest ini setiap kamu mengerjakan tugasmu, progress mu akan bertambah.',
   'Untuk menambahkan tugas kamu dapat menekan tombol tambah tugas.',
+  'Kolom total tugas menunjukkan jumlah total tugas kamu dan kolom selesai menunjukkan berapa tugas yang sudah kamu selesaikan.',
   'Saat tugas mu belum kamu kerjakan dan tenggat waktu kurang dari 7 hari maka tugas akan berpindah ke Boss Fight.',
+  'Kamu dapat mengecek progress mu di profil.',
 ]);
 
 const STARTER_STATE = {
