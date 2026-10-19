@@ -183,7 +183,7 @@ test('admin can delete only completed or rejected payment history', async () => 
   }
 });
 
-test('admin order listing signs private payment proofs for review', async () => {
+test('admin order listing keeps older verified history and signs private payment proofs', async () => {
   const originalFetch = global.fetch;
   global.fetch = async (input) => {
     const url = String(input);
@@ -215,8 +215,8 @@ test('admin order listing signs private payment proofs for review', async () => 
           amount_idr: 15000,
           status: 'paid',
           proof_path: 'verified-customer/paid-proof.png',
-          created_at: '2026-10-07T00:00:00.000Z',
-          paid_at: '2026-10-08T00:00:00.000Z',
+          created_at: '2025-10-07T00:00:00.000Z',
+          paid_at: '2025-10-08T00:00:00.000Z',
           rejected_at: null,
         }, {
           invoice_number: 'KUDO-00000000-0000-4000-8000-000000000002',
@@ -261,8 +261,8 @@ test('admin order listing signs private payment proofs for review', async () => 
       diamonds: 2000,
       amount: 15000,
       status: 'paid',
-      createdAt: '2026-10-07T00:00:00.000Z',
-      verifiedAt: '2026-10-08T00:00:00.000Z',
+      createdAt: '2025-10-07T00:00:00.000Z',
+      verifiedAt: '2025-10-08T00:00:00.000Z',
       proofUrl: 'https://supabase.example/storage/v1/object/sign/payment-proofs/proof.png?token=temporary',
     });
     assert.deepEqual(result.verifiedOrders[1], {

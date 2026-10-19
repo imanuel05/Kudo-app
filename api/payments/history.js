@@ -2,9 +2,8 @@ const {
   authenticateRequest,
   sendJson,
   supabaseRequest,
+  supabaseRequestAll,
 } = require('../../lib/payments');
-
-const PAYMENT_HISTORY_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 function storagePath(path) {
   return String(path || '').split('/').map(encodeURIComponent).join('/');
@@ -32,22 +31,15 @@ module.exports = async function paymentHistory(request, response) {
     const user = await authenticateRequest(request);
     if (!user?.id) return sendJson(response, 401, { error: 'Sesi login tidak valid.' });
 
-    const cutoff = new Date(Date.now() - PAYMENT_HISTORY_RETENTION_MS).toISOString();
     const query = new URLSearchParams({
       select: 'invoice_number,diamonds,amount_idr,status,proof_path,created_at,paid_at,rejected_at',
       user_id: `eq.${user.id}`,
-      created_at: `gte.${cutoff}`,
       order: 'created_at.desc',
-      limit: '100',
     });
-    const orders = await supabaseRequest(`/rest/v1/payment_orders?${query}`);
-    if (!Array.isArray(orders)) throw new Error('Payment history response was invalid.');
+    const orders = await supabaseRequestAll('/rest/v1/payment_orders', query);
 
     return sendJson(response, 200, {
-      orders: await Promise.all(orders.filter((order) => {
-        const createdAt = Date.parse(order.created_at);
-        return Number.isFinite(createdAt) && createdAt >= Date.parse(cutoff);
-      }).map(async (order) => ({
+      orders: await Promise.all(orders.map(async (order) => ({
         invoiceNumber: order.invoice_number,
         diamonds: order.diamonds,
         amount: order.amount_idr,

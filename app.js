@@ -10,6 +10,7 @@ const ASSETS = {
   navProfile: "assets/kudo-image-1fb9464debf6610f.png",
   ticket: "assets/kudo-image-16678d2166e4afaf.png",
   diamondItem: "assets/kudo-image-2af03c55f26ca16b.png",
+  diamondPack1200: "assets/diamond-pack-1200.png",
   hourglass: "assets/kudo-image-68cbb379aec24bc7.png",
   artDaily: "assets/kudo-image-73889fc73cf3182c.png",
   artBoss: "assets/kudo-image-4cd17bbbd753eb38.png",
@@ -43,6 +44,8 @@ const ASSETS = {
   profileAvatarFemale: "assets/kudo-image-34a1cf76c3d0db54.png",
   profileInfoArt: "assets/kudo-image-af5f4e4eb1854473.png",
   taskMovedMessage: "assets/task-moved-message.png",
+  taskOnboarding: "assets/task-onboarding-art.png",
+  diaryOnboarding: "assets/diary-onboarding-art.png",
 };
 const KDRAMA_EPISODE_POSTER_OVERRIDES = Object.freeze({
   'nine puzzle': 'assets/nine-puzzle-episode-poster.png',
@@ -110,9 +113,25 @@ const BOSS_AVATARS = {
     image: 'assets/error-code-boss.png',
     alt: 'Boss Error Code berbentuk laptop',
   },
+  'pumpkin-root': {
+    name: 'Pumpkin Root',
+    image: 'assets/pumpkin-root-boss.png',
+    alt: 'Boss Pumpkin Root berbentuk labu penyihir',
+  },
 };
 const ERROR_CODE_SKIN_ID = 'error-code';
 const ERROR_CODE_SKIN_COST = 500;
+const PUMPKIN_ROOT_SKIN_ID = 'pumpkin-root';
+const PUMPKIN_ROOT_SKIN_COST = 500;
+const BOSS_SKIN_COSTS = Object.freeze({
+  [ERROR_CODE_SKIN_ID]: ERROR_CODE_SKIN_COST,
+  [PUMPKIN_ROOT_SKIN_ID]: PUMPKIN_ROOT_SKIN_COST,
+});
+const DIARY_QUEST_INTRO_STEPS = Object.freeze([
+  'Di dalam diary quest ini setiap kamu mengerjakan tugasmu, progress mu akan bertambah.',
+  'Untuk menambahkan tugas kamu dapat menekan tombol tambah tugas.',
+  'Saat tugas mu belum kamu kerjakan dan tenggat waktu kurang dari 7 hari maka tugas akan berpindah ke Boss Fight.',
+]);
 
 const STARTER_STATE = {
   crystals: 2000,
@@ -130,6 +149,9 @@ const STARTER_STATE = {
   bossHealth: 100,
   bossAvatar: 'paper-task',
   ownedBossSkins: [],
+  dismissedMessageIds: [],
+  addTaskIntroSeen: false,
+  diaryQuestIntroSeen: false,
   animeVideoAssets: {},
   strictMode: false
 };
@@ -182,8 +204,13 @@ function focusTrackSource(name) {
 }
 
 function ownsBossSkin(skinId) {
-  return skinId !== ERROR_CODE_SKIN_ID
+  return !Object.hasOwn(BOSS_SKIN_COSTS, skinId)
     || (Array.isArray(state.ownedBossSkins) && state.ownedBossSkins.includes(skinId));
+}
+
+function diaryQuestIntroCard(step) {
+  const currentStep = Math.min(Math.max(0, Number(step) || 0), DIARY_QUEST_INTRO_STEPS.length - 1);
+  return `<h2>Diary quest</h2><p>${DIARY_QUEST_INTRO_STEPS[currentStep]}</p><button class="button button-primary" type="button" data-action="next-diary-intro">${currentStep === DIARY_QUEST_INTRO_STEPS.length - 1 ? 'Tutup' : 'Lanjut'}</button>`;
 }
 
 function stopWhiteNoise() {
@@ -359,7 +386,6 @@ let diamondProofError = '';
 let diamondPaymentSubmitting = false;
 let purchaseHistory = [];
 let purchaseHistoryPage = 0;
-let purchaseHistoryExpiryTimer = null;
 let purchaseHistoryLoading = false;
 let purchaseHistoryError = '';
 let purchaseHistoryLoaded = false;
@@ -672,11 +698,14 @@ function loadState() {
         }
       : structuredClone(STARTER_STATE);
     loadedState.ownedBossSkins = Array.isArray(loadedState.ownedBossSkins)
-      ? loadedState.ownedBossSkins.filter((skinId) => skinId === ERROR_CODE_SKIN_ID)
+      ? loadedState.ownedBossSkins.filter((skinId) => Object.hasOwn(BOSS_SKIN_COSTS, skinId))
       : [];
-    if (loadedState.bossAvatar === ERROR_CODE_SKIN_ID && !loadedState.ownedBossSkins.includes(ERROR_CODE_SKIN_ID)) {
+    if (Object.hasOwn(BOSS_SKIN_COSTS, loadedState.bossAvatar) && !loadedState.ownedBossSkins.includes(loadedState.bossAvatar)) {
       loadedState.bossAvatar = 'paper-task';
     }
+    loadedState.dismissedMessageIds = Array.isArray(loadedState.dismissedMessageIds)
+      ? loadedState.dismissedMessageIds.filter((messageId) => typeof messageId === 'string')
+      : [];
     return loadedState;
   } catch {
     return structuredClone(STARTER_STATE);
@@ -736,8 +765,6 @@ function resetAccountScopedPages() {
   clearTimeout(taskDeadlineRefreshTimer);
   taskDeadlineRefreshTimer = null;
   messagePage = 0;
-  window.clearTimeout(purchaseHistoryExpiryTimer);
-  purchaseHistoryExpiryTimer = null;
   purchaseHistory = [];
   purchaseHistoryPage = 0;
   purchaseHistoryLoading = false;
@@ -900,11 +927,13 @@ function pruneExpiredCompletedTasks() {
 
 function processTaskDeadlineMessages() {
   if (!Array.isArray(state.messages)) state.messages = [];
+  if (!Array.isArray(state.dismissedMessageIds)) state.dismissedMessageIds = [];
   let changed = false;
   const now = Date.now();
   const messageCutoff = now - 30 * 24 * 60 * 60 * 1000;
   const originalMessageCount = state.messages.length;
   state.messages = state.messages.filter((message) => {
+    if (state.dismissedMessageIds.includes(message.id)) return false;
     const receivedAt = Date.parse(message.createdAt);
     return !Number.isFinite(receivedAt) || receivedAt > messageCutoff;
   });
@@ -928,7 +957,7 @@ function processTaskDeadlineMessages() {
   }
 
   const addMessage = (id, type, title, body, task) => {
-    if (state.messages.some((message) => message.id === id)) return;
+    if (state.dismissedMessageIds.includes(id) || state.messages.some((message) => message.id === id)) return;
     state.messages.unshift({
       id,
       type,
@@ -1169,11 +1198,6 @@ function navigate(page) {
     purchaseHistoryLoaded = false;
     purchaseHistoryError = '';
   }
-  if (currentPage() === 'purchase-history' && page !== 'purchase-history') {
-    window.clearTimeout(purchaseHistoryExpiryTimer);
-    purchaseHistoryExpiryTimer = null;
-  }
-
   if (
     location.hash === `#${page}`
   ) {
@@ -1800,6 +1824,11 @@ function renderHome() {
 }
 
 function renderTaskCreate() {
+  if (!state.addTaskIntroSeen) {
+    state.addTaskIntroSeen = true;
+    persist();
+    modal = { type: 'add-task-onboarding' };
+  }
   taskPhotoData = '';
 
   const today =
@@ -1931,6 +1960,11 @@ function renderTaskCreate() {
 
 function renderTaskPage(kind) {
   pruneExpiredCompletedTasks();
+  if (kind === 'easy' && !state.diaryQuestIntroSeen) {
+    state.diaryQuestIntroSeen = true;
+    persist();
+    modal = { type: 'diary-quest-onboarding', step: 0 };
+  }
   const hard = kind === 'hard';
   const page = hard
     ? 'boss'
@@ -2627,9 +2661,13 @@ function renderShop() {
   ];
   if (!tabs.some(([key]) => key === shopActiveTab)) shopActiveTab = 'diamonds';
   const sectionContent = {
-    diamonds: `<section class="shop-section"><h2>Paket berlian</h2><div class="diamond-pack-grid"><button class="diamond-pack-card" type="button" data-action="buy-diamond-pack" data-amount="1200"><img src="${ASSETS.rewardDiamonds}" alt="" /><strong>1.200</strong><span>Rp 10.000</span></button><button class="diamond-pack-card" type="button" data-action="buy-diamond-pack" data-amount="2000"><img src="${ASSETS.rewardDiamonds}" alt="" /><strong>2.000</strong><span>Rp 15.000</span></button></div></section>`,
+    diamonds: `<section class="shop-section"><h2>Paket berlian</h2><div class="diamond-pack-grid"><button class="diamond-pack-card" type="button" data-action="buy-diamond-pack" data-amount="1200"><img src="${ASSETS.diamondPack1200}" alt="" /><strong>1.200</strong><span>Rp 10.000</span></button><button class="diamond-pack-card" type="button" data-action="buy-diamond-pack" data-amount="2000"><img src="${ASSETS.rewardDiamonds}" alt="" /><strong>2.000</strong><span>Rp 15.000</span></button></div></section>`,
     items: `<section class="shop-section shop-item-list"><h2>Item</h2><article class="shop-product-card"><img class="shop-product-art" src="${ASSETS.hourglass}" alt="" /><div class="shop-product-copy"><h3>Penambah waktu</h3><p>Tambahkan waktu mu dan taklukan tugasmu</p><button type="button" data-action="buy-hourglass" data-cost="50"><img src="${ASSETS.diamondItem}" alt="" /> 50</button></div></article><article class="shop-product-card"><img class="shop-product-art shop-ticket-art" src="${ASSETS.ticket}" alt="" /><div class="shop-product-copy"><h3>Tiket nonton</h3><p>Nikmati waktu istirahat dengan menonton yang menarik</p><button type="button" data-action="buy-chest" data-cost="100"><img src="${ASSETS.diamondItem}" alt="" /> 100</button></div></article></section>`,
-    skins: `<section class="shop-section"><h2>Boss</h2><article class="shop-product-card shop-skin-card"><img class="shop-product-art" src="${BOSS_AVATARS[ERROR_CODE_SKIN_ID].image}" alt="${escapeHtml(BOSS_AVATARS[ERROR_CODE_SKIN_ID].alt)}" /><div class="shop-product-copy"><h3>Error Code</h3><p>${ownsBossSkin(ERROR_CODE_SKIN_ID) ? 'Skin ini sudah kamu miliki.' : 'Buka skin ini untuk menggunakannya di Boss Fight.'}</p>${ownsBossSkin(ERROR_CODE_SKIN_ID) ? '<span class="shop-skin-owned">Dimiliki</span>' : `<button type="button" data-action="buy-boss-skin"><img src="${ASSETS.diamondItem}" alt="" /> ${ERROR_CODE_SKIN_COST}</button>`}</div></article></section>`,
+    skins: `<section class="shop-section"><h2>Boss</h2>${Object.entries(BOSS_SKIN_COSTS).map(([skinId, cost]) => {
+      const skin = BOSS_AVATARS[skinId];
+      const owned = ownsBossSkin(skinId);
+      return `<article class="shop-product-card shop-skin-card"><img class="shop-product-art" src="${skin.image}" alt="${escapeHtml(skin.alt)}" /><div class="shop-product-copy"><h3>${escapeHtml(skin.name)}</h3><p>${owned ? 'Skin ini sudah kamu miliki.' : 'Buka skin ini untuk menggunakannya di Boss Fight.'}</p>${owned ? '<span class="shop-skin-owned">Dimiliki</span>' : `<button type="button" data-action="buy-boss-skin" data-skin-id="${skinId}"><img src="${ASSETS.diamondItem}" alt="" /> ${cost}</button>`}</div></article>`;
+    }).join('')}</section>`,
   };
   const content = `<section class="shop-feature-banner"><div class="shop-feature-copy"><h1>Fitur-fitur untuk membantumu</h1><p>Jelajahi fitur untuk mendapatkan item yang dapat membantumu.</p></div><img src="${ASSETS.shopFeature}" alt="Kudo membawa berlian dan penambah waktu" /></section>
     <div class="shop-tabs" role="tablist" aria-label="Kategori toko">${tabs.map(([key, label]) => `<button class="shop-tab ${shopActiveTab === key ? 'is-active' : ''}" type="button" role="tab" data-action="shop-tab" data-shop-tab="${key}" aria-controls="shop-panel-${key}" aria-selected="${shopActiveTab === key}">${label}</button>`).join('')}</div>
@@ -3422,7 +3460,7 @@ async function pollDiamondPaymentStatus() {
 function renderRewards() {
   const missions = dailyMissions();
   const completed = missions.filter((mission) => mission.done).length;
-  const content = `<section class="mission-hero"><div class="mission-hero-copy"><h1>Misi</h1><p>Selesaikan misi untuk mendapatkan hadiah!</p></div><div class="mission-hero-art"><img class="mission-hero-kids" src="${ASSETS.missionCelebration}" alt="Kudo merayakan misi" /></div></section>
+  const content = `<section class="watch-hero mission-hero"><div class="mission-hero-copy"><h1>Misi</h1><p>Selesaikan misi untuk mendapatkan hadiah!</p></div><div class="mission-hero-art"><img class="mission-hero-kids" src="${ASSETS.missionCelebration}" alt="Kudo merayakan misi" /></div></section>
     <h2 class="daily-missions-title">Misi harian</h2><div class="mission-summary">${completed}/${missions.length} misi selesai</div>
     <section class="mission-list" aria-label="Daftar misi harian">${missions.map((mission) => {
       const chest = mission.opened ? ASSETS.chestOpen : mission.done ? ASSETS.chestReady : ASSETS.chestLocked;
@@ -3486,7 +3524,7 @@ function renderMessages() {
   messagePage = Math.min(messagePage, pageCount - 1);
   const pageMessages = state.messages.slice(messagePage * pageSize, (messagePage + 1) * pageSize);
   const list = pageMessages.length
-    ? `<div class="message-list">${pageMessages.map((message) => `<article class="message-card"><img class="message-card-icon" src="${message.type === 'task-moved' ? ASSETS.taskMovedMessage : 'assets/message-icon.png'}" alt="" /><div><h2>${escapeHtml(message.title)}</h2><p>${escapeHtml(message.body)}</p><time datetime="${escapeHtml(message.createdAt)}">${new Date(message.createdAt).toLocaleString('id-ID')}</time></div></article>`).join('')}</div>${pageCount > 1 ? `<nav class="message-pagination" aria-label="Navigasi pesan"><button type="button" data-action="message-page" data-page="${messagePage - 1}" aria-label="Pesan sebelumnya" ${messagePage === 0 ? 'disabled' : ''}></button><span>Halaman ${messagePage + 1} dari ${pageCount}</span><button type="button" data-action="message-page" data-page="${messagePage + 1}" aria-label="Pesan berikutnya" ${messagePage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
+    ? `<div class="message-list">${pageMessages.map((message) => `<article class="message-card"><img class="message-card-icon" src="${message.type === 'task-moved' ? ASSETS.taskMovedMessage : 'assets/message-icon.png'}" alt="" /><div class="message-card-copy"><h2>${escapeHtml(message.title)}</h2><p>${escapeHtml(message.body)}</p><time datetime="${escapeHtml(message.createdAt)}">${new Date(message.createdAt).toLocaleString('id-ID')}</time></div><button class="message-delete" type="button" data-action="delete-message" data-message-id="${escapeHtml(message.id)}" aria-label="Hapus pesan: ${escapeHtml(message.title)}"><img src="assets/trash-icon.png" alt="" /></button></article>`).join('')}</div>${pageCount > 1 ? `<nav class="message-pagination" aria-label="Navigasi pesan"><button type="button" data-action="message-page" data-page="${messagePage - 1}" aria-label="Pesan sebelumnya" ${messagePage === 0 ? 'disabled' : ''}></button><span>Halaman ${messagePage + 1} dari ${pageCount}</span><button type="button" data-action="message-page" data-page="${messagePage + 1}" aria-label="Pesan berikutnya" ${messagePage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
     : `<div class="messages-empty-state"><img src="${ASSETS.focusShortage}" alt="" /><p>Belum ada pesan masuk</p></div>`;
 
   let markedRead = false;
@@ -3501,17 +3539,10 @@ function renderMessages() {
 
 function renderPurchaseHistory() {
   if (!currentAccount?.id) return navigate('login');
-  const retentionMs = 30 * 24 * 60 * 60 * 1000;
-  const now = Date.now();
-  const retentionCutoff = now - retentionMs;
-  const visiblePurchaseHistory = purchaseHistory.filter((order) => {
-    const createdAt = Date.parse(order.createdAt);
-    return Number.isFinite(createdAt) && createdAt >= retentionCutoff;
-  });
   const pageSize = 6;
-  const pageCount = Math.max(1, Math.ceil(visiblePurchaseHistory.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(purchaseHistory.length / pageSize));
   purchaseHistoryPage = Math.min(purchaseHistoryPage, pageCount - 1);
-  const pageOrders = visiblePurchaseHistory.slice(
+  const pageOrders = purchaseHistory.slice(
     purchaseHistoryPage * pageSize,
     (purchaseHistoryPage + 1) * pageSize
   );
@@ -3524,7 +3555,7 @@ function renderPurchaseHistory() {
     expired: 'Kedaluwarsa',
     cancelled: 'Dibatalkan',
   };
-  const orders = visiblePurchaseHistory.length
+  const orders = purchaseHistory.length
     ? `<div class="purchase-history-list">${pageOrders.map((order) => `<article class="purchase-history-item"><div class="purchase-history-proof">${order.proofUrl ? `<a href="${escapeHtml(order.proofUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Lihat bukti pembayaran ${escapeHtml(order.invoiceNumber)}"><img src="${escapeHtml(order.proofUrl)}" alt="Bukti pembayaran" /></a>` : '<span>Tidak ada bukti</span>'}</div><div class="purchase-history-details"><strong>${Number(order.diamonds).toLocaleString('id-ID')} berlian</strong><small>${new Date(order.createdAt).toLocaleString('id-ID')}</small><small class="purchase-invoice">${escapeHtml(order.invoiceNumber)}</small></div><div class="purchase-history-amount"><strong>Rp ${Number(order.amount).toLocaleString('id-ID')}</strong><span class="purchase-status purchase-status-${escapeHtml(order.status)}">${statusLabels[order.status] || 'Status tidak diketahui'}</span></div></article>`).join('')}</div>${pageCount > 1 ? `<nav class="purchase-history-pagination" aria-label="Navigasi histori pembelian"><button type="button" data-action="purchase-history-page" data-page="${purchaseHistoryPage - 1}" aria-label="Halaman sebelumnya" ${purchaseHistoryPage === 0 ? 'disabled' : ''}></button><span>Halaman ${purchaseHistoryPage + 1} dari ${pageCount}</span><button type="button" data-action="purchase-history-page" data-page="${purchaseHistoryPage + 1}" aria-label="Halaman berikutnya" ${purchaseHistoryPage >= pageCount - 1 ? 'disabled' : ''}></button></nav>` : ''}`
     : purchaseHistoryLoading || (!purchaseHistoryLoaded && !purchaseHistoryError)
       ? '<p class="purchase-history-message" role="status">Memuat histori pembelian...</p>'
@@ -3535,21 +3566,6 @@ function renderPurchaseHistory() {
     ? `<p class="purchase-history-error" role="alert">${escapeHtml(purchaseHistoryError)} <button type="button" data-action="retry-purchase-history">Coba lagi</button></p>`
     : '';
   app.innerHTML = appFrame('purchase-history', `<section class="purchase-history-page">${errorMarkup}${orders}</section>`);
-  window.clearTimeout(purchaseHistoryExpiryTimer);
-  const nextExpiry = visiblePurchaseHistory.reduce((expiry, order) => {
-    const createdAt = Date.parse(order.createdAt);
-    const orderExpiry = createdAt + retentionMs;
-    return orderExpiry > now ? Math.min(expiry, orderExpiry) : expiry;
-  }, Infinity);
-  if (Number.isFinite(nextExpiry)) {
-    purchaseHistoryExpiryTimer = window.setTimeout(
-      () => {
-        purchaseHistoryExpiryTimer = null;
-        if (currentPage() === 'purchase-history') renderPurchaseHistory();
-      },
-      Math.min(nextExpiry - now, 2147483647)
-    );
-  }
   if (!purchaseHistoryLoaded && !purchaseHistoryLoading && !purchaseHistoryError) void loadPurchaseHistory();
 }
 
@@ -3791,6 +3807,32 @@ function clearAdminUploadSelection(input) {
     status.textContent = '';
     status.hidden = true;
   }
+}
+
+function adminUploadMimeType(file) {
+  const supportedTypes = new Set([
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'video/mp4',
+    'video/webm',
+  ]);
+  if (supportedTypes.has(file?.type)) return file.type;
+  if (file?.type) return '';
+  const extension = String(file?.name || '').split('.').pop()?.toLocaleLowerCase();
+  return ({
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    webp: 'image/webp',
+    mp4: 'video/mp4',
+    webm: 'video/webm',
+  })[extension] || '';
+}
+
+function adminUploadExtension(file) {
+  const mimeType = adminUploadMimeType(file);
+  return mimeType === 'image/jpeg' ? 'jpg' : mimeType.split('/')[1] || '';
 }
 
 function setAdminVideoStep(form, step) {
@@ -4079,7 +4121,8 @@ async function uploadAdminVideo(button) {
   const showType = form?.querySelector('#admin-video-type')?.value || existingShow?.show_type || defaults?.type || 'Series';
   const needsPoster = !existingShow?.poster_path;
   const needsEpisodePoster = Boolean(defaults?.episodePoster) || !existingShow?.episode_poster_path;
-  if (!file || !['video/mp4', 'video/webm'].includes(file.type) || file.size > 50 * 1024 * 1024) {
+  const videoMimeType = adminUploadMimeType(file);
+  if (!file || !['video/mp4', 'video/webm'].includes(videoMimeType) || file.size > 50 * 1024 * 1024) {
     adminPanelError = 'Pilih video MP4/WebM dengan ukuran maksimal 50 MB.';
     renderAdminPanel();
     return;
@@ -4096,7 +4139,7 @@ async function uploadAdminVideo(button) {
     || !showDescription
     || !genres.length
     || !thumbnailFile
-    || imageFiles.some((image) => !['image/png', 'image/jpeg', 'image/webp'].includes(image.type) || image.size > 5 * 1024 * 1024)
+    || imageFiles.some((image) => !['image/png', 'image/jpeg', 'image/webp'].includes(adminUploadMimeType(image)) || image.size > 5 * 1024 * 1024)
     || genres.length > 20
     || genres.some((genre) => genre.length > 40)
   ) {
@@ -4120,7 +4163,7 @@ async function uploadAdminVideo(button) {
     const upload = async (path, uploadFile) => {
       const { error } = await supabaseClient.storage
         .from('catalog-video')
-        .upload(path, uploadFile, { contentType: uploadFile.type, upsert: false });
+        .upload(path, uploadFile, { contentType: adminUploadMimeType(uploadFile), upsert: false });
       if (error) throw error;
       uploadedPaths.push(path);
     };
@@ -4133,7 +4176,7 @@ async function uploadAdminVideo(button) {
       posterUploadFile = await posterResponse.blob();
     }
     if (posterUploadFile) {
-      const posterExtension = posterUploadFile.type === 'image/jpeg' ? 'jpg' : posterUploadFile.type.split('/')[1];
+      const posterExtension = adminUploadExtension(posterUploadFile);
       posterPath = `${userId}/${folderName}/poster.${posterExtension}`;
       await upload(posterPath, posterUploadFile);
     }
@@ -4144,14 +4187,14 @@ async function uploadAdminVideo(button) {
       episodePosterUploadFile = await posterResponse.blob();
     }
     if (episodePosterUploadFile) {
-      const episodePosterExtension = episodePosterUploadFile.type === 'image/jpeg' ? 'jpg' : episodePosterUploadFile.type.split('/')[1];
+      const episodePosterExtension = adminUploadExtension(episodePosterUploadFile);
       episodePosterPath = `${userId}/${folderName}/episode-posters/${crypto.randomUUID()}.${episodePosterExtension}`;
       await upload(episodePosterPath, episodePosterUploadFile);
     }
-    const thumbnailExtension = thumbnailFile.type === 'image/jpeg' ? 'jpg' : thumbnailFile.type.split('/')[1];
+    const thumbnailExtension = adminUploadExtension(thumbnailFile);
     const thumbnailPath = `${userId}/${folderName}/thumbnails/episode-${episodeNumber}-${crypto.randomUUID()}.${thumbnailExtension}`;
     await upload(thumbnailPath, thumbnailFile);
-    const videoExtension = file.type === 'video/webm' ? 'webm' : 'mp4';
+    const videoExtension = videoMimeType === 'video/webm' ? 'webm' : 'mp4';
     const videoPath = `${userId}/${folderName}/episodes/${crypto.randomUUID()}.${videoExtension}`;
     await upload(videoPath, file);
 
@@ -4456,6 +4499,10 @@ function modalView() {
 
   if (modal.type === 'analyzing') {
     body = `<div class="dialog analyzing-dialog"><div class="loading-spinner" aria-hidden="true"></div><h2>Menganalisis tugas...</h2><p>Kudo sedang membaca tugasmu.</p></div>`;
+  } else if (modal.type === 'add-task-onboarding') {
+    body = `<div class="dialog onboarding-dialog task-onboarding-dialog"><h2>Tambah tugas</h2><p>Isi semua kolom untuk menambahkan tugas, sistem akan memilih tugas untuk dimasukkan ke diary quest atau boss fight.</p><img src="${ASSETS.taskOnboarding}" alt="Anak perempuan dan laki-laki mencari tahu bersama kucing" /><button class="button button-primary" type="button" data-action="close-modal">Tutup</button></div>`;
+  } else if (modal.type === 'diary-quest-onboarding') {
+    body = `<div class="diary-onboarding-dialog"><img class="diary-onboarding-art" src="${ASSETS.diaryOnboarding}" alt="Anak perempuan dan laki-laki menyambutmu dengan buku" /><section class="diary-onboarding-card">${diaryQuestIntroCard(modal.step)}</section></div>`;
   } else if (modal.type === 'task-added') {
     const task = modal.task;
     body = `<div class="dialog result-dialog task-added-dialog"><img class="task-added-art" src="${ASSETS.artDaily}" alt="Anak-anak belajar bersama" /><h2>Tugas ditambahkan</h2><p>${escapeHtml(task.title)} masuk ke ${task.difficulty === 'hard' ? 'Boss Fight' : 'Daily Quest'}.</p><button class="button button-primary" type="button" data-action="close-and-home">Kembali</button></div>`;
@@ -4501,8 +4548,9 @@ function modalView() {
     const itemImage = hourglassItem ? ASSETS.hourglass : ASSETS.ticket;
     body = `<div class="item-purchase-sheet"><h2>${hourglassItem ? 'Tambah waktu?' : 'Tambah Tiket?'}</h2><div class="item-purchase-card ${hourglassItem ? '' : 'is-ticket'}"><img src="${itemImage}" alt="" /><strong>1X</strong><span class="item-purchase-price"><img src="${ASSETS.diamondItem}" alt="" />${Number(modal.cost).toLocaleString('id-ID')}</span></div><button class="button button-primary item-purchase-confirm" type="button" data-action="confirm-shop-buy">Dapatkan ${hourglassItem ? 'penambah waktu' : 'tiket nonton'}</button><button class="item-purchase-decline" type="button" data-action="decline-shop-purchase">Tidak, terima kasih</button></div>`;
   } else if (modal.type === 'boss-skin-purchase') {
-    const skin = BOSS_AVATARS[ERROR_CODE_SKIN_ID];
-    body = `<div class="item-purchase-sheet"><h2>Beli Skin Boss?</h2><div class="item-purchase-card shop-skin-purchase-card"><img src="${skin.image}" alt="${escapeHtml(skin.alt)}" /><strong>${escapeHtml(skin.name)}</strong><span class="item-purchase-price"><img src="${ASSETS.diamondItem}" alt="" />${ERROR_CODE_SKIN_COST}</span></div><button class="button button-primary item-purchase-confirm" type="button" data-action="confirm-boss-skin-buy">Beli skin</button><button class="item-purchase-decline" type="button" data-action="decline-shop-purchase">Tidak, terima kasih</button></div>`;
+    const skin = BOSS_AVATARS[modal.skinId];
+    const cost = BOSS_SKIN_COSTS[modal.skinId];
+    body = `<div class="item-purchase-sheet"><h2>Beli Skin Boss?</h2><div class="item-purchase-card shop-skin-purchase-card"><img src="${skin.image}" alt="${escapeHtml(skin.alt)}" /><strong>${escapeHtml(skin.name)}</strong><span class="item-purchase-price"><img src="${ASSETS.diamondItem}" alt="" />${cost}</span></div><button class="button button-primary item-purchase-confirm" type="button" data-action="confirm-boss-skin-buy">Beli skin</button><button class="item-purchase-decline" type="button" data-action="decline-shop-purchase">Tidak, terima kasih</button></div>`;
   } else if (modal.type === 'free-chest-offer') {
     body = `<div class="dialog result-dialog free-chest-offer-dialog"><img class="free-chest-offer-art" src="${ASSETS.shopFreeChestArt}" alt="Anak-anak dan kucing berharap" /><h2>Penawaran peti gratis</h2><p>Iklan belum tersedia.</p><button class="button button-primary" type="button" data-action="close-modal">Kembali</button></div>`;
   } else if (modal.type === 'show-unavailable') {
@@ -4538,6 +4586,8 @@ function modalView() {
       ? 'modal-overlay item-purchase-overlay'
     : modal.type === 'boss-skin-purchase'
       ? 'modal-overlay item-purchase-overlay'
+    : modal.type === 'diary-quest-onboarding'
+      ? 'modal-overlay onboarding-overlay'
     : modal.type === 'focus-gate' || modal.type === 'anime-ticket-gate'
       ? 'modal-overlay focus-gate-overlay'
       : 'modal-overlay';
@@ -5496,29 +5546,38 @@ app.addEventListener('click', async (event) => {
       break;
     case 'dismiss-focus-player': stopWhiteNoise(); state.activeFocus = null; focusMiniPlayerAvailable = false; persist(); break;
     case 'stop-focus': stopWhiteNoise(); state.activeFocus = null; focusMiniPlayerAvailable = false; persist(); modal = { type: 'focus-ended' }; break;
-    case 'buy-boss-skin':
-      if (ownsBossSkin(ERROR_CODE_SKIN_ID)) {
-        toast = 'Skin Error Code sudah kamu miliki.';
-      } else if (state.crystals < ERROR_CODE_SKIN_COST) {
+    case 'buy-boss-skin': {
+      const skinId = button.dataset.skinId || ERROR_CODE_SKIN_ID;
+      const cost = BOSS_SKIN_COSTS[skinId];
+      if (!cost) break;
+      if (ownsBossSkin(skinId)) {
+        toast = `Skin ${BOSS_AVATARS[skinId].name} sudah kamu miliki.`;
+      } else if (state.crystals < cost) {
         modal = { type: 'shop-insufficient' };
       } else {
-        modal = { type: 'boss-skin-purchase' };
+        modal = { type: 'boss-skin-purchase', skinId };
       }
       break;
-    case 'confirm-boss-skin-buy':
-      if (ownsBossSkin(ERROR_CODE_SKIN_ID)) {
+    }
+    case 'confirm-boss-skin-buy': {
+      const skinId = modal?.type === 'boss-skin-purchase' ? modal.skinId : '';
+      const cost = BOSS_SKIN_COSTS[skinId];
+      if (!cost) {
         modal = null;
-        toast = 'Skin Error Code sudah kamu miliki.';
-      } else if (state.crystals < ERROR_CODE_SKIN_COST) {
+      } else if (ownsBossSkin(skinId)) {
+        modal = null;
+        toast = `Skin ${BOSS_AVATARS[skinId].name} sudah kamu miliki.`;
+      } else if (state.crystals < cost) {
         modal = { type: 'shop-insufficient' };
       } else {
-        state.crystals -= ERROR_CODE_SKIN_COST;
-        state.ownedBossSkins = [...new Set([...(Array.isArray(state.ownedBossSkins) ? state.ownedBossSkins : []), ERROR_CODE_SKIN_ID])];
+        state.crystals -= cost;
+        state.ownedBossSkins = [...new Set([...(Array.isArray(state.ownedBossSkins) ? state.ownedBossSkins : []), skinId])];
         persist();
         modal = null;
-        toast = 'Skin Error Code berhasil dibeli.';
+        toast = `Skin ${BOSS_AVATARS[skinId].name} berhasil dibeli.`;
       }
       break;
+    }
     case 'buy-item-pack': case 'buy-hourglass': case 'buy-chest': {
       const itemKey = button.dataset.itemKey || (button.dataset.action === 'buy-hourglass' ? 'hourglasses' : 'chests');
       const quantity = Number(button.dataset.quantity || 1);
@@ -5587,6 +5646,30 @@ app.addEventListener('click', async (event) => {
     case 'claim-daily':
       if (state.chestClaimedOn !== new Date().toISOString().slice(0, 10)) { state.chestClaimedOn = new Date().toISOString().slice(0, 10); state.crystals += 20; persist(); modal = { type: 'daily-claimed' }; }
       break;
+    case 'next-diary-intro':
+      if (modal?.type === 'diary-quest-onboarding') {
+        const nextStep = Number(modal.step) + 1;
+        if (nextStep < DIARY_QUEST_INTRO_STEPS.length) {
+          modal.step = nextStep;
+          const card = app.querySelector('.diary-onboarding-card');
+          if (card) card.innerHTML = diaryQuestIntroCard(nextStep);
+        } else {
+          modal = null;
+          button.closest('.modal-overlay')?.remove();
+        }
+      }
+      return;
+    case 'delete-message': {
+      const messageId = button.dataset.messageId;
+      if (messageId && state.messages.some((message) => message.id === messageId)) {
+        state.messages = state.messages.filter((message) => message.id !== messageId);
+        state.dismissedMessageIds = [...new Set([...(state.dismissedMessageIds || []), messageId])];
+        persist();
+      }
+      messagePage = Math.max(0, Math.min(messagePage, Math.ceil(state.messages.length / 6) - 1));
+      renderMessages();
+      return;
+    }
     case 'delete-task': state.tasks = state.tasks.filter((task) => task.id !== modal.taskId); persist(); modal = null; break;
     case 'reset-demo': modal = { type: 'reset' }; break;
     case 'confirm-reset': stopWhiteNoise(); localStorage.removeItem(STORAGE_KEY); state = structuredClone(STARTER_STATE); modal = null; navigate('home'); return;
@@ -5621,7 +5704,7 @@ app.addEventListener('change', async (event) => {
     const removeButton = event.target.previousElementSibling?.querySelector('.admin-upload-remove');
     const status = event.target.form?.querySelector(`[data-upload-status="${event.target.id}"]`);
     if (!file || !preview) return;
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(adminUploadMimeType(file)) || file.size > 5 * 1024 * 1024) {
       clearAdminUploadSelection(event.target);
       if (status) {
         status.textContent = 'Pilih PNG/JPG/WebP maksimal 5 MB.';
@@ -5647,7 +5730,7 @@ app.addEventListener('change', async (event) => {
     const removeButton = uploadBox?.querySelector('.admin-upload-remove');
     const status = event.target.form?.querySelector(`[data-upload-status="${event.target.id}"]`);
     const file = event.target.files?.[0];
-    if (file && (!['video/mp4', 'video/webm'].includes(file.type) || file.size > 50 * 1024 * 1024)) {
+    if (file && (!['video/mp4', 'video/webm'].includes(adminUploadMimeType(file)) || file.size > 50 * 1024 * 1024)) {
       clearAdminUploadSelection(event.target);
       if (status) {
         status.textContent = 'Pilih video MP4/WebM dengan ukuran maksimal 50 MB.';

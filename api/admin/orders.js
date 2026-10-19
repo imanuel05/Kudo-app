@@ -3,6 +3,7 @@ const {
   parseJsonBody,
   sendJson,
   supabaseRequest,
+  supabaseRequestAll,
 } = require('../../lib/payments');
 
 function storagePath(path) {
@@ -69,12 +70,11 @@ module.exports = async function adminOrders(request, response) {
           order: 'created_at.asc',
           limit: '100',
         })}`),
-        supabaseRequest(`/rest/v1/payment_orders?${new URLSearchParams({
+        supabaseRequestAll('/rest/v1/payment_orders', new URLSearchParams({
           select: 'invoice_number,user_id,diamonds,amount_idr,status,proof_path,created_at,paid_at,rejected_at',
           status: 'in.(paid,rejected)',
           order: 'created_at.desc',
-          limit: '100',
-        })}`),
+        })),
       ]);
       if (!Array.isArray(orders) || !Array.isArray(verifiedOrders)) {
         throw new Error('Admin payment order response was invalid.');

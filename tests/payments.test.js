@@ -35,7 +35,7 @@ function createResponse() {
   };
 }
 
-test('payment history is authenticated and returns only the current user orders', async () => {
+test('payment history is authenticated and returns all current user orders without age limits', async () => {
   const originalFetch = global.fetch;
   const calls = [];
   const recentOrderDate = new Date().toISOString();
@@ -96,7 +96,7 @@ test('payment history is authenticated and returns only the current user orders'
 
     assert.equal(response.statusCode, 200);
     const history = JSON.parse(response.body).orders;
-    assert.equal(history.length, 2);
+    assert.equal(history.length, 3);
     assert.deepEqual(history[0], {
       invoiceNumber: 'KUDO-00000000-0000-4000-8000-000000000000',
       diamonds: 1200,
@@ -108,15 +108,15 @@ test('payment history is authenticated and returns only the current user orders'
     });
     assert.equal(history[1].invoiceNumber, 'KUDO-00000000-0000-4000-8000-000000000001');
     assert.equal(history[1].verifiedAt, verifiedOrderDate);
+    assert.equal(history[2].invoiceNumber, 'KUDO-00000000-0000-4000-8000-000000000002');
+    assert.equal(history[2].createdAt, expiredOrderDate);
     assert.match(calls[1].url, /user_id=eq\.current-user/);
     assert.match(calls[1].url, /order=created_at\.desc/);
     const historyQuery = new URL(calls[1].url).searchParams;
     assert.match(historyQuery.get('select'), /proof_path/);
+    assert.equal(historyQuery.has('created_at'), false);
+    assert.equal(historyQuery.get('limit'), '1000');
     assert.ok(calls.some(({ url }) => url.includes('/storage/v1/object/sign/payment-proofs/current-user/order/proof.png')));
-    const requestedCutoff = Date.parse(historyQuery.get('created_at').slice(4));
-    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    assert.ok(requestedCutoff <= thirtyDaysAgo);
-    assert.ok(requestedCutoff >= thirtyDaysAgo - 1000);
   } finally {
     global.fetch = originalFetch;
   }
