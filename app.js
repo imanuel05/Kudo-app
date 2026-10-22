@@ -119,14 +119,22 @@ const BOSS_AVATARS = {
     image: 'assets/pumpkin-root-boss.png',
     alt: 'Boss Pumpkin Root berbentuk labu penyihir',
   },
+  'the-rocky': {
+    name: 'The Rocky',
+    image: 'assets/the-rocky-boss.png',
+    alt: 'Boss The Rocky berbentuk monster batu',
+  },
 };
 const ERROR_CODE_SKIN_ID = 'error-code';
 const ERROR_CODE_SKIN_COST = 500;
 const PUMPKIN_ROOT_SKIN_ID = 'pumpkin-root';
 const PUMPKIN_ROOT_SKIN_COST = 500;
+const THE_ROCKY_SKIN_ID = 'the-rocky';
+const THE_ROCKY_SKIN_COST = 500;
 const BOSS_SKIN_COSTS = Object.freeze({
   [ERROR_CODE_SKIN_ID]: ERROR_CODE_SKIN_COST,
   [PUMPKIN_ROOT_SKIN_ID]: PUMPKIN_ROOT_SKIN_COST,
+  [THE_ROCKY_SKIN_ID]: THE_ROCKY_SKIN_COST,
 });
 const DIARY_QUEST_INTRO_STEPS = Object.freeze([
   'Di dalam diary quest ini setiap kamu mengerjakan tugasmu, progress mu akan bertambah.',
